@@ -1,26 +1,40 @@
+// components/ThemeToggle.tsx
 "use client";
 
-import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { IconButton } from "@radix-ui/themes";
-import { LuMoon, LuSun } from "react-icons/lu";
 
-export default function ThemeToggle() {
-  const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+const ThemeToggle = () => {
+  "use client";
+  const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    const saved = localStorage.getItem("theme");
+    const isDarkTheme = saved === "dark";
+    setIsDark(isDarkTheme);
+    document.documentElement.setAttribute(
+      "data-theme",
+      isDarkTheme ? "dark" : "light"
+    );
   }, []);
 
-  if (!mounted) return null;
+  const toggleTheme = () => {
+    const newTheme = isDark ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", newTheme);
+    localStorage.setItem("theme", newTheme);
+    setIsDark(!isDark);
+  };
 
   return (
-    <IconButton
-      variant="soft"
-      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-    >
-      {resolvedTheme === "dark" ? <LuSun /> : <LuMoon />}
-    </IconButton>
+    <label className="label cursor-pointer gap-2">
+      <span className="label-text">Dark Mode</span>
+      <input
+        type="checkbox"
+        className="checkbox theme-controller"
+        checked={isDark}
+        onChange={toggleTheme}
+      />
+    </label>
   );
-}
+};
+
+export default ThemeToggle;

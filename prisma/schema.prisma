@@ -14,10 +14,35 @@ datasource db {
 }
 
 model Movie {
-  id           String @id @default(uuid())
-  title        String
-  releasedYear Int
-  description  String @db.Text
-  posterUrl    String
-  directorName String
+  id                String       @id @default(uuid())
+  title             String
+  description       String
+  releasedYear      Int
+  duration          Int
+  posterUrl         String
+  directorFirstName String
+  directorLastName  String
+  genres            MovieGenre[]
+
+  @@map("movie")
+}
+
+model Genre {
+  id          String       @id @default(uuid())
+  genreName   String       @db.VarChar(55)
+  description String
+  movies      MovieGenre[]
+
+  @@map("genre")
+}
+
+model MovieGenre {
+  movie   Movie  @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  genre   Genre  @relation(fields: [genreId], references: [id], onDelete: Cascade)
+  movieId String
+  genreId String
+
+  @@id([movieId, genreId])
+  @@index([genreId])
+  @@map("movie_genres")
 }
