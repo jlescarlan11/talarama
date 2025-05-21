@@ -23,13 +23,15 @@ const NavBar = () => {
         </Link>
 
         <Flex className="items-center" gap="6">
-          <ul className="flex space-x-2 ">
+          <ul className="flex gap-2 ">
             {links.map((link) => (
-              <Link key={link.href} href={link.href}>
-                <Button variant={link.href === currentPath ? "solid" : "soft"}>
-                  {link.label}
-                </Button>
-              </Link>
+              <Button
+                key={link.href}
+                variant={link.href === currentPath ? "solid" : "soft"}
+                className="!cursor-pointer"
+              >
+                <Link href={link.href}>{link.label}</Link>
+              </Button>
             ))}
           </ul>
           <Flex>
