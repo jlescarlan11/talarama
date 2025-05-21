@@ -1,14 +1,14 @@
-import { Avatar, Container, Flex, nav } from "@radix-ui/themes";
+import { Avatar, Flex } from "@radix-ui/themes";
 import Link from "next/link";
-import React from "react";
+import { PiFilmSlate, PiHouse, PiNotebook } from "react-icons/pi";
 import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
 
 const NavBar = () => {
   const links = [
-    { label: "Dashboard", href: "/" },
-    { label: "Diary", href: "/diary" },
-    { label: "Movie", href: "/movie" },
+    { icon: <PiHouse />, label: `Dashboard`, href: "/" },
+    { icon: <PiNotebook />, label: "Diary", href: "/diary" },
+    { icon: <PiFilmSlate />, label: "Movie", href: "/movies" },
   ];
 
   return (
@@ -18,10 +18,14 @@ const NavBar = () => {
           <Logo />
         </Link>
 
-        <Flex className="items-center" gap="6">
-          <ul className="flex space-x-4">
+        <Flex className="items-center" gap="4">
+          <ul className="flex  ">
             {links.map((link) => (
-              <Link key={link.href} href={link.href} className="flex-1">
+              <Link
+                key={link.href}
+                href={link.href}
+                className=" px-4 py-2 flex rounded-full items-center gap-2"
+              >
                 {link.label}
               </Link>
             ))}
@@ -33,7 +37,7 @@ const NavBar = () => {
             fallback="A"
           />
 
-          {/* <ThemeToggle /> */}
+          <ThemeToggle />
         </Flex>
       </nav>
     </div>
