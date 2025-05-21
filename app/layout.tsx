@@ -1,6 +1,11 @@
+// app/layout.tsx
+import "@radix-ui/themes/styles.css";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Theme } from "@radix-ui/themes";
+import NavBar from "./NavBar";
+import ThemeWrapper from "./ThemeWrapper"; // Use the wrapper
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,7 +32,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <ThemeWrapper>
+          <Theme>
+            <NavBar />
+            <main>{children}</main>
+          </Theme>
+        </ThemeWrapper>
       </body>
     </html>
   );
