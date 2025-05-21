@@ -1,10 +1,14 @@
-import { Avatar, Flex } from "@radix-ui/themes";
+"use client";
+import { Avatar, Button, Flex } from "@radix-ui/themes";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { PiFilmSlate, PiHouse, PiNotebook } from "react-icons/pi";
 import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
 
 const NavBar = () => {
+  const currentPath = usePathname();
+
   const links = [
     { icon: <PiHouse />, label: `Dashboard`, href: "/" },
     { icon: <PiNotebook />, label: "Diary", href: "/diary" },
@@ -18,26 +22,28 @@ const NavBar = () => {
           <Logo />
         </Link>
 
-        <Flex className="items-center" gap="4">
-          <ul className="flex  ">
+        <Flex className="items-center" gap="6">
+          <ul className="flex gap-2 ">
             {links.map((link) => (
-              <Link
+              <Button
                 key={link.href}
-                href={link.href}
-                className=" px-4 py-2 flex rounded-full items-center gap-2"
+                variant={link.href === currentPath ? "solid" : "soft"}
+                className="!cursor-pointer"
               >
-                {link.label}
-              </Link>
+                <Link href={link.href}>{link.label}</Link>
+              </Button>
             ))}
           </ul>
-          <Avatar
-            src="https://images.usplash.com/photo-1502823403499-6ccfcf4fb453?&w=256&h=256&q=70&crop=focalpoint&fp-x=0.5&fp-y=0.3&fp-z=1&fit=crop"
-            radius="full"
-            size="2"
-            fallback="A"
-          />
+          <Flex>
+            <Avatar
+              src="https://images.usplash.com/photo-1502823403499-6ccfcf4fb453?&w=256&h=256&q=70&crop=focalpoint&fp-x=0.5&fp-y=0.3&fp-z=1&fit=crop"
+              radius="full"
+              size="2"
+              fallback="A"
+            />
 
-          <ThemeToggle />
+            <ThemeToggle />
+          </Flex>
         </Flex>
       </nav>
     </div>
