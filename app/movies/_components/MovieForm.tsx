@@ -72,7 +72,11 @@ const MovieForm = ({ movie }: { movie?: ExtendedMovie }) => {
 
     try {
       setIsSubmitting(true);
-      await axios.post("/api/movies", updatedData);
+      if (movie) {
+        await axios.patch("/api/movies/" + movie.id, updatedData);
+      } else {
+        await axios.post("/api/movies", updatedData);
+      }
       router.push("/movies");
     } catch (error) {
       setIsSubmitting(false);
@@ -319,14 +323,8 @@ const MovieForm = ({ movie }: { movie?: ExtendedMovie }) => {
               disabled={isSubmitting}
               className="btn btn-primary btn-md"
             >
-              {isSubmitting ? (
-                <>
-                  Saving Movie
-                  <Spinner />
-                </>
-              ) : (
-                <>Save Movie</>
-              )}
+              {movie ? "Update Movie" : "Submit Move"}
+              {isSubmitting && <Spinner />}
             </button>
           </div>
         </form>
