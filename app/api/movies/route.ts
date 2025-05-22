@@ -2,13 +2,13 @@ import prisma from "@/prisma/client";
 import { Genre } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
-import { createMovieSchema } from "@/app/validationSchemas";
+import { movieSchema } from "@/app/validationSchemas";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const validation = createMovieSchema.safeParse(body);
+    const validation = movieSchema.safeParse(body);
 
     if (!validation.success) {
       return NextResponse.json(validation.error.format(), { status: 400 });

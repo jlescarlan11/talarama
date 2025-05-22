@@ -1,7 +1,7 @@
 "use client";
 import ErrorMessage from "@/app/components/ErrorMessage";
 import Spinner from "@/app/components/Spinner";
-import { createMovieSchema } from "@/app/validationSchemas";
+import { movieSchema } from "@/app/validationSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import Image from "next/image";
@@ -11,7 +11,7 @@ import { useForm } from "react-hook-form";
 import { FiImage } from "react-icons/fi";
 import { z } from "zod";
 
-type MovieForm = z.infer<typeof createMovieSchema>;
+type MovieForm = z.infer<typeof movieSchema>;
 
 const NewMoviePage = () => {
   const router = useRouter();
@@ -27,7 +27,7 @@ const NewMoviePage = () => {
     setValue,
     trigger,
   } = useForm<MovieForm>({
-    resolver: zodResolver(createMovieSchema),
+    resolver: zodResolver(movieSchema),
   });
 
   const onSubmit = async (data: MovieForm) => {
