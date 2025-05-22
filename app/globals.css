@@ -2,3 +2,9 @@
 @plugin "daisyui" {
   themes: light --default, dark --prefersdark;
 }
+
+@layer utilities {
+  .nav-links {
+    @apply hover:text-red-400 transition-colors;
+  }
+}
