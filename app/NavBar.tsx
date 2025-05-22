@@ -20,42 +20,43 @@ const NavBar = () => {
   return (
     <div className="shadow-sm mb-4 flex ">
       <nav className="navbar flex justify-between">
-        <div>
-          <Link href="/">
-            <Logo />
-          </Link>
-        </div>
+        <Link href="/">
+          <Logo />
+        </Link>
+
         <div className="flex gap-2">
-          <div className="dropdown dropdown-end">
-            <div
-              tabIndex={0}
-              role="button"
-              className="btn btn-ghost btn-circle avatar"
-            >
-              <Image
-                alt="Picture of user"
-                width={200}
-                height={200}
-                src="https://example.com/profile.png"
-              />
-            </div>
-            <div>
-              <ul
-                tabIndex={0}
-                className="menu menu-sm dropdown-content p-2 w-48"
-              >
-                {links.map((link) => (
-                  <li key={link.href} className="!cursor-pointer">
-                    <Link href={link.href}>{link.label}</Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-          <ThemeToggle />
           <div>
             {status === "authenticated" && (
-              <Link href="/api/auth/signout">Log out</Link>
+              <div className="dropdown dropdown-end">
+                <div
+                  tabIndex={0}
+                  role="button"
+                  className="btn btn-ghost btn-circle avatar"
+                >
+                  <Image
+                    alt="Picture of user"
+                    className="rounded-full"
+                    width={200}
+                    height={200}
+                    src={session!.user!.image!}
+                  />
+                </div>
+                <div
+                  tabIndex={0}
+                  className="menu menu-sm dropdown-content p-2 w-48"
+                >
+                  <span>{session!.user!.email!}</span>
+                  <ul>
+                    {links.map((link) => (
+                      <li key={link.href} className="!cursor-pointer">
+                        <Link href={link.href}>{link.label}</Link>
+                      </li>
+                    ))}
+                  </ul>
+                  <ThemeToggle />
+                  <Link href="/api/auth/signout">Log out</Link>
+                </div>
+              </div>
             )}
             {status === "unauthenticated" && (
               <Link href="/api/auth/signin">Log in</Link>
