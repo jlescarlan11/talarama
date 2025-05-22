@@ -1,7 +1,3 @@
-import React from "react";
+import MovieFormSkeleton from "../_components/MovieFormSkeleton";
 
-const LoadingNewMoviePage = () => {
-  return <div>LoadingNewMoviePage</div>;
-};
-
-export default LoadingNewMoviePage;
+export default MovieFormSkeleton;

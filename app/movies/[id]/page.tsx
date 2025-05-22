@@ -2,6 +2,7 @@ import prisma from "@/prisma/client";
 import { notFound } from "next/navigation";
 import EditMovieButton from "./EditMovieButton";
 import MovieDetails from "./MovieDetails";
+import DeleteMovieButton from "./DeleteMovieButton";
 
 interface Props {
   params: { id: string };
@@ -29,6 +30,7 @@ const MovieDetailPage = async ({ params }: Props) => {
       </div>
       <div className="card">
         <EditMovieButton movieId={movie.id} />
+        <DeleteMovieButton movieId={movie.id} />
       </div>
     </div>
   );

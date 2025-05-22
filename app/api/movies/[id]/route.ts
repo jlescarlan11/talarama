@@ -1,12 +1,14 @@
+import { movieSchema } from "@/app/validationSchemas";
 import prisma from "@/prisma/client";
 import { Genre } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
-import { movieSchema } from "@/app/validationSchemas";
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const { id } = await params;
+
   try {
     const body = await request.json();
     const validation = movieSchema.safeParse(body);
@@ -37,7 +39,7 @@ export async function PATCH(
     );
 
     const updatedMovie = await prisma.movie.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         title: data.title,
         description: data.description,
@@ -71,4 +73,23 @@ export async function PATCH(
       { status: 500 }
     );
   }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const { id } = await params;
+  const movie = await prisma.movie.findUnique({
+    where: { id },
+  });
+
+  if (!movie)
+    return NextResponse.json({ error: "Invalid Movie" }, { status: 404 });
+
+  await prisma.movie.delete({
+    where: { id: movie.id },
+  });
+
+  return NextResponse.json({});
 }
