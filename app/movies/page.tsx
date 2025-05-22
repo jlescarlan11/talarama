@@ -2,6 +2,7 @@ import prisma from "@/prisma/client";
 import delay from "delay";
 
 import MovieActions from "./MovieActions";
+import Link from "next/link";
 
 const MoviesPage = async () => {
   const movies = await prisma.movie.findMany();
@@ -30,7 +31,9 @@ const MoviesPage = async () => {
               return (
                 <tr key={movie.id}>
                   <th>{index}</th>
-                  <td>{movie.title}</td>
+                  <td>
+                    <Link href={`/movies/${movie.id}`}>{movie.title}</Link>
+                  </td>
                   <td>{movie.description}</td>
                   <td>{movie.releasedYear}</td>
                   <td>{movie.duration}</td>
