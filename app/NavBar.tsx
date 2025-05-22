@@ -5,9 +5,11 @@ import { usePathname } from "next/navigation";
 import { PiFilmSlate, PiHouse, PiNotebook } from "react-icons/pi";
 import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
+import { useSession } from "next-auth/react";
 
 const NavBar = () => {
   const currentPath = usePathname(); // to edit pa
+  const { status, data: session } = useSession();
 
   const links = [
     { icon: <PiHouse />, label: `Dashboard`, href: "/" },
@@ -51,6 +53,14 @@ const NavBar = () => {
             </div>
           </div>
           <ThemeToggle />
+          <div>
+            {status === "authenticated" && (
+              <Link href="/api/auth/signout">Log out</Link>
+            )}
+            {status === "unauthenticated" && (
+              <Link href="/api/auth/signin">Log in</Link>
+            )}
+          </div>
         </div>
       </nav>
     </div>
