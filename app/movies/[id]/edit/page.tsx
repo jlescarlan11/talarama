@@ -1,0 +1,29 @@
+import prisma from "@/prisma/client";
+import { notFound } from "next/navigation";
+import React from "react";
+import MovieForm from "../../_components/MovieForm";
+
+interface Props {
+  params: { id: string };
+}
+
+const EditMoviePage = async ({ params }: Props) => {
+  const id = await params.id;
+
+  const movie = await prisma.movie.findUnique({
+    where: { id },
+    include: {
+      genres: {
+        include: {
+          genre: true,
+        },
+      },
+    },
+  });
+
+  if (!movie) notFound();
+
+  return <MovieForm movie={movie} />;
+};
+
+export default EditMoviePage;
