@@ -1,15 +1,13 @@
 "use client";
 
-import NewMovieModal from "./NewMovieModal";
+import Link from "next/link";
 
 const MoviesPage = () => {
   return (
     <div>
-      <label htmlFor="new-movie-modal" className="btn btn-primary">
-        New Movie
-      </label>
-
-      <NewMovieModal />
+      <button>
+        <Link href="movies/new"> New Movie</Link>
+      </button>
     </div>
   );
 };
