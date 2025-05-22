@@ -19,7 +19,7 @@ model Movie {
   description       String
   releasedYear      Int
   duration          Int
-  posterUrl         String
+  posterUrl         String?
   directorFirstName String
   directorLastName  String
   genres            MovieGenre[]
@@ -28,10 +28,9 @@ model Movie {
 }
 
 model Genre {
-  id          String       @id @default(uuid())
-  genreName   String       @db.VarChar(55)
-  description String
-  movies      MovieGenre[]
+  id        String       @id @default(uuid())
+  genreName String       @unique @db.VarChar(55)
+  movies    MovieGenre[]
 
   @@map("genre")
 }
