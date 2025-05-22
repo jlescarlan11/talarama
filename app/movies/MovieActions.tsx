@@ -1,13 +1,13 @@
 import Link from "next/link";
 
-const NewMovieButton = () => {
+const MovieActions = () => {
   return (
-    <div>
-      <button>
+    <div className="mb-4">
+      <button className="btn btn-primary">
         <Link href="movies/new"> New Movie</Link>
       </button>
     </div>
   );
 };
 
-export default NewMovieButton;
+export default MovieActions;

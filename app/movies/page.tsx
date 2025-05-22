@@ -1,13 +1,15 @@
 import prisma from "@/prisma/client";
-import NewMovieButton from "./NewMovieButton";
+import delay from "delay";
+
+import MovieActions from "./MovieActions";
 
 const MoviesPage = async () => {
   const movies = await prisma.movie.findMany();
-
+  await delay(2000);
   return (
     <div>
       <div className="mb-4">
-        <NewMovieButton />
+        <MovieActions />
       </div>
       <div className="overflow-x-auto">
         <table className="table table-xs">
