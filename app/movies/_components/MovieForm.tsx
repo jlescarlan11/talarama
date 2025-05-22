@@ -26,7 +26,9 @@ const MovieForm = ({ movie }: { movie?: ExtendedMovie }) => {
     movie?.genres ? movie.genres.map((g) => g.genre.genreName).join(", ") : ""
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [previewPoster, setPreviewPoster] = useState<string>("");
+  const [previewPoster, setPreviewPoster] = useState<string>(
+    movie?.posterUrl || ""
+  );
 
   const {
     register,
@@ -37,6 +39,16 @@ const MovieForm = ({ movie }: { movie?: ExtendedMovie }) => {
     trigger,
   } = useForm<MovieForm>({
     resolver: zodResolver(movieSchema),
+    defaultValues: {
+      title: movie?.title || "",
+      description: movie?.description || "",
+      releasedYear: movie?.releasedYear || 0,
+      duration: movie?.duration || 0,
+      directorFirstName: movie?.directorFirstName || "",
+      directorLastName: movie?.directorLastName || "",
+      posterUrl: movie?.posterUrl || "",
+      genres: movie?.genres ? movie.genres.map((g) => g.genre.genreName) : [],
+    },
   });
 
   const onSubmit = async (data: MovieForm) => {
@@ -119,7 +131,7 @@ const MovieForm = ({ movie }: { movie?: ExtendedMovie }) => {
                       <input
                         type="text"
                         placeholder="Enter movie title"
-                        value={movie?.title}
+                        defaultValue={movie?.title || ""}
                         {...register("title")}
                         className={`input input-bordered w-full ${
                           errors.title ? "input-error" : ""
@@ -135,7 +147,7 @@ const MovieForm = ({ movie }: { movie?: ExtendedMovie }) => {
                       <textarea
                         placeholder="Enter movie description..."
                         {...register("description")}
-                        value={movie?.description}
+                        defaultValue={movie?.description || ""}
                         className={`textarea textarea-bordered h-32 resize-none w-full ${
                           errors.description ? "textarea-error" : ""
                         }`}
@@ -151,7 +163,7 @@ const MovieForm = ({ movie }: { movie?: ExtendedMovie }) => {
                         <span>Year Released</span>
                         <input
                           type="number"
-                          value={movie?.releasedYear}
+                          defaultValue={movie?.releasedYear || 0}
                           placeholder="Enter movie release year"
                           min="1900"
                           max="2030"
@@ -170,7 +182,7 @@ const MovieForm = ({ movie }: { movie?: ExtendedMovie }) => {
                         <span>Duration (minutes)</span>
                         <input
                           type="number"
-                          value={movie?.duration}
+                          defaultValue={movie?.duration || 0}
                           placeholder="Enter movie duration in minutes"
                           min="1"
                           onChange={(e) => handleNumberInput(e, "duration")}
@@ -190,7 +202,7 @@ const MovieForm = ({ movie }: { movie?: ExtendedMovie }) => {
                         <span>Director&apos;s First Name</span>
                         <input
                           type="text"
-                          value={movie?.directorFirstName}
+                          defaultValue={movie?.directorFirstName || 0}
                           placeholder="Enter Director's First name"
                           {...register("directorFirstName")}
                           className={`input input-bordered w-full ${
@@ -207,7 +219,7 @@ const MovieForm = ({ movie }: { movie?: ExtendedMovie }) => {
                         <span>Director&apos;s Last Name</span>
                         <input
                           type="text"
-                          value={movie?.directorLastName}
+                          defaultValue={movie?.directorLastName || ""}
                           placeholder="Enter Director's Last name"
                           {...register("directorLastName")}
                           className={`input input-bordered w-full ${
@@ -229,7 +241,11 @@ const MovieForm = ({ movie }: { movie?: ExtendedMovie }) => {
                       <input
                         type="text"
                         placeholder="Enter Movie Genres separated by commas"
-                        value={genreInput}
+                        defaultValue={
+                          movie?.genres
+                            ? movie.genres.map((g) => g.genre.genreName)
+                            : []
+                        }
                         onChange={handleGenreChange}
                         className={`input input-bordered w-full ${
                           errors.genres ? "input-error" : ""
@@ -253,7 +269,7 @@ const MovieForm = ({ movie }: { movie?: ExtendedMovie }) => {
                       <span>Poster URL</span>
                       <input
                         type="url"
-                        value={movie?.posterUrl || ""}
+                        defaultValue={movie?.posterUrl || ""} // Changed from value to defaultValue
                         placeholder="Enter Poster URL"
                         {...register("posterUrl")}
                         onBlur={handlePosterUrlBlur}
