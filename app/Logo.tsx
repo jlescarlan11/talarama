@@ -1,4 +1,3 @@
-import { Button, Flex, Text } from "@radix-ui/themes";
 import { Mansalva } from "next/font/google";
 import { PiFilmReel } from "react-icons/pi";
 
@@ -6,17 +5,12 @@ const mansalva = Mansalva({ subsets: ["latin"], weight: "400" });
 
 const Logo = () => {
   return (
-    <Button
-      variant="ghost"
-      className="!bg-transparent hover:!bg-transparent !cursor-pointer"
-    >
-      <Flex align="center" className="text-2xl px-4 py-2 ">
+    <button className="btn btn-soft border-none shadow-none !bg-transparent hover:!bg-transparent">
+      <div className="flex  items-center text-2xl px-4 py-2 ">
         <PiFilmReel />
-        <Text className={`${mansalva.className} !tracking-tighter`}>
-          Talarama
-        </Text>
-      </Flex>
-    </Button>
+        <p className={`${mansalva.className} !tracking-[-0.1em]`}>Talarama</p>
+      </div>
+    </button>
   );
 };
 

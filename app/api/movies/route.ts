@@ -26,8 +26,11 @@ export async function POST(request: NextRequest) {
       title: body.title,
       description: body.description,
       releasedYear: body.releasedYear,
+      duration: body.duration,
       posterUrl: body.posterUrl,
-      directorName: body.directorName,
+      directorFirstName: body.directorFirstName,
+      directorLastName: body.directorLastName,
+      genres: body.genres,
     },
   });
 

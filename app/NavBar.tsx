@@ -1,5 +1,5 @@
 "use client";
-import { Avatar, Button, Flex } from "@radix-ui/themes";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PiFilmSlate, PiHouse, PiNotebook } from "react-icons/pi";
@@ -7,7 +7,7 @@ import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
 
 const NavBar = () => {
-  const currentPath = usePathname();
+  const currentPath = usePathname(); // to edit pa
 
   const links = [
     { icon: <PiHouse />, label: `Dashboard`, href: "/" },
@@ -16,35 +16,42 @@ const NavBar = () => {
   ];
 
   return (
-    <div className="shadow-sm mb-4">
-      <nav className="p-8 flex items-center justify-between space-x-4 h-20">
-        <Link href="/">
-          <Logo />
-        </Link>
-
-        <Flex className="items-center" gap="6">
-          <ul className="flex gap-2 ">
-            {links.map((link) => (
-              <Button
-                key={link.href}
-                variant={link.href === currentPath ? "solid" : "soft"}
-                className="!cursor-pointer"
+    <div className="shadow-sm mb-4 flex ">
+      <nav className="navbar flex justify-between">
+        <div>
+          <Link href="/">
+            <Logo />
+          </Link>
+        </div>
+        <div className="flex gap-2">
+          <div className="dropdown dropdown-end">
+            <div
+              tabIndex={0}
+              role="button"
+              className="btn btn-ghost btn-circle avatar"
+            >
+              <Image
+                alt="Picture of user"
+                width={200}
+                height={200}
+                src="https://example.com/profile.png"
+              />
+            </div>
+            <div>
+              <ul
+                tabIndex={0}
+                className="menu menu-sm dropdown-content p-2 w-48"
               >
-                <Link href={link.href}>{link.label}</Link>
-              </Button>
-            ))}
-          </ul>
-          <Flex>
-            <Avatar
-              src="https://images.usplash.com/photo-1502823403499-6ccfcf4fb453?&w=256&h=256&q=70&crop=focalpoint&fp-x=0.5&fp-y=0.3&fp-z=1&fit=crop"
-              radius="full"
-              size="2"
-              fallback="A"
-            />
-
-            <ThemeToggle />
-          </Flex>
-        </Flex>
+                {links.map((link) => (
+                  <li key={link.href} className="!cursor-pointer">
+                    <Link href={link.href}>{link.label}</Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          <ThemeToggle />
+        </div>
       </nav>
     </div>
   );
