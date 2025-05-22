@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import Link from "next/link";
+import { Link } from "@/app/components";
 import { usePathname } from "next/navigation";
 import { PiFilmSlate, PiHouse, PiNotebook } from "react-icons/pi";
 import Logo from "./Logo";

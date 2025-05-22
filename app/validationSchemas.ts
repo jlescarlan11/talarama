@@ -2,7 +2,7 @@ import z from "zod";
 
 const currentYear = new Date().getFullYear();
 
-export const createMovieSchema = z.object({
+export const movieSchema = z.object({
   title: z.string().min(1, "Title is required").max(255, "Title is too long"),
   description: z.string().min(1, "Description is required"),
   releasedYear: z

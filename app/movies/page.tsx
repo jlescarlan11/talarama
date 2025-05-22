@@ -1,12 +1,11 @@
 import prisma from "@/prisma/client";
-import delay from "delay";
 
 import MovieActions from "./MovieActions";
-import Link from "next/link";
+import { Link } from "@/app/components";
 
 const MoviesPage = async () => {
   const movies = await prisma.movie.findMany();
-  await delay(2000);
+
   return (
     <div>
       <div className="mb-4">

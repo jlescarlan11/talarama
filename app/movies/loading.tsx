@@ -1,6 +1,5 @@
 import MovieActions from "./MovieActions";
-import Skeleton from "react-loading-skeleton";
-import "react-loading-skeleton/dist/skeleton.css";
+import { Skeleton } from "@/app/components";
 
 const MoviesPage = async () => {
   const movies = [1, 2, 3, 4, 5];
