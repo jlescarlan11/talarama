@@ -8,7 +8,7 @@ interface Props {
 }
 
 const EditMoviePage = async ({ params }: Props) => {
-  const id = await params.id;
+  const { id } = await params;
 
   const movie = await prisma.movie.findUnique({
     where: { id },
