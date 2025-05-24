@@ -8,6 +8,7 @@ const DeleteMovieButton = ({ movieId }: { movieId: string }) => {
   const router = useRouter();
   const [error, setError] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
   const deleteMovie = async () => {
     try {
@@ -15,65 +16,72 @@ const DeleteMovieButton = ({ movieId }: { movieId: string }) => {
       await axios.delete("/api/movies/" + movieId);
       router.push("/movies");
     } catch (error) {
-      setIsDeleting(false);
+      console.error("Unexpected error occurred:", error);
       setError(true);
-
-      console.log("Unexpected error occur", error);
+    } finally {
+      setIsDeleting(false);
+      setIsConfirmModalOpen(false);
     }
   };
 
   return (
     <>
-      {/* The button to open modal */}
-      <label htmlFor="delete_modal" className="btn btn-warning ">
+      {/* Delete Movie Trigger Button */}
+      <button
+        onClick={() => setIsConfirmModalOpen(true)}
+        className="btn btn-warning"
+      >
         Delete Movie
-      </label>
-      {/* Put this part before </body> tag */}
-      <input type="checkbox" id="delete_modal" className="modal-toggle" />
-      <div className="modal" role="dialog">
-        <div className="modal-box">
-          <h3 className="text-lg font-bold">Confirm Deletion</h3>
-          <p className="py-4">
-            Are you sure you want to delete this movie? this action cannot be
-            undone
-          </p>
-          <div className="modal-action">
-            <label htmlFor="delete_modal" className="btn">
-              Close
-            </label>
-          </div>
-          <div className="modal-action">
-            <label htmlFor="delete_modal" className="btn">
+      </button>
+
+      {/* Confirm Deletion Modal */}
+      {isConfirmModalOpen && (
+        <div className="modal modal-open" role="dialog">
+          <div className="modal-box">
+            <h3 className="text-lg font-bold">Confirm Deletion</h3>
+            <p className="py-4">
+              Are you sure you want to delete this movie? This action cannot be
+              undone.
+            </p>
+            <div className="modal-action flex justify-end gap-2">
+              <button
+                className="btn"
+                onClick={() => setIsConfirmModalOpen(false)}
+              >
+                Cancel
+              </button>
               <button
                 onClick={deleteMovie}
                 disabled={isDeleting}
                 className="btn btn-warning"
               >
-                Delete Movie {isDeleting && <Spinner />}
+                {isDeleting ? (
+                  <>
+                    Deleting <Spinner />
+                  </>
+                ) : (
+                  "Delete Movie"
+                )}
               </button>
-            </label>
+            </div>
           </div>
         </div>
+      )}
 
-        <input
-          type="checkbox"
-          id="error_modal"
-          className={`${error ? "modal-toggle" : ""}`}
-        />
-        <div className="modal-box">
-          <h3 className="text-lg font-bold">Error</h3>
-          <p className="py-4">This movie could not bedeleted.</p>
-          <div className="modal-action">
-            <label
-              htmlFor="delete_modal"
-              className="btn"
-              onClick={() => setError(false)}
-            >
-              Okay
-            </label>
+      {/* Error Modal */}
+      {error && (
+        <div className="modal modal-open" role="dialog">
+          <div className="modal-box">
+            <h3 className="text-lg font-bold">Error</h3>
+            <p className="py-4">This movie could not be deleted.</p>
+            <div className="modal-action">
+              <button className="btn" onClick={() => setError(false)}>
+                Okay
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </>
   );
 };

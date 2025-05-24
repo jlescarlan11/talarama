@@ -66,7 +66,7 @@ const AuthStatus = () => {
 const NavLinks = () => {
   const links = [
     { icon: <PiHouse />, label: `Dashboard`, href: "/" },
-    { icon: <PiNotebook />, label: "Diary", href: "/diary" },
+    { icon: <PiNotebook />, label: "Diary", href: "/diaries" },
     { icon: <PiFilmSlate />, label: "Movie", href: "/movies" },
   ];
 
