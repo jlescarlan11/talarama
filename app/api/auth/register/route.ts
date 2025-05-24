@@ -1,8 +1,7 @@
 import prisma from "@/prisma/client";
+import bcrypt from "bcrypt";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import bcrypt from "bcrypt";
-import { registerSchema } from "@/app/validationSchemas";
 
 const schema = z.object({
   username: z.string().min(3),

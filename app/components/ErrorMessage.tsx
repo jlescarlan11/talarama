@@ -1,9 +1,13 @@
 import { PropsWithChildren } from "react";
 
-const ErrorMessage = ({ children }: PropsWithChildren) => {
+type ErrorMessageProps = PropsWithChildren<{
+  className?: string;
+}>;
+
+const ErrorMessage = ({ children, className = "" }: ErrorMessageProps) => {
   if (!children) return null;
 
-  return <p className="text-error">{children}</p>;
+  return <p className={`text-error ${className}`}>{children}</p>;
 };
 
 export default ErrorMessage;
