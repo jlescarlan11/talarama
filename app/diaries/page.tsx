@@ -1,10 +1,10 @@
 import React from "react";
-import NewDiaryButton from "./NewDiaryButton";
+import NewDiaryEntryButton from "./NewDiaryEntryButton";
 
 const DiaryPage = () => {
   return (
     <>
-      <NewDiaryButton />
+      <NewDiaryEntryButton />
     </>
   );
 };

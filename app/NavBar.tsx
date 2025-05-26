@@ -1,14 +1,14 @@
 "use client";
-import Image from "next/image";
 import { Link, Skeleton } from "@/app/components";
-import { usePathname } from "next/navigation";
+import Image from "next/image";
+// import { usePathname } from "next/navigation";
+import { signIn, signOut, useSession } from "next-auth/react";
 import { PiFilmSlate, PiHouse, PiNotebook } from "react-icons/pi";
 import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
-import { useSession } from "next-auth/react";
 
 const NavBar = () => {
-  const currentPath = usePathname(); // to edit pa
+  // const currentPath = usePathname(); // to edit pa
 
   return (
     <div className="shadow-sm mb-4 flex ">
@@ -30,7 +30,7 @@ const AuthStatus = () => {
   if (status === "unauthenticated")
     return (
       <div className="nav-links">
-        <Link href="/api/auth/signin">Log in</Link>
+        <button onClick={() => signIn("google")}>Log in</button>
       </div>
     );
 
@@ -55,7 +55,9 @@ const AuthStatus = () => {
           <NavLinks />
           <ThemeToggle />
           <div className="nav-links">
-            <Link href="/api/auth/signout">Log out</Link>
+            <button onClick={() => signOut({ callbackUrl: "/" })}>
+              Log Out
+            </button>
           </div>
         </div>
       </div>

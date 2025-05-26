@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -19,26 +13,21 @@ enum Role {
 }
 
 model User {
-  id             String  @id @default(cuid())
-  username       String  @unique @db.VarChar(20)
-  email          String  @unique
-  image          String?
-  role           Role    @default(USER)
-  hashedPassword String?
-
-  Authenticator Authenticator[]
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  Account   Account[]
-  Session   Session[]
-
-  @@index([email])
-  @@index([username])
-  @@map("users")
+  id            String       @id @default(cuid())
+  name          String?
+  username      String?      @unique
+  email         String       @unique
+  emailVerified DateTime?
+  image         String?
+  role          Role         @default(USER)
+  accounts      Account[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  DiaryEntry    DiaryEntry[]
 }
 
 model Account {
+  id                Int     @id @default(autoincrement())
   userId            String
   type              String
   provider          String
@@ -51,46 +40,9 @@ model Account {
   id_token          String?
   session_state     String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@id([provider, providerAccountId])
-}
-
-model Session {
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model VerificationToken {
-  identifier String
-  token      String
-  expires    DateTime
-
-  @@id([identifier, token])
-}
-
-// Optional for WebAuthn support
-model Authenticator {
-  credentialID         String  @unique
-  userId               String
-  providerAccountId    String
-  credentialPublicKey  String
-  counter              Int
-  credentialDeviceType String
-  credentialBackedUp   Boolean
-  transports           String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@id([userId, credentialID])
+  @@unique([provider, providerAccountId])
 }
 
 model Movie {
@@ -103,6 +55,7 @@ model Movie {
   directorFirstName String
   directorLastName  String
   genres            MovieGenre[]
+  DiaryEntry        DiaryEntry[]
 
   @@map("movie")
 }
@@ -124,4 +77,20 @@ model MovieGenre {
   @@id([movieId, genreId])
   @@index([genreId])
   @@map("movie_genres")
+}
+
+model DiaryEntry {
+  id              String   @id @default(uuid())
+  rating          Float
+  review          String   @db.Text
+  watchCount      Int      @default(1)
+  lastWatchedDate DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id])
+  movie           Movie    @relation(fields: [movieId], references: [id])
+  userId          String
+  movieId         String
+
+  @@unique([userId, movieId])
 }
