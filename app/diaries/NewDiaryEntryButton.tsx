@@ -1,6 +1,6 @@
 import { Link } from "@/app/components";
 
-const NewDiaryButton = () => {
+const NewDiaryEntryButton = () => {
   return (
     <div className="mb-4">
       <button className="btn btn-primary">
@@ -10,4 +10,4 @@ const NewDiaryButton = () => {
   );
 };
 
-export default NewDiaryButton;
+export default NewDiaryEntryButton;

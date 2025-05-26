@@ -1,50 +1,64 @@
 import prisma from "@/prisma/client";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import bcrypt from "bcrypt";
 import { NextAuthOptions } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 
 const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "email", placeholder: "Email" },
-        password: {
-          label: "Password",
-          type: "password",
-          placeholder: "Password",
-        },
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
-
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        });
-
-        if (!user) return null;
-
-        const passwordsMatch = await bcrypt.compare(
-          credentials.password,
-          user.hashedPassword!
-        );
-
-        return passwordsMatch ? user : null;
-      },
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
   ],
   session: {
     strategy: "jwt",
   },
-  // pages: {
-  //   // signIn: "/auth/signin",
-  //   // signOut: "/auth/signout",
-  //   // error: "/auth/error",
-  //   // verifyRequest: "/auth/verify-request",
-  //   // newUser: "/auth/new-user",
-  // },
+  callbacks: {
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      else if (new URL(url).origin === baseUrl) return url;
+      return baseUrl;
+    },
+    async jwt({ token, user }) {
+      // If user object is available (sign in), pull user from DB to get updated username
+      if (user || !token.username) {
+        const dbUser = await prisma.user.findUnique({
+          where: { email: token.email! },
+        });
+
+        if (dbUser) {
+          token.id = dbUser.id;
+          token.username = dbUser.username!;
+        }
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id as string;
+        session.user.username = token.username as string;
+      }
+      return session;
+    },
+  },
+  events: {
+    async createUser({ user }) {
+      const base = user.email?.split("@")[0] ?? "user";
+      let username = base;
+      let count = 1;
+
+      while (await prisma.user.findUnique({ where: { username } })) {
+        username = `${base}${count}`;
+        count++;
+      }
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { username },
+      });
+    },
+  },
 };
 
 export default authOptions;
