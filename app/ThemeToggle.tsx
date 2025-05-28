@@ -15,7 +15,7 @@ const ThemeToggle = () => {
     setMounted(true);
   }, []);
 
-  // Update localStorage and HTML attribute when theme changes
+  // Update localStorage and HTML attribute when theme chang
   const toggleTheme = () => {
     const newTheme = currentTheme === "light" ? "dark" : "light";
     setCurrentTheme(newTheme);
