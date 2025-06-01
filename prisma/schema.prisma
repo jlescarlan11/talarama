@@ -13,17 +13,19 @@ enum Role {
 }
 
 model User {
-  id            String       @id @default(cuid())
+  id            String        @id @default(cuid())
   name          String?
-  username      String?      @unique
-  email         String       @unique
+  username      String?       @unique
+  email         String        @unique
   emailVerified DateTime?
   image         String?
-  role          Role         @default(USER)
+  role          Role          @default(USER)
   accounts      Account[]
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  DiaryEntry    DiaryEntry[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  diaryEntries  DiaryEntry[]
+  watchedMovies WatchedList[]
+  likedMovies   LikedBy[]
 }
 
 model Account {
@@ -46,26 +48,51 @@ model Account {
 }
 
 model Movie {
-  id                String       @id @default(uuid())
-  title             String
-  description       String
-  releasedYear      Int
-  duration          Int
-  posterUrl         String?
-  directorFirstName String
-  directorLastName  String
-  genres            MovieGenre[]
-  DiaryEntry        DiaryEntry[]
+  id           String  @id @default(uuid())
+  title        String  @db.VarChar(50)
+  description  String?
+  releasedYear Int
+  duration     String  @db.VarChar(50)
+  posterUrl    String? @db.VarChar(50)
+
+  genres       MovieGenre[]
+  diaryEntries DiaryEntry[]
+  watchedBy    WatchedList[]
+  likedBy      LikedBy[]
 
   @@map("movie")
 }
 
 model Genre {
   id        String       @id @default(uuid())
-  genreName String       @unique @db.VarChar(55)
+  genreName String       @unique @db.VarChar(50)
   movies    MovieGenre[]
 
   @@map("genre")
+}
+
+model WatchedList {
+  user      User     @relation(fields: [userId], references: [id])
+  movie     Movie    @relation(fields: [movieId], references: [id])
+  createdAt DateTime @default(now())
+
+  userId  String
+  movieId String
+
+  @@id([userId, movieId])
+  @@map("watched_list")
+}
+
+model LikedBy {
+  user    User     @relation(fields: [userId], references: [id])
+  movie   Movie    @relation(fields: [movieId], references: [id])
+  likedAt DateTime @default(now())
+
+  userId  String
+  movieId String
+
+  @@id([userId, movieId])
+  @@map("liked_by")
 }
 
 model MovieGenre {
@@ -80,17 +107,16 @@ model MovieGenre {
 }
 
 model DiaryEntry {
-  id              String   @id @default(uuid())
-  rating          Float
-  review          String   @db.Text
-  watchCount      Int      @default(1)
-  lastWatchedDate DateTime @default(now())
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  user            User     @relation(fields: [userId], references: [id])
-  movie           Movie    @relation(fields: [movieId], references: [id])
-  userId          String
-  movieId         String
+  id        String   @id @default(uuid())
+  rating    Int
+  review    String   @db.VarChar(255)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+  movie     Movie    @relation(fields: [movieId], references: [id])
+  userId    String
+  movieId   String
 
   @@unique([userId, movieId])
+  @@map("diary_entry")
 }
