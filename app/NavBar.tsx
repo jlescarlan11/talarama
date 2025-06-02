@@ -1,9 +1,14 @@
 "use client";
 import { Link, Skeleton } from "@/app/components";
-import Image from "next/image";
 // import { usePathname } from "next/navigation";
-import { signIn, signOut, useSession } from "next-auth/react";
-import { PiFilmSlate, PiHouse, PiNotebook } from "react-icons/pi";
+import { signIn, useSession } from "next-auth/react";
+import {
+  PiFilmSlate,
+  PiGearBold,
+  PiHouse,
+  PiMagnifyingGlassBold,
+  PiNotebook,
+} from "react-icons/pi";
 import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
 
@@ -11,7 +16,7 @@ const NavBar = () => {
   // const currentPath = usePathname(); // to edit pa
 
   return (
-    <div className="shadow-sm mb-4 flex ">
+    <div className="mb-4 flex container max-w-7xl mx-auto h-24">
       <nav className="navbar flex justify-between">
         <Link href="/">
           <Logo />
@@ -35,9 +40,30 @@ const AuthStatus = () => {
     );
 
   return (
-    <div>
+    <div className="flex space-x-2 ">
+      <div>
+        <NavLinks />
+      </div>
+      <div>
+        <label className="input bg-primary text-primary-content">
+          <PiMagnifyingGlassBold className="text-xl" />
+          <input type="search" className="grow" placeholder="Search" />
+        </label>
+      </div>
+      <div>
+        <button className="btn btn-primary">
+          <ThemeToggle />
+        </button>
+      </div>
+      <div>
+        <button className="btn btn-primary">
+          <PiGearBold className="text-xl" />
+        </button>
+      </div>
+
       <div className="dropdown dropdown-end">
-        <div
+        {/* <NavLinks /> */}
+        {/* <div
           tabIndex={0}
           role="button"
           className="btn btn-ghost btn-circle avatar"
@@ -49,17 +75,17 @@ const AuthStatus = () => {
             height={200}
             src={session!.user!.image!}
           />
-        </div>
-        <div tabIndex={0} className="menu menu-sm dropdown-content p-2 w-48">
+        </div> */}
+        {/* <div tabIndex={0} className="menu menu-sm dropdown-content p-2 w-48">
           <span>{session!.user!.email!}</span>
-          <NavLinks />
+
           <ThemeToggle />
           <div className="nav-links">
             <button onClick={() => signOut({ callbackUrl: "/" })}>
               Log Out
             </button>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );
@@ -73,13 +99,13 @@ const NavLinks = () => {
   ];
 
   return (
-    <ul>
+    <div className="flex space-x-2">
       {links.map((link) => (
-        <li key={link.href} className="!cursor-pointer nav-links">
+        <button key={link.href} className="!cursor-pointer btn btn-primary">
           <Link href={link.href}>{link.label}</Link>
-        </li>
+        </button>
       ))}
-    </ul>
+    </div>
   );
 };
 

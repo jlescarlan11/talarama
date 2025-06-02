@@ -1,9 +1,9 @@
-import { Genre, Movie, MovieGenre } from "@prisma/client";
+import { Genre, Movie, MovieCategorizesAs } from "@prisma/client";
 import Image from "next/image";
 import React from "react";
 
 type ExtendedMovie = Movie & {
-  genres: (MovieGenre & {
+  genres: (MovieCategorizesAs & {
     genre: Genre;
   })[];
 };

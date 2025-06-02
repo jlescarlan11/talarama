@@ -49,7 +49,7 @@ export default function RootLayout({
         <AuthProvider>
           <NavBar />
           <main>
-            <div className="container">{children}</div>
+            <div className="container max-w-7xl mx-auto p-4">{children}</div>
           </main>
         </AuthProvider>
       </body>

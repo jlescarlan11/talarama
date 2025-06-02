@@ -3,7 +3,7 @@ import ErrorMessage from "@/app/components/ErrorMessage";
 import Spinner from "@/app/components/Spinner";
 import { movieSchema } from "@/app/validationSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Genre, Movie, MovieGenre } from "@prisma/client";
+import { Genre, Movie, MovieCategorizesAs } from "@prisma/client";
 import axios from "axios";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -15,7 +15,7 @@ import { z } from "zod";
 type MovieForm = z.infer<typeof movieSchema>;
 
 type ExtendedMovie = Movie & {
-  genres: (MovieGenre & {
+  genres: (MovieCategorizesAs & {
     genre: Genre;
   })[];
 };
