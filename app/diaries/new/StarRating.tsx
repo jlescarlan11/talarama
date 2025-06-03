@@ -22,7 +22,7 @@ const StarRating: React.FC<StarRatingProps> = ({
         <span className="label-text font-semibold">Rating</span>
       </label>
       <div className="flex gap-1 items-center">
-        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((star) => (
+        {[1, 2, 3, 4, 5].map((star) => (
           <button
             key={star}
             type="button"

@@ -1,9 +1,20 @@
+// components/ClientTabs.tsx
 "use client";
-import { useState } from "react";
-import Favorites from "./Favorites";
-import MyDiaries from "./MyDiaries";
+import { useState, ReactNode } from "react";
 
-const Tabs = () => {
+interface ClientTabsProps {
+  favoritesContent: ReactNode;
+  diariesContent: ReactNode;
+  watchlistContent?: ReactNode;
+  statisticsContent?: ReactNode;
+}
+
+const ClientTabs = ({
+  favoritesContent,
+  diariesContent,
+  watchlistContent,
+  statisticsContent,
+}: ClientTabsProps) => {
   const [activeTab, setActiveTab] = useState("favorites");
 
   return (
@@ -41,35 +52,39 @@ const Tabs = () => {
 
       {activeTab === "favorites" && (
         <div role="tabpanel" className="p-6">
-          {/* Favorites content */}
-          <Favorites />
+          {favoritesContent}
         </div>
       )}
 
       {activeTab === "diaries" && (
         <div role="tabpanel" className="p-6">
-          {/* My Diaries content */}
-          <MyDiaries />
+          {diariesContent}
         </div>
       )}
 
       {activeTab === "watchlist" && (
         <div role="tabpanel" className="p-6">
-          {/* Watchlist content */}
-          <h3 className="text-xl font-bold mb-4">Watchlist</h3>
-          <p>Items you&apos;re watching would appear here.</p>
+          {watchlistContent || (
+            <>
+              <h3 className="text-xl font-bold mb-4">Watchlist</h3>
+              <p>Items you&apos;re watching would appear here.</p>
+            </>
+          )}
         </div>
       )}
 
       {activeTab === "statistics" && (
         <div role="tabpanel" className="p-6">
-          {/* Statistics content */}
-          <h3 className="text-xl font-bold mb-4">Statistics</h3>
-          <p>Your activity statistics would be shown here.</p>
+          {statisticsContent || (
+            <>
+              <h3 className="text-xl font-bold mb-4">Statistics</h3>
+              <p>Your activity statistics would be shown here.</p>
+            </>
+          )}
         </div>
       )}
     </div>
   );
 };
 
-export default Tabs;
+export default ClientTabs;

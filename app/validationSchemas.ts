@@ -11,7 +11,7 @@ export const diaryEntrySchema = z.object({
     })
     .int()
     .min(1, "Rating must be at least 1")
-    .max(10, "Rating cannot be more than 10"),
+    .max(5, "Rating cannot be more than 10"),
   review: z
     .string()
     .min(10, "Review must be at least 10 characters long")
