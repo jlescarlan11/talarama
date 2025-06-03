@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Favorites from "./Favorites";
+import MyDiary from "./MyDiary";
 
 const Tabs = () => {
   const [activeTab, setActiveTab] = useState("favorites");
@@ -48,8 +49,7 @@ const Tabs = () => {
       {activeTab === "diaries" && (
         <div role="tabpanel" className="p-6">
           {/* My Diaries content */}
-          <h3 className="text-xl font-bold mb-4">My Diaries</h3>
-          <p>Your diary entries would be displayed here.</p>
+        <MyDiary/>
         </div>
       )}
 
