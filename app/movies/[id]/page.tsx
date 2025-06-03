@@ -1,10 +1,11 @@
-import prisma from "@/prisma/client";
-import { notFound } from "next/navigation";
-import EditMovieButton from "./EditMovieButton";
-import MovieDetails from "./MovieDetails";
-import DeleteMovieButton from "./DeleteMovieButton";
-import { getServerSession } from "next-auth";
 import authOptions from "@/app/auth/authOptions";
+import prisma from "@/prisma/client";
+import { getServerSession } from "next-auth";
+import { notFound } from "next/navigation";
+import MovieReviews from "./MovieReviews";
+import NetflixHero from "./NetflixHero";
+import { MovieWithReviews } from "./types";
+import Link from "next/link";
 
 interface Props {
   params: { id: string };
@@ -12,8 +13,8 @@ interface Props {
 
 const MovieDetailPage = async ({ params }: Props) => {
   const session = await getServerSession(authOptions);
-
   const { id } = await params;
+
   const movie = await prisma.movie.findUnique({
     where: { id },
     include: {
@@ -22,23 +23,68 @@ const MovieDetailPage = async ({ params }: Props) => {
           genre: true,
         },
       },
+      diaryEntries: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      },
+      _count: {
+        select: {
+          watchedBy: true,
+          likedBy: true,
+          diaryEntries: true,
+        },
+      },
     },
   });
 
   if (!movie) return notFound();
 
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div className="card">
-        <MovieDetails movie={movie} />
-      </div>
-      {session && (
-        <div className="card">
-          <EditMovieButton movieId={movie.id} />
+  const movieWithReviews: MovieWithReviews = {
+    ...movie,
+    genres: movie.genres.map((mg) => mg.genre),
+    reviews: movie.diaryEntries,
+  };
 
-          <DeleteMovieButton movieId={movie.id} />
+  return (
+    <div className="">
+      <div className="mb-6">
+        <div className="text-sm breadcrumbs">
+          <ul>
+            <li>
+              <Link href="/" className="hover:underline">
+                Home
+              </Link>
+            </li>
+            <li>
+              <Link href="/movies" className="hover:underline">
+                Movies
+              </Link>
+            </li>
+            <li>{movie.title}</li>
+          </ul>
         </div>
-      )}
+      </div>
+      {/* Netflix-style Hero */}
+      <NetflixHero
+        movie={movieWithReviews}
+        counts={movie._count}
+        session={session}
+      />
+
+      {/* Reviews Section */}
+      <div className="">
+        <MovieReviews reviews={movieWithReviews.reviews} />
+      </div>
     </div>
   );
 };

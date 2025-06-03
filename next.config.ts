@@ -7,6 +7,8 @@ const nextConfig: NextConfig = {
       "posters.movieposterdb.com",
       "localc.ph",
       "lh3.googleusercontent.com",
+      "th.bing.com",
+      "m.media-amazon.com",
     ], // Add any other trusted domains here
   },
 };
