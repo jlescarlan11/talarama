@@ -1,208 +1,270 @@
 "use client";
 
-import ErrorMessage from "@/app/components/ErrorMessage";
-import Spinner from "@/app/components/Spinner";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import Image from "next/image";
-import { FiImage } from "react-icons/fi";
+import React, { useState } from "react";
 import axios from "axios";
+import { useRouter } from "next/navigation";
+import MovieSearch from "./MovieSearch";
+import StarRating from "./StarRating";
+import { Movie, DiaryFormData, FormErrors } from "../types/diary";
+import Image from "next/image";
 
-// --- Zod Schema ---
-const diarySchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  content: z.string().min(1, "Content is required"),
-  date: z.string().min(1, "Date is required"),
-  mood: z.string().min(1, "Mood is required"),
-  imageUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
-});
+interface DiaryFormProps {
+  movies: Movie[];
+}
 
-type DiaryFormData = z.infer<typeof diarySchema>;
-
-const DiaryForm = ({ diary }: { diary?: DiaryFormData & { id: string } }) => {
+const DiaryForm: React.FC<DiaryFormProps> = ({ movies }) => {
   const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [previewImage, setPreviewImage] = useState(diary?.imageUrl || "");
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setError,
-    trigger,
-    setValue,
-  } = useForm<DiaryFormData>({
-    resolver: zodResolver(diarySchema),
-    defaultValues: {
-      title: diary?.title || "",
-      content: diary?.content || "",
-      date: diary?.date || new Date().toISOString().slice(0, 10),
-      mood: diary?.mood || "",
-      imageUrl: diary?.imageUrl || "",
-    },
+  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+  const [formData, setFormData] = useState<DiaryFormData>({
+    movieId: "",
+    rating: 0,
+    review: "",
+    watchedDate: new Date().toISOString().split("T")[0], // Default to today
   });
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const onSubmit = async (data: DiaryFormData) => {
-    try {
-      setIsSubmitting(true);
-      if (diary) {
-        await axios.patch("/api/diary/" + diary.id, data);
-      } else {
-        await axios.post("/api/diary", data);
+  const handleMovieSelect = (movie: Movie) => {
+    setSelectedMovie(movie);
+    setFormData((prev) => ({ ...prev, movieId: movie.id }));
+    setErrors((prev) => ({ ...prev, movieId: undefined }));
+  };
+
+  const handleRatingChange = (rating: number) => {
+    setFormData((prev) => ({ ...prev, rating }));
+    setErrors((prev) => ({ ...prev, rating: undefined }));
+  };
+
+  const handleReviewChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setFormData((prev) => ({ ...prev, review: e.target.value }));
+    setErrors((prev) => ({ ...prev, review: undefined }));
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({ ...prev, watchedDate: e.target.value }));
+    setErrors((prev) => ({ ...prev, watchedDate: undefined }));
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+
+    if (!formData.movieId) {
+      newErrors.movieId = "Please select a movie";
+    }
+
+    if (formData.rating === 0) {
+      newErrors.rating = "Please provide a rating";
+    }
+
+    if (formData.review.trim().length < 10) {
+      newErrors.review = "Review must be at least 10 characters long";
+    }
+
+    if (formData.review.trim().length > 2000) {
+      newErrors.review = "Review cannot exceed 2000 characters";
+    }
+
+    if (!formData.watchedDate) {
+      newErrors.watchedDate = "Please select a watched date";
+    } else {
+      const selectedDate = new Date(formData.watchedDate);
+      const today = new Date();
+      today.setHours(23, 59, 59, 999); // Set to end of day for comparison
+
+      if (selectedDate > today) {
+        newErrors.watchedDate = "Watched date cannot be in the future";
       }
-      router.push("/diary");
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrors({});
+
+    try {
+      const response = await axios.post("/api/diaries", formData);
+
+      if (response.status === 201) {
+        router.push("/diaries"); // Adjust route as needed
+        router.refresh();
+      }
     } catch (error) {
-      console.error(error);
+      if (axios.isAxiosError(error)) {
+        if (error.response?.data) {
+          if (error.response.status === 400) {
+            setErrors({
+              general: "Validation failed. Please check your input.",
+            });
+          } else if (error.response.status === 401) {
+            setErrors({
+              general: "You must be logged in to create diary entries.",
+            });
+          } else if (error.response.status === 404) {
+            setErrors({ general: "Movie or user not found." });
+          } else {
+            setErrors({
+              general: error.response.data.error || "Server error occurred",
+            });
+          }
+        } else {
+          setErrors({
+            general: "Network error - please check your connection",
+          });
+        }
+      } else {
+        setErrors({ general: "An unexpected error occurred" });
+      }
+    } finally {
       setIsSubmitting(false);
-      setError("root", {
-        type: "manual",
-        message: "Something went wrong. Please try again.",
-      });
     }
   };
 
-  const handleImageUrlBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    const url = e.target.value.trim();
-    setPreviewImage(url);
+  const formatDuration = (minutes: number): string => {
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return hours > 0 ? `${hours}h ${remainingMinutes}m` : `${minutes}m`;
   };
 
   return (
-    <div className="min-h-screen py-8">
-      <div className="container mx-auto px-4 max-w-4xl">
-        <h1 className="text-3xl font-bold mb-4">
-          {diary ? "Edit Diary Entry" : "Create a Diary Entry"}
-        </h1>
+    <div className="max-w-6xl mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-8">Add to your films...</h1>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Left side form */}
-            <div className="sm:col-span-2 space-y-8">
-              <div className="card shadow-sm">
-                <div className="card-body space-y-2">
-                  <h2 className="card-title text-lg mb-4">Entry Details</h2>
+      <form onSubmit={handleSubmit}>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left side - Form inputs */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Movie search and date row */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <MovieSearch
+                movies={movies}
+                selectedMovie={selectedMovie}
+                onMovieSelect={handleMovieSelect}
+                error={errors.movieId}
+              />
 
-                  {/* Title */}
-                  <div className="form-control">
-                    <label className="floating-label">
-                      <span>Title</span>
-                      <input
-                        type="text"
-                        {...register("title")}
-                        className={`input input-bordered w-full ${errors.title ? "input-error" : ""}`}
-                      />
-                    </label>
-                    <ErrorMessage>{errors.title?.message}</ErrorMessage>
+              {/* Date picker */}
+              <div className="w-full sm:w-48">
+                <input
+                  type="date"
+                  value={formData.watchedDate}
+                  onChange={handleDateChange}
+                  className={`input input-bordered w-full ${
+                    errors.watchedDate ? "input-error" : ""
+                  }`}
+                />
+                {errors.watchedDate && (
+                  <div className="text-error text-sm mt-1">
+                    {errors.watchedDate}
                   </div>
-
-                  {/* Date */}
-                  <div className="form-control">
-                    <label className="floating-label">
-                      <span>Date</span>
-                      <input
-                        type="date"
-                        {...register("date")}
-                        className={`input input-bordered w-full ${errors.date ? "input-error" : ""}`}
-                      />
-                    </label>
-                    <ErrorMessage>{errors.date?.message}</ErrorMessage>
-                  </div>
-
-                  {/* Mood */}
-                  <div className="form-control">
-                    <label className="floating-label">
-                      <span>Mood</span>
-                      <input
-                        type="text"
-                        placeholder="e.g., Happy, Anxious, Reflective"
-                        {...register("mood")}
-                        className={`input input-bordered w-full ${errors.mood ? "input-error" : ""}`}
-                      />
-                    </label>
-                    <ErrorMessage>{errors.mood?.message}</ErrorMessage>
-                  </div>
-
-                  {/* Content */}
-                  <div className="form-control">
-                    <label className="floating-label">
-                      <span>Content</span>
-                      <textarea
-                        placeholder="Write your thoughts..."
-                        {...register("content")}
-                        className={`textarea textarea-bordered h-32 resize-none w-full ${errors.content ? "textarea-error" : ""}`}
-                      />
-                    </label>
-                    <ErrorMessage>{errors.content?.message}</ErrorMessage>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
 
-            {/* Right side image preview */}
-            <div className="space-y-8">
-              <div className="card shadow-sm">
-                <div className="card-body space-y-2">
-                  <h2 className="card-title text-lg mb-4">Optional Image</h2>
+            {/* Review textarea */}
+            <div>
+              <label className="label">
+                <span className="label-text font-semibold">Review</span>
+                <span className="label-text-alt">
+                  {formData.review.length}/2000
+                </span>
+              </label>
+              <textarea
+                placeholder="Add a review..."
+                value={formData.review}
+                onChange={handleReviewChange}
+                className={`textarea textarea-bordered w-full h-64 resize-none ${
+                  errors.review ? "textarea-error" : ""
+                }`}
+                maxLength={2000}
+              />
+              {errors.review && (
+                <div className="text-error text-sm mt-1">{errors.review}</div>
+              )}
+            </div>
 
-                  {/* Image URL */}
-                  <div className="form-control">
-                    <label className="floating-label">
-                      <span>Image URL</span>
-                      <input
-                        type="url"
-                        {...register("imageUrl")}
-                        onBlur={handleImageUrlBlur}
-                        className={`input input-bordered ${errors.imageUrl ? "input-error" : ""}`}
+            {/* Star rating */}
+            <StarRating
+              rating={formData.rating}
+              onRatingChange={handleRatingChange}
+              error={errors.rating}
+            />
+          </div>
+
+          {/* Right side - Movie poster preview */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-6">
+              <div className="aspect-[2/3] border-2 border-dashed border-base-300 rounded-lg flex items-center justify-center bg-base-200 overflow-hidden">
+                {selectedMovie ? (
+                  <div className="w-full h-full relative">
+                    {selectedMovie.posterUrl ? (
+                      <Image
+                        width={300}
+                        height={450}
+                        src={selectedMovie.posterUrl}
+                        alt={selectedMovie.title}
+                        className="w-full h-full object-cover"
                       />
-                    </label>
-                    <ErrorMessage>{errors.imageUrl?.message}</ErrorMessage>
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center text-center p-4">
+                        <h3 className="font-semibold text-lg mb-2">
+                          {selectedMovie.title}
+                        </h3>
+                        <p className="text-sm text-gray-600 mb-1">
+                          {selectedMovie.releasedYear}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {formatDuration(selectedMovie.duration)}
+                        </p>
+                        {selectedMovie.directorFirstName &&
+                          selectedMovie.directorLastName && (
+                            <p className="text-sm text-gray-500 mt-2">
+                              Dir. {selectedMovie.directorFirstName}{" "}
+                              {selectedMovie.directorLastName}
+                            </p>
+                          )}
+                      </div>
+                    )}
                   </div>
-
-                  {/* Image Preview */}
-                  <div className="mt-4">
-                    <label className="label">
-                      <span className="label-text font-semibold">Preview</span>
-                    </label>
-                    <div className="aspect-[4/3] bg-base-300 rounded-lg overflow-hidden border-2 border-dashed border-base-content/20">
-                      {previewImage ? (
-                        <Image
-                          src={previewImage}
-                          alt="Diary image preview"
-                          width={300}
-                          height={225}
-                          className="w-full h-full object-cover"
-                          onError={() => setPreviewImage("")}
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center h-full text-base-content/40">
-                          <div className="text-center">
-                            <FiImage className="w-12 h-12 mx-auto mb-2" />
-                            <p className="text-sm">Image preview</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                ) : (
+                  <div className="text-center p-4">
+                    <p className="text-base-content/60">Movie Poster</p>
+                    <p className="text-sm text-base-content/40 mt-1">
+                      Select a movie to see preview
+                    </p>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Submit Button */}
-          <div className="flex justify-start pt-6">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="btn btn-primary btn-md"
-            >
-              {diary ? "Update Entry" : "Submit Entry"}
-              {isSubmitting && <Spinner />}
-            </button>
+        {/* General error message */}
+        {errors.general && (
+          <div className="alert alert-error mt-6">
+            <span>{errors.general}</span>
           </div>
-        </form>
-      </div>
+        )}
+
+        {/* Submit button */}
+        <div className="mt-8 flex justify-end">
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className={`btn btn-primary px-8 ${isSubmitting ? "loading" : ""}`}
+          >
+            {isSubmitting ? "Saving..." : "Save Entry"}
+          </button>
+        </div>
+      </form>
     </div>
   );
 };

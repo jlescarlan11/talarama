@@ -102,13 +102,14 @@ model MovieCategorizesAs {
 }
 
 model DiaryEntry {
-  id        String   @id @default(uuid())
-  rating    Int
-  review    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id])
-  movie     Movie    @relation(fields: [movieId], references: [id])
-  userId    String
-  movieId   String
+  id          String   @id @default(uuid())
+  rating      Int
+  review      String
+  watchedDate DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id])
+  movie       Movie    @relation(fields: [movieId], references: [id])
+  userId      String
+  movieId     String
 }
