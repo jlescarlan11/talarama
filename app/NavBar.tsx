@@ -1,7 +1,7 @@
 "use client";
 import { Link, Skeleton } from "@/app/components";
 // import { usePathname } from "next/navigation";
-import { signIn, useSession } from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
 import { PiFilmSlate, PiGearBold, PiHouse, PiNotebook } from "react-icons/pi";
 import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
@@ -44,6 +44,9 @@ const AuthStatus = () => {
           <input type="search" className="grow" placeholder="Search" />
         </label>
       </div> */}
+      <div className="nav-links">
+        <button onClick={() => signOut({ callbackUrl: "/" })}>Log Out</button>
+      </div>
       <div>
         <button className="btn btn-primary">
           <ThemeToggle />
