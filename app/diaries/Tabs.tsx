@@ -5,7 +5,7 @@ const Tabs = () => {
   const [activeTab, setActiveTab] = useState("favorites");
 
   return (
-    <div className="w-full max-w-3xl bg-base-100 rounded-lg shadow-md">
+    <div className="w-full bg-base-100 rounded-lg shadow-md">
       <div role="tablist" className="tabs tabs-boxed bg-base-200 p-2">
         <button
           role="tab"
