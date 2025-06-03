@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import MovieSearch from "./MovieSearch";
-import StarRating from "./StarRating";
+import StarRating from "../new/StarRating";
 import { Movie, DiaryFormData, FormErrors } from "../types/diary";
 import Image from "next/image";
 

@@ -1,10 +1,9 @@
-import React from "react";
-import NewDiaryEntryButton from "./NewDiaryEntryButton";
 import { getServerSession } from "next-auth";
-import authOptions from "../auth/authOptions";
-import { NextResponse } from "next/server";
 import Image from "next/image";
-import Tabs from "./Tabs";
+import { NextResponse } from "next/server";
+import authOptions from "../auth/authOptions";
+import NewDiaryEntryButton from "./NewDiaryEntryButton";
+import TabsContainer from "./TabsContainer";
 
 const DiaryPage = async () => {
   const session = await getServerSession(authOptions);
@@ -47,7 +46,7 @@ const DiaryPage = async () => {
       </div>
       <div className="border-b"></div>
       <div>
-        <Tabs />
+        <TabsContainer />
       </div>
     </>
   );

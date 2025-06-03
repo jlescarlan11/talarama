@@ -25,3 +25,20 @@ export interface FormErrors {
   watchedDate?: string;
   general?: string;
 }
+
+export interface DiaryEntryWithMovie {
+  id: string;
+  rating: number;
+  review: string;
+  watchedDate: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  userId: string;
+  movieId: string;
+  movie: {
+    id: string;
+    title: string;
+    posterUrl: string | null;
+    releaseYear?: number;
+  };
+}
