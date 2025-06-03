@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Favorites from "./Favorites";
 
 const Tabs = () => {
   const [activeTab, setActiveTab] = useState("favorites");
@@ -40,8 +41,7 @@ const Tabs = () => {
       {activeTab === "favorites" && (
         <div role="tabpanel" className="p-6">
           {/* Favorites content */}
-          <h3 className="text-xl font-bold mb-4">Your Favorites</h3>
-          <p>This is where your favorite items would appear.</p>
+          <Favorites />
         </div>
       )}
 
