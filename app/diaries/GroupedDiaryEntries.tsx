@@ -89,12 +89,13 @@ const GroupedDiaryEntries: React.FC<GroupedDiaryEntriesProps> = ({
         <div></div>
       </div>
       <div className="space-y-4">
-        {sortedMonthKeys.map((monthYear) => (
+        {sortedMonthKeys.map((monthYear, index) => (
           <DiaryMonthGroup
             key={monthYear}
             monthYear={monthYear}
             entries={groupedEntries[monthYear]}
             totalMovies={entries.length}
+            isFirstGroup={index === 0}
           />
         ))}
       </div>

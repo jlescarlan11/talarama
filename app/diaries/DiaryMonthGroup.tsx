@@ -7,15 +7,21 @@ interface DiaryMonthGroupProps {
   monthYear: string;
   entries: DiaryEntryWithMovie[];
   totalMovies: number;
+  isFirstGroup?: boolean;
+  isLastGroup?: boolean;
 }
 
 const DiaryMonthGroup: React.FC<DiaryMonthGroupProps> = ({
   monthYear,
   entries,
-  totalMovies,
+  isFirstGroup = false,
 }) => {
   return (
-    <div className="border-b pb-4">
+    <div
+      className={`pb-4 ${
+        !isFirstGroup ? "border-t border-gray-200 pt-4" : ""
+      } `}
+    >
       <div className="space-y-3">
         {entries.map((entry, index) => (
           <div key={entry.id} className="grid grid-cols-12 gap-4">
