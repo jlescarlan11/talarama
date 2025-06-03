@@ -5,10 +5,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Genre } from "@prisma/client";
 
 interface MovieActionsProps {
-  genres: Genre[];
+  genres?: Genre[]; // Make optional to prevent undefined access
 }
 
-const MovieActions = ({ genres }: MovieActionsProps) => {
+const MovieActions = ({ genres = [] }: MovieActionsProps) => {
+  // Default to empty array
   const router = useRouter();
   const searchParams = useSearchParams();
 

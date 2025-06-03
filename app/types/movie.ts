@@ -19,11 +19,15 @@ export interface MovieWithGenres {
     genreId: string;
     genre: Genre;
   }[];
+  _count?: {
+    diaryEntries?: number;
+  };
 }
 
 export interface MovieFilters {
   genre?: string;
   sort?: string;
+  search?: string;
 }
 
 export type SortOption =
@@ -41,6 +45,29 @@ export interface MovieQueryOptions {
         genreId: string;
       };
     };
+    OR?: Array<{
+      title?: {
+        contains: string;
+        mode: "insensitive";
+      };
+      description?: {
+        contains: string;
+        mode: "insensitive";
+      };
+      releasedYear?: {
+        equals: number | undefined;
+      };
+      genres?: {
+        some: {
+          genre: {
+            genreName: {
+              contains: string;
+              mode: "insensitive";
+            };
+          };
+        };
+      };
+    }>;
   };
   orderBy:
     | { title: "asc" | "desc" }
@@ -50,6 +77,11 @@ export interface MovieQueryOptions {
     genres: {
       include: {
         genre: true;
+      };
+    };
+    _count?: {
+      select: {
+        DiaryEntry: true;
       };
     };
   };

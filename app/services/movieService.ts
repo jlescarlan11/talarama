@@ -15,15 +15,53 @@ export class MovieService {
     });
   }
 
-  static buildWhereClause(filters: MovieFilters) {
+  static async buildWhereClause(
+    filters: MovieFilters
+  ): Promise<MovieQueryOptions["where"]> {
+    const { search, genre } = await filters;
     const whereClause: MovieQueryOptions["where"] = {};
 
-    if (filters.genre && filters.genre !== "all") {
+    if (genre && genre !== "all") {
       whereClause.genres = {
         some: {
-          genreId: filters.genre,
+          genreId: genre,
         },
       };
+    }
+
+    if (search) {
+      const searchTerm = search.toLowerCase();
+      whereClause.OR = [
+        {
+          title: {
+            contains: searchTerm,
+            mode: "insensitive",
+          },
+        },
+        {
+          description: {
+            contains: searchTerm,
+            mode: "insensitive",
+          },
+        },
+        {
+          releasedYear: {
+            equals: parseInt(searchTerm) || undefined,
+          },
+        },
+        {
+          genres: {
+            some: {
+              genre: {
+                genreName: {
+                  contains: searchTerm,
+                  mode: "insensitive",
+                },
+              },
+            },
+          },
+        },
+      ];
     }
 
     return whereClause;
@@ -53,10 +91,11 @@ export class MovieService {
   }
 
   static async getMovies(filters: MovieFilters): Promise<MovieWithGenres[]> {
-    const whereClause = this.buildWhereClause(filters);
-    const orderBy = this.buildOrderByClause(filters.sort);
+    const { sort } = await filters;
+    const whereClause = await this.buildWhereClause(filters);
+    const orderBy = this.buildOrderByClause(sort);
 
-    return await prisma.movie.findMany({
+    const movies = await prisma.movie.findMany({
       where: whereClause,
       orderBy,
       include: {
@@ -65,7 +104,60 @@ export class MovieService {
             genre: true,
           },
         },
+        _count: {
+          select: {
+            diaryEntries: true,
+          },
+        },
       },
     });
+
+    return movies.map((movie) => ({
+      ...movie,
+      genres: movie.genres.map(({ movieId, genreId, genre }) => ({
+        movieId,
+        genreId,
+        genre,
+      })),
+      _count: {
+        diaryEntries: movie._count?.diaryEntries || 0,
+      },
+    }));
+  }
+
+  static async getMovieCount(filters: MovieFilters): Promise<number> {
+    const whereClause = await this.buildWhereClause(filters);
+    return await prisma.movie.count({ where: whereClause });
+  }
+
+  static async getFeaturedMovies(): Promise<MovieWithGenres[]> {
+    const movies = await prisma.movie.findMany({
+      take: 10,
+      orderBy: [{ createdAt: "desc" }, { releasedYear: "desc" }],
+      include: {
+        genres: {
+          include: {
+            genre: true,
+          },
+        },
+        _count: {
+          select: {
+            diaryEntries: true,
+          },
+        },
+      },
+    });
+
+    return movies.map((movie) => ({
+      ...movie,
+      genres: movie.genres.map(({ movieId, genreId, genre }) => ({
+        movieId,
+        genreId,
+        genre,
+      })),
+      _count: {
+        diaryEntries: movie._count?.diaryEntries || 0,
+      },
+    }));
   }
 }

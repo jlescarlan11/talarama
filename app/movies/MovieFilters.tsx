@@ -46,24 +46,18 @@ const MovieFiltersComponent = ({ genres }: MovieFiltersProps) => {
     router.push("/movies", { scroll: false });
   };
 
-  const hasActiveFilters = currentSort !== "" || currentGenre !== "all";
+  const hasActiveFilters =
+    currentSort !== "" || currentGenre !== "all" || searchParams.get("search");
 
   return (
-    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center   p-4">
-      <div className="flex flex-col sm:flex-row gap-4 flex-1">
+    <div className="flex">
+      <div className="flex items-center space-x-2">
         {/* Genre Filter */}
-        <div className="flex flex-col gap-1">
-          <label
-            htmlFor="genre-filter"
-            className="text-sm font-medium text-gray-700"
-          >
-            Genre
-          </label>
+        <div className="form-control w-full sm:w-auto">
           <select
-            id="genre-filter"
+            className="select "
             value={currentGenre}
             onChange={handleGenreChange}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
           >
             <option value={DEFAULT_GENRE_OPTION.value}>
               {DEFAULT_GENRE_OPTION.label}
@@ -77,18 +71,11 @@ const MovieFiltersComponent = ({ genres }: MovieFiltersProps) => {
         </div>
 
         {/* Sort Filter */}
-        <div className="flex flex-col gap-1">
-          <label
-            htmlFor="sort-filter"
-            className="text-sm font-medium text-gray-700"
-          >
-            Sort by
-          </label>
+        <div className="form-control w-full sm:w-auto">
           <select
-            id="sort-filter"
+            className="select"
             value={currentSort}
             onChange={handleSortChange}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
           >
             {SORT_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -97,17 +84,14 @@ const MovieFiltersComponent = ({ genres }: MovieFiltersProps) => {
             ))}
           </select>
         </div>
-      </div>
 
-      {/* Clear Filters Button */}
-      {hasActiveFilters && (
-        <button
-          onClick={clearAllFilters}
-          className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors"
-        >
-          Clear Filters
-        </button>
-      )}
+        {/* Clear Filters Button */}
+        {hasActiveFilters && (
+          <button onClick={clearAllFilters} className="btn btn-primary">
+            Clear all filters
+          </button>
+        )}
+      </div>
     </div>
   );
 };

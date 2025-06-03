@@ -2,13 +2,7 @@
 import { Link, Skeleton } from "@/app/components";
 // import { usePathname } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
-import {
-  PiFilmSlate,
-  PiGearBold,
-  PiHouse,
-  PiMagnifyingGlassBold,
-  PiNotebook,
-} from "react-icons/pi";
+import { PiFilmSlate, PiGearBold, PiHouse, PiNotebook } from "react-icons/pi";
 import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
 
@@ -44,12 +38,12 @@ const AuthStatus = () => {
       <div>
         <NavLinks />
       </div>
-      <div>
+      {/* <div>
         <label className="input bg-primary text-primary-content">
           <PiMagnifyingGlassBold className="text-xl" />
           <input type="search" className="grow" placeholder="Search" />
         </label>
-      </div>
+      </div> */}
       <div>
         <button className="btn btn-primary">
           <ThemeToggle />
