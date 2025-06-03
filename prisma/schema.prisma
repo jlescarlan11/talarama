@@ -112,3 +112,10 @@ model DiaryEntry {
   userId    String
   movieId   String
 }
+model Diary {
+  id      String   @id @default(cuid())
+  title   String
+  content String
+  date    DateTime
+  mood    String
+}

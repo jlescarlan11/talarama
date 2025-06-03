@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
         title: data.title,
         description: data.description,
         releasedYear: data.releasedYear,
-        duration: parseInt(data.duration),
+        duration: data.duration,
         posterUrl: data.posterUrl ?? null,
         directorFirstName: data.directorFirstName,
         directorLastName: data.directorLastName,
