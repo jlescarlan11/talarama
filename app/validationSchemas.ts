@@ -2,6 +2,22 @@ import z from "zod";
 
 const currentYear = new Date().getFullYear();
 
+export const diaryEntrySchema = z.object({
+  movieId: z.string().min(1, "Movie ID is required"),
+  rating: z
+    .number({
+      required_error: "Rating is required",
+      invalid_type_error: "Rating must be a number",
+    })
+    .int()
+    .min(1, "Rating must be at least 1")
+    .max(10, "Rating cannot be more than 10"),
+  review: z
+    .string()
+    .min(10, "Review must be at least 10 characters long")
+    .max(2000, "Review cannot exceed 2000 characters"),
+});
+
 export const movieSchema = z.object({
   title: z.string().min(1, "Title is required").max(255, "Title is too long"),
   description: z.string().min(1, "Description is required"),
