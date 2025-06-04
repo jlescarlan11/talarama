@@ -38,7 +38,7 @@ const NetflixHero = ({ movie, counts, session }: Props) => {
                 />
               ) : (
                 <div className="w-full h-full  flex items-center justify-center">
-                  <div className="text-center text-gray-400">
+                  <div className="text-center">
                     <svg
                       className="w-16 h-16 mx-auto mb-2"
                       fill="currentColor"
@@ -68,7 +68,7 @@ const NetflixHero = ({ movie, counts, session }: Props) => {
             <div className="flex items-center gap-4 mb-6 text-sm sm:text-base">
               {averageRating > 0 && (
                 <div className="flex items-center gap-2">
-                  <span className="text-green-400 font-bold text-lg">
+                  <span className="text-yellow-400 font-bold text-lg">
                     {averageRating.toFixed(1)}
                   </span>
                   <div className="flex">
@@ -89,12 +89,14 @@ const NetflixHero = ({ movie, counts, session }: Props) => {
                   </div>
                 </div>
               )}
-              <span className="text-white/80">{movie.releasedYear}</span>
-              <span className="text-white/80">
+              <span className="text-neutral-content/50">
+                {movie.releasedYear}
+              </span>
+              <span className="text-neutral-content/50">
                 {Math.floor(movie.duration / 60)}h {movie.duration % 60}m
               </span>
               {director && (
-                <span className="text-white/80">Dir. {director}</span>
+                <span className="text-neutral-content/50">Dir. {director}</span>
               )}
             </div>
 
