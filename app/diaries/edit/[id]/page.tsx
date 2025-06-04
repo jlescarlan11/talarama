@@ -3,12 +3,13 @@ import DiaryForm from "../../_components/DiaryForm";
 import prisma from "@/prisma/client";
 import { notFound } from "next/navigation";
 
-interface Props {
+type Props = {
   params: { id: string };
-}
+  searchParams: { [key: string]: string | string[] | undefined };
+};
 
 const EditDiaryPage = async ({ params }: Props) => {
-  const { id } = await params;
+  const { id } = params;
 
   const movies = await prisma.movie.findMany();
   const diaryEntry = await prisma.diaryEntry.findUnique({
