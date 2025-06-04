@@ -24,6 +24,10 @@ export interface FormErrors {
   review?: string;
   watchedDate?: string;
   general?: string;
+  root?: {
+    type: string;
+    message: string;
+  };
 }
 
 export interface DiaryEntryWithMovie {

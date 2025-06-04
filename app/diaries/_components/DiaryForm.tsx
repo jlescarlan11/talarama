@@ -3,10 +3,13 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
 import MovieSearch from "./MovieSearch";
 import StarRating from "../new/StarRating";
-import { Movie, DiaryFormData, FormErrors } from "../types/diary";
+import { Movie, DiaryFormData, FormErrors, DiaryEntryWithMovie } from "../types/diary";
 import Image from "next/image";
+import DiaryFormFields from "./DiaryFormFields";
+import MoviePreview from "./MoviePreview";
 
 interface DiaryFormProps {
   movies: Movie[];
@@ -15,15 +18,10 @@ interface DiaryFormProps {
 
 const DiaryForm: React.FC<DiaryFormProps> = ({ movies, diary }) => {
   const router = useRouter();
+  const { register, handleSubmit, setValue, trigger, formState: { errors }, setError, watch } = useForm<DiaryFormData>();
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
-  const [formData, setFormData] = useState<DiaryFormData>({
-    movieId: "",
-    rating: 0,
-    review: "",
-    watchedDate: new Date().toISOString().split("T")[0], // Default to today
-  });
-  const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const watchedFields = watch();
 
   const handleMovieSelect = (movie: Movie) => {
     setSelectedMovie(movie);
