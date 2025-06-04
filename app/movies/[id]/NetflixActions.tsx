@@ -1,9 +1,7 @@
 "use client";
 
 // components/NetflixActions.tsx
-import { Session } from "next-auth";
 import { PiNoteBold, PiHeart, PiHeartFill } from "react-icons/pi";
-import { MovieCounts } from "./types";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
@@ -11,15 +9,13 @@ import axios from "axios";
 
 interface Props {
   movieId: string;
-  session: Session | null;
-  counts: MovieCounts;
   movieTitle: string;
   posterUrl: string | null;
   isLiked: boolean;
   onLikeChange: (isLiked: boolean) => void;
 }
 
-const NetflixActions = ({ movieId, session, counts, movieTitle, posterUrl, isLiked, onLikeChange }: Props) => {
+const NetflixActions = ({ movieId, movieTitle, posterUrl, isLiked, onLikeChange }: Props) => {
   const router = useRouter();
   const { data: sessionData } = useSession();
   const [isInWatchlist, setIsInWatchlist] = useState(false);
