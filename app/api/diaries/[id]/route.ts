@@ -92,7 +92,7 @@ export async function PATCH(
 
     return NextResponse.json(updatedEntry, { status: 200 });
   } catch (error) {
-    console.error("Error updating diary entry:", error);
+    console.error("Error updating diary entry :", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
