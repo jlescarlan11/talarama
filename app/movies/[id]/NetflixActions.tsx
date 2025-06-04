@@ -1,7 +1,10 @@
+"use client";
+
 // components/NetflixActions.tsx
 import { Session } from "next-auth";
 import { PiNoteBold } from "react-icons/pi";
 import { MovieCounts } from "./types";
+import { useRouter } from "next/navigation";
 
 interface Props {
   movieId: string;
@@ -10,13 +13,19 @@ interface Props {
 }
 
 const NetflixActions = ({ movieId, session, counts }: Props) => {
+  const router = useRouter();
+
+  const handleLogNow = () => {
+    router.push(`/diaries/new?movieId=${movieId}`);
+  };
+
   return (
     <div className="flex flex-col space-y-4">
       <div className="flex space-x-2">
         {session && (
           <>
             {/* Primary Action */}
-            <button className="btn btn-primary">
+            <button className="btn btn-primary" onClick={handleLogNow}>
               <PiNoteBold className="text-xl" />
               Log Now
             </button>
