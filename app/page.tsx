@@ -16,7 +16,7 @@ export default async function Home() {
           : "Welcome to Movie Diary"}
       </h1>
       <p className="text-2xl text-center text-white/80 mb-8">
-        Here&apos;s where you left off your movie roll...
+        Here&apos;s where you left off your movie roll....
       </p>
       <div className="w-full flex justify-center">
         <MovieCarousel movies={movies} />
