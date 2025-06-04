@@ -8,7 +8,7 @@ import { MovieWithReviews } from "./types";
 import Link from "next/link";
 
 interface Props {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 const MovieDetailPage = async ({ params }: Props) => {

@@ -5,12 +5,12 @@ import prisma from "@/prisma/client";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({}, { status: 401 });
 
-  const { id: movieId } = params;
+  const { id: movieId } = await params;
   const userId = session.user.id;
 
   try {
@@ -35,12 +35,12 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({}, { status: 401 });
 
-  const { id: movieId } = params;
+  const { id: movieId } = await params;
   const userId = session.user.id;
 
   try {
@@ -87,12 +87,12 @@ export async function POST(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({}, { status: 401 });
 
-  const { id: movieId } = params;
+  const { id: movieId } = await params;
   const userId = session.user.id;
 
   try {

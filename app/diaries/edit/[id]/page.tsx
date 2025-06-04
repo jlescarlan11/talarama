@@ -3,9 +3,10 @@ import DiaryForm from "../../_components/DiaryForm";
 import prisma from "@/prisma/client";
 import { notFound } from "next/navigation";
 
-interface Props {
-  params: { id: string };
-}
+type Props = {
+  params: Promise<{ id: string }>;
+  searchParams: { [key: string]: string | string[] | undefined };
+};
 
 const EditDiaryPage = async ({ params }: Props) => {
   const { id } = await params;
