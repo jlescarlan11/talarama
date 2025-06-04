@@ -8,13 +8,16 @@ import prisma from "@/prisma/client";
 
 export const runtime = "edge"; // Explicitly opt into Edge runtime
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-
-export async function PATCH(request: Request, { params }: RouteParams) {
+export async function PATCH(
+  request: Request,
+  {
+    params,
+  }: {
+    params: {
+      id: string;
+    };
+  }
+) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -97,7 +100,16 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(request: Request, { params }: RouteParams) {
+export async function DELETE(
+  request: Request,
+  {
+    params,
+  }: {
+    params: {
+      id: string;
+    };
+  }
+) {
   try {
     const session = await getServerSession(authOptions);
 
