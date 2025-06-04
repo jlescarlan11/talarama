@@ -25,7 +25,7 @@ const MovieReviews = ({ reviews }: Props) => {
   if (reviews.length === 0) {
     return (
       <div className="mt-16">
-        <h2 className="text-2xl font-bold mb-8">Reviews</h2>
+        <h2 className="text-2xl font-bold mb-8 ">Reviews</h2>
         <div className="text-center py-16 text-white/60">
           <svg
             className="w-16 h-16 mx-auto mb-4 opacity-50"
@@ -53,11 +53,11 @@ const MovieReviews = ({ reviews }: Props) => {
         <h2 className="text-2xl font-bold">Reviews ({reviews.length})</h2>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-2">
         {reviews.map((review) => (
           <div
             key={review.id}
-            className="bg-gray-900/50 rounded-lg p-6 backdrop-blur-sm"
+            className=" border-t border-base-200 rounded-lg p-6 backdrop-blur-sm"
           >
             <div className="flex items-start gap-4">
               {/* User Avatar */}
@@ -86,29 +86,19 @@ const MovieReviews = ({ reviews }: Props) => {
                   </div>
                 )}
               </div>
-
               {/* Review Content */}
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
-                  <h3 className="font-semibold text-white">
+                  <h3 className="font-semibold ">
                     {review.user.name || "Anonymous"}
                   </h3>
-
-                  {/* Rating */}
                   <div className="flex items-center gap-2">
-                    <span
-                      className={`font-bold text-lg ${getRatingColor(
-                        review.rating
-                      )}`}
-                    >
-                      {review.rating}/10
-                    </span>
                     <div className="flex">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <svg
                           key={star}
                           className={`w-4 h-4 ${
-                            star <= review.rating / 2
+                            star <= review.rating
                               ? "text-yellow-400"
                               : "text-gray-600"
                           }`}
@@ -120,55 +110,11 @@ const MovieReviews = ({ reviews }: Props) => {
                       ))}
                     </div>
                   </div>
-
-                  <span className="text-gray-400 text-sm">
-                    {formatDate(review.createdAt)}
+                  <span className="text-neutral-content text-sm">
+                    {formatDate(review.updatedAt)}
                   </span>
                 </div>
-
-                {/* Review Text */}
-                <p className="text-white/90 leading-relaxed mb-3">
-                  {review.review}
-                </p>
-
-                {/* Review Actions */}
-                <div className="flex items-center gap-4 text-sm text-gray-400">
-                  <button className="hover:text-white transition-colors flex items-center gap-1">
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"
-                      />
-                    </svg>
-                    Helpful
-                  </button>
-                  <button className="hover:text-white transition-colors flex items-center gap-1">
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    Reply
-                  </button>
-                  <button className="hover:text-white transition-colors">
-                    Report
-                  </button>
-                </div>
+                <p className="leading-relaxed mb-3">{review.review}</p>
               </div>
             </div>
           </div>
