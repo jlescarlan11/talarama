@@ -17,7 +17,6 @@ const NetflixActions = ({ movieId, session, counts }: Props) => {
   const router = useRouter();
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(counts.likedBy);
-  const [inWatchlist, setInWatchlist] = useState(false);
 
   const handleLogNow = () => {
     router.push(`/diaries/new?movieId=${movieId}`);
@@ -41,23 +40,6 @@ const NetflixActions = ({ movieId, session, counts }: Props) => {
     }
   };
 
-  const handleWatchlist = async () => {
-    if (!session) return;
-
-    try {
-      const response = await fetch(`/api/movies/${movieId}/watchlist`, {
-        method: "POST",
-      });
-
-      if (!response.ok) throw new Error("Failed to toggle watchlist");
-
-      const data = await response.json();
-      setInWatchlist(data.inWatchlist);
-    } catch (error) {
-      console.error("Error toggling watchlist:", error);
-    }
-  };
-
   return (
     <div className="flex flex-col space-y-4">
       <div className="flex space-x-2">
@@ -70,10 +52,7 @@ const NetflixActions = ({ movieId, session, counts }: Props) => {
             </button>
 
             {/* Secondary Actions */}
-            <button 
-              className={`btn ${inWatchlist ? 'btn-success' : 'btn-accent'}`}
-              onClick={handleWatchlist}
-            >
+            <button className="btn btn-accent">
               <svg
                 className="w-5 h-5"
                 fill="none"
@@ -87,7 +66,7 @@ const NetflixActions = ({ movieId, session, counts }: Props) => {
                   d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                 />
               </svg>
-              {inWatchlist ? 'In Watchlist' : 'Add to Watchlist'}
+              Add to Watchlist
             </button>
 
             <button 
