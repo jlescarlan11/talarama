@@ -39,10 +39,5 @@ export interface DiaryEntryWithMovie {
   updatedAt: Date;
   userId: string;
   movieId: string;
-  movie: {
-    id: string;
-    title: string;
-    posterUrl: string | null;
-    releaseYear?: number;
-  };
+  movie: Movie;
 }
