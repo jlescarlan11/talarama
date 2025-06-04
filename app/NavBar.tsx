@@ -15,11 +15,6 @@ const NavBar = () => {
           <Link href="/">
             <Logo />
           </Link>
-          <Link href="/profile">
-            <button className="ml-4 px-6 py-2 rounded-full bg-accent text-white font-bold text-lg shadow-md hover:bg-accent/80 transition">
-              My Profile
-            </button>
-          </Link>
         </div>
         <div className="flex items-center gap-4">
           <AuthStatus />
