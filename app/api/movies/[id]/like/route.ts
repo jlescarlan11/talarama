@@ -83,4 +83,49 @@ export async function POST(
       { status: 500 }
     );
   }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({}, { status: 401 });
+
+  const { id: movieId } = params;
+  const userId = session.user.id;
+
+  try {
+    // Check if the like exists
+    const existingLike = await prisma.likedBy.findUnique({
+      where: {
+        movieId_userId: {
+          movieId,
+          userId,
+        },
+      },
+    });
+
+    if (!existingLike) {
+      return NextResponse.json({ liked: false });
+    }
+
+    // Unlike the movie
+    await prisma.likedBy.delete({
+      where: {
+        movieId_userId: {
+          movieId,
+          userId,
+        },
+      },
+    });
+
+    return NextResponse.json({ liked: false });
+  } catch (error) {
+    console.error("Error unliking movie:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
 } 
