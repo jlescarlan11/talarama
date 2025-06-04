@@ -20,7 +20,6 @@ export interface Genre {
 export interface MovieCounts {
   watchedBy: number;
   likedBy: number;
-  diaryEntries: number;
 }
 
 export interface Review {

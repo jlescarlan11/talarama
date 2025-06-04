@@ -40,55 +40,7 @@ const MyDiaries = async () => {
     },
   });
 
-  const getDiaryStats = () => {
-    if (diaryEntries.length === 0) return null;
-
-    const totalRating = diaryEntries.reduce(
-      (sum, entry) => sum + entry.rating,
-      0
-    );
-    const averageRating = totalRating / diaryEntries.length;
-
-    const currentYear = new Date().getFullYear();
-    const thisYearEntries = diaryEntries.filter(
-      (entry) => new Date(entry.watchedDate).getFullYear() === currentYear
-    );
-
-    return {
-      totalEntries: diaryEntries.length,
-      averageRating: Math.round(averageRating * 10) / 10,
-      thisYearCount: thisYearEntries.length,
-    };
-  };
-
-  return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Grouped Diary Entries */}
-      <GroupedDiaryEntries entries={diaryEntries} />
-
-      {/* Load More Section - Future Enhancement */}
-      {diaryEntries.length > 20 && (
-        <div className="text-center mt-12 pt-8 border-t border-base-300">
-          <button className="btn btn-outline btn-wide">
-            <svg
-              className="w-4 h-4 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 14l-7 7m0 0l-7-7m7 7V3"
-              />
-            </svg>
-            Load Earlier Entries
-          </button>
-        </div>
-      )}
-    </div>
-  );
+  return <GroupedDiaryEntries entries={diaryEntries} />;
 };
 
 export default MyDiaries;
