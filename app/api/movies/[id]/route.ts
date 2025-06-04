@@ -7,20 +7,28 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions);
-
-  if (!session) return NextResponse.json({}, { status: 401 });
-
-  const { id } = params;
-
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await params;
+
     const body = await request.json();
     const validation = movieSchema.safeParse(body);
 
     if (!validation.success) {
-      return NextResponse.json(validation.error.format(), { status: 400 });
+      return NextResponse.json(
+        {
+          error: "Validation failed",
+          details: validation.error.format(),
+        },
+        { status: 400 }
+      );
     }
 
     const data = validation.data;
@@ -55,7 +63,6 @@ export async function PATCH(
         directorFirstName: data.directorFirstName,
         directorLastName: data.directorLastName,
         genres: {
-          // Reset genres to only those in the update payload
           deleteMany: {},
           create: genres.map((genre) => ({
             genre: {
@@ -75,7 +82,7 @@ export async function PATCH(
   } catch (error) {
     console.error("Error updating movie:", error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
@@ -83,33 +90,49 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({}, { status: 401 });
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  const { id } = params;
-  const movie = await prisma.movie.findUnique({
-    where: { id },
-  });
+    const { id } = await params;
+    
+    const movie = await prisma.movie.findUnique({
+      where: { id },
+    });
 
-  if (!movie)
-    return NextResponse.json({ error: "Invalid Movie" }, { status: 404 });
+    if (!movie) {
+      return NextResponse.json(
+        { error: "Movie not found" },
+        { status: 404 }
+      );
+    }
 
-  await prisma.movie.delete({
-    where: { id: movie.id },
-  });
+    await prisma.movie.delete({
+      where: { id: movie.id },
+    });
 
-  return NextResponse.json({});
+    return NextResponse.json({ success: true }, { status: 200 });
+  } catch (error) {
+    console.error("Error deleting movie:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
 }
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    const movieId = params.id;
+    const { id: movieId } = await params;
 
     const movie = await prisma.movie.findUnique({
       where: { id: movieId },
@@ -133,10 +156,13 @@ export async function GET(
     });
 
     if (!movie) {
-      return NextResponse.json({ error: "Movie not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Movie not found" },
+        { status: 404 }
+      );
     }
 
-    return NextResponse.json(movie);
+    return NextResponse.json(movie, { status: 200 });
   } catch (error) {
     console.error("Error fetching movie:", error);
     return NextResponse.json(
