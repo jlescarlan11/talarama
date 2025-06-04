@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import MovieSearch from "./MovieSearch";
 import StarRating from "../new/StarRating";
 import { Movie, DiaryFormData, FormErrors } from "../types/diary";
@@ -14,6 +14,7 @@ interface DiaryFormProps {
 
 const DiaryForm: React.FC<DiaryFormProps> = ({ movies }) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [formData, setFormData] = useState<DiaryFormData>({
     movieId: "",
@@ -23,6 +24,16 @@ const DiaryForm: React.FC<DiaryFormProps> = ({ movies }) => {
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const movieId = searchParams.get('movieId');
+    if (movieId) {
+      const movie = movies.find(m => m.id === movieId);
+      if (movie) {
+        handleMovieSelect(movie);
+      }
+    }
+  }, [searchParams, movies]);
 
   const handleMovieSelect = (movie: Movie) => {
     setSelectedMovie(movie);

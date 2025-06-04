@@ -14,12 +14,19 @@ interface MovieSearchProps {
 
 const MovieSearch: React.FC<MovieSearchProps> = ({
   movies,
+  selectedMovie,
   onMovieSelect,
   error,
 }) => {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(selectedMovie?.title || "");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [filteredMovies, setFilteredMovies] = useState<Movie[]>([]);
+
+  useEffect(() => {
+    if (selectedMovie) {
+      setSearchQuery(selectedMovie.title);
+    }
+  }, [selectedMovie]);
 
   useEffect(() => {
     if (searchQuery.trim() === "") {
