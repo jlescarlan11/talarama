@@ -100,42 +100,34 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
-  try {
-    const session = await getServerSession(authOptions);
+  const { params } = context;
+  const session = await getServerSession(authOptions);
 
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-    const { id } = params;
+  const { id } = params;
 
-    // Verify diary entry exists and belongs to user
-    const diaryEntry = await prisma.diaryEntry.findFirst({
-      where: {
-        id,
-        userId: session.user.id,
-      },
-    });
+  const diaryEntry = await prisma.diaryEntry.findFirst({
+    where: {
+      id,
+      userId: session.user.id,
+    },
+  });
 
-    if (!diaryEntry) {
-      return NextResponse.json(
-        { error: "Diary entry not found or access denied" },
-        { status: 404 }
-      );
-    }
-
-    await prisma.diaryEntry.delete({
-      where: { id: diaryEntry.id },
-    });
-
-    return NextResponse.json({ message: "Diary entry deleted successfully" });
-  } catch (error) {
-    console.error("Error deleting diary entry:", error);
+  if (!diaryEntry) {
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      { error: "Diary entry not found or access denied" },
+      { status: 404 }
     );
   }
+
+  await prisma.diaryEntry.delete({
+    where: { id: diaryEntry.id },
+  });
+
+  return NextResponse.json({ message: "Diary entry deleted successfully" });
 }
