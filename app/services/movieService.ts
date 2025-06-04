@@ -104,6 +104,11 @@ export class MovieService {
             genre: true,
           },
         },
+        diaryEntries: {
+          select: {
+            rating: true,
+          },
+        },
         _count: {
           select: {
             diaryEntries: true,
