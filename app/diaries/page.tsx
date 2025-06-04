@@ -2,7 +2,6 @@ import { getServerSession } from "next-auth";
 import Image from "next/image";
 import { NextResponse } from "next/server";
 import authOptions from "../auth/authOptions";
-import NewDiaryEntryButton from "./NewDiaryEntryButton";
 import TabsContainer from "./TabsContainer";
 import { PiHeartFill, PiFilmSlate, PiBookOpenText, PiStarFill } from "react-icons/pi";
 import React from "react";
@@ -46,11 +45,7 @@ const DiaryPage = async () => {
     .sort(([, a], [, b]) => b - a)[0]?.[0] || "None";
 
   const stats = [
-    { 
-      label: "films watched", 
-      value: totalMovies, 
-      icon: <PiFilmSlate className="text-2xl text-accent" /> 
-    },
+
     { 
       label: "diary entries", 
       value: totalMovies, // Since each movie has one diary entry
@@ -65,9 +60,6 @@ const DiaryPage = async () => {
 
   return (
     <>
-      <div className="flex justify-end mb-4">
-        <NewDiaryEntryButton />
-      </div>
       <div className=" rounded-2xl shadow-lg p-8 mb-8 flex flex-col md:flex-row items-center gap-8">
         <div className="flex flex-col items-center md:items-start gap-4 md:flex-row md:gap-8 w-full">
           <Image

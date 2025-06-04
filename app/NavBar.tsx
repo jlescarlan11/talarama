@@ -4,6 +4,7 @@ import { Link, Skeleton } from "@/app/components";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { PiFilmSlate, PiGearBold, PiNotebook } from "react-icons/pi";
 import Logo from "./Logo";
+import React from "react";
 
 const NavBar = () => {
   // const currentPath = usePathname(); // to edit pa
@@ -70,10 +71,17 @@ const NavLinks = () => {
 
   return (
     <div className="flex space-x-2">
-      {links.map((link) => (
-        <button key={link.href} className="!cursor-pointer btn btn-primary">
-          <Link href={link.href}>{link.label}</Link>
-        </button>
+      {links.map((link, index) => (
+        <React.Fragment key={link.href}>
+          <button className="!cursor-pointer btn btn-primary">
+            <Link href={link.href}>{link.label}</Link>
+          </button>
+          {index === 0 && (
+            <button className="!cursor-pointer btn btn-primary">
+              <Link href="/diaries/new">New Diary</Link>
+            </button>
+          )}
+        </React.Fragment>
       ))}
     </div>
   );
