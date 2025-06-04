@@ -3,8 +3,39 @@
   themes: light --default, dark --prefersdark;
 }
 
+html, body {
+  background: #14082b;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+.movie-carousel-outer {
+  overflow: hidden;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+.movie-carousel-track {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  animation: carousel-move var(--carousel-duration, 18s) linear infinite;
+  width: var(--carousel-track-width, max-content);
+}
+@keyframes carousel-move {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(calc(-1 * var(--carousel-half-width, 0px))); }
+}
+
 @layer utilities {
   .nav-links {
     @apply hover:text-red-400 transition-colors;
+  }
+  .bg-accent {
+    background-color: #a259ff !important;
+  }
+  .text-accent {
+    color: #a259ff !important;
   }
 }

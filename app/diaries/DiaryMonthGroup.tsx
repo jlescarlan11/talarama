@@ -48,40 +48,27 @@ const DiaryMonthGroup: React.FC<DiaryMonthGroupProps> = ({
 
   return (
     <>
-      <div
-        className={`pb-4 ${
-          !isFirstGroup ? "border-t border-gray-200 pt-4" : ""
-        } `}
-      >
-        <div className="space-y-3">
-          {entries.map((entry, index) => (
-            <div key={entry.id} className="grid grid-cols-12 gap-4">
-              {/* Month column - shows only for first entry */}
-              <div className="col-span-2">
-                {index === 0 && (
-                  <>
-                    <h2 className="font-bold text-base-content text-lg">
-                      {monthYear}
-                    </h2>
-                  </>
-                )}
-              </div>
-
-              {/* Entry content spans remaining columns */}
-              <div className="col-span-10">
-                <DiaryEntryCard
-                  diaryEntry={entry}
-                  showFullDate={false}
-                  onView={handleView}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                />
-              </div>
+      <div className="space-y-3">
+        {entries.map((entry, index) => (
+          <div key={entry.id} className="grid grid-cols-12 gap-4 items-center py-4 border-b border-white/10 last:border-b-0">
+            {/* Day of the Month */}
+            <div className="col-span-2 flex flex-col items-center">
+              <span className="text-3xl font-bold text-accent drop-shadow-lg">{new Date(entry.watchedDate).getDate()}</span>
+              <span className="text-xs text-white/50 mt-1">Day</span>
             </div>
-          ))}
-        </div>
+            {/* Entry content spans remaining columns */}
+            <div className="col-span-10">
+              <DiaryEntryCard
+                diaryEntry={entry}
+                showFullDate={false}
+                onView={handleView}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            </div>
+          </div>
+        ))}
       </div>
-
       {/* View Modal */}
       {viewModalEntry && (
         <DiaryEntryViewModal
@@ -89,7 +76,6 @@ const DiaryMonthGroup: React.FC<DiaryMonthGroupProps> = ({
           onClose={handleCloseViewModal}
         />
       )}
-
       {/* Delete Component */}
       {deleteModalEntry && (
         <DiaryEntryDeleteButton

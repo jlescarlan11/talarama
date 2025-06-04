@@ -8,6 +8,12 @@ interface ClientTabsProps {
   watchlistContent?: ReactNode;
 }
 
+const tabList = [
+  { key: "favorites", label: "Favorites" },
+  { key: "diaries", label: "My Diary" },
+  { key: "watchlist", label: "Watchlist" },
+];
+
 const ClientTabs = ({
   favoritesContent,
   diariesContent,
@@ -16,53 +22,32 @@ const ClientTabs = ({
   const [activeTab, setActiveTab] = useState("favorites");
 
   return (
-    <div className="w-full bg-base-100 rounded-lg shadow-md">
-      <div role="tablist" className="tabs tabs-boxed bg-base-200 p-2">
-        <button
-          role="tab"
-          className={`tab ${activeTab === "favorites" ? "tab-active" : ""}`}
-          onClick={() => setActiveTab("favorites")}
-        >
-          Favorites
-        </button>
-        <button
-          role="tab"
-          className={`tab ${activeTab === "diaries" ? "tab-active" : ""}`}
-          onClick={() => setActiveTab("diaries")}
-        >
-          My Diaries
-        </button>
-        <button
-          role="tab"
-          className={`tab ${activeTab === "watchlist" ? "tab-active" : ""}`}
-          onClick={() => setActiveTab("watchlist")}
-        >
-          Watchlist
-        </button>
+    <div className="w-full rounded-2xl bg-[#1a1033] shadow-lg">
+      <div role="tablist" className="grid grid-cols-3 p-4 bg-[#22124a] rounded-t-2xl">
+        {tabList.map((tab) => (
+          <div key={tab.key} className="relative flex justify-center">
+            <button
+              role="tab"
+              className={`w-1/2 px-6 py-2 rounded-full font-semibold transition-all duration-150 text-white/80 hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/60 ${
+                activeTab === tab.key
+                  ? "bg-accent text-white shadow-md"
+                  : "bg-transparent"
+              }`}
+              onClick={() => setActiveTab(tab.key)}
+            >
+              {tab.label}
+            </button>
+          </div>
+        ))}
       </div>
-
-      {activeTab === "favorites" && (
-        <div role="tabpanel" className="p-6">
-          {favoritesContent}
-        </div>
-      )}
-
-      {activeTab === "diaries" && (
-        <div role="tabpanel" className="p-6">
-          {diariesContent}
-        </div>
-      )}
-
-      {activeTab === "watchlist" && (
-        <div role="tabpanel" className="p-6">
-          {watchlistContent || (
-            <>
-              <h3 className="text-xl font-bold mb-4">Watchlist</h3>
-              <p>Items you&apos;re watching would appear here.</p>
-            </>
-          )}
-        </div>
-      )}
+      <div className="p-6">
+        {activeTab === "favorites" && favoritesContent}
+        {activeTab === "diaries" && diariesContent}
+        {activeTab === "watchlist" &&
+          (watchlistContent || (
+            <div className="text-center text-white/60">No watchlist items yet.</div>
+          ))}
+      </div>
     </div>
   );
 };

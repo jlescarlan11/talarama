@@ -58,7 +58,7 @@ const Favorites = async () => {
   }));
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="px-2 py-4">
       <MovieGrid
         movies={moviesWithGenres}
         emptyStateTitle="No favorites yet"

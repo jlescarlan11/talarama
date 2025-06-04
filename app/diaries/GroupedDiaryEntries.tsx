@@ -2,6 +2,7 @@
 import React from "react";
 import DiaryMonthGroup from "./DiaryMonthGroup";
 import { DiaryEntryWithMovie } from "./types/diary";
+import { PiCalendarBlank } from "react-icons/pi";
 
 interface GroupedDiaryEntriesProps {
   entries: DiaryEntryWithMovie[];
@@ -76,29 +77,24 @@ const GroupedDiaryEntries: React.FC<GroupedDiaryEntriesProps> = ({
   const sortedMonthKeys = sortMonthKeys(Object.keys(groupedEntries));
 
   return (
-    <div className="space-y-0">
+    <div className="space-y-8">
       {/* Month Header */}
-      <div className="grid grid-cols-12">
-        <div className="col-span-2">
-          <p className="text-xs">Month & Year</p>
-        </div>
-        <div className="col-span-2">
-          <p className="text-xs">Day of the Month</p>
-        </div>
-        <div className=""></div>
-        <div></div>
-      </div>
-      <div className="space-y-4">
-        {sortedMonthKeys.map((monthYear, index) => (
+      {sortedMonthKeys.map((monthYear, index) => (
+        <div key={monthYear} className="bg-[#22124a] rounded-xl p-6 shadow-md">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="bg-accent/20 rounded-full p-2">
+              <PiCalendarBlank className="text-accent text-2xl" />
+            </div>
+            <h2 className="font-bold text-lg text-white">{monthYear}</h2>
+          </div>
           <DiaryMonthGroup
-            key={monthYear}
             monthYear={monthYear}
             entries={groupedEntries[monthYear]}
             totalMovies={entries.length}
             isFirstGroup={index === 0}
           />
-        ))}
-      </div>
+        </div>
+      ))}
     </div>
   );
 };

@@ -5,6 +5,7 @@ import Image from "next/image";
 import StarRating from "./StarRating";
 import DiaryEntryMenu from "./DiaryEntryMenu";
 import { DiaryEntryWithMovie } from "./types/diary";
+import { PiHeartFill } from "react-icons/pi";
 
 interface DiaryEntryCardProps {
   diaryEntry: DiaryEntryWithMovie;
@@ -39,71 +40,55 @@ const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({
   };
 
   return (
-    <div className="grid grid-cols-10">
-      {/* Date Column */}
-      <div className="flex-shrink-0 col-span-2">
-        <div className="text-2xl font-bold text-primary">
-          {formatDate(diaryEntry.watchedDate)}
-        </div>
-      </div>
-
+    <div className="flex items-center gap-4 bg-[#2a1846] rounded-xl p-4 shadow-md">
+      {/* Date Column (hidden, now handled by parent) */}
       {/* Movie Poster */}
-      <div className="flex-shrink-0 flex space-x-4 col-span-4">
-        <div className="">
-          {diaryEntry.movie.posterUrl ? (
-            <Image
-              height={80}
-              width={60}
-              src={diaryEntry.movie.posterUrl}
-              alt={`${diaryEntry.movie.title} poster`}
-              className="rounded-md object-cover"
-              loading="lazy"
-            />
-          ) : (
-            <div className="w-[60px] h-[80px] bg-base-200 rounded-md flex items-center justify-center">
-              <svg
-                className="w-8 h-8 text-base-content/40"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"
-                />
-              </svg>
-            </div>
-          )}
-        </div>
-
-        <div className="flex-grow min-w-0">
-          <div className="mb-2">
-            <h3 className="font-semibold text-lg text-base-content leading-tight">
-              {diaryEntry.movie.title}
-            </h3>
-            <div className="mt-1">
-              <StarRating rating={diaryEntry.rating} size="sm" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Movie Details */}
-      <div className="col-span-3">
-        {diaryEntry.review && (
-          <div className="">
-            <p className="text-sm text-base-content/70 leading-relaxed">
-              {truncateReview(diaryEntry.review)}
-            </p>
+      <div className="flex-shrink-0">
+        {diaryEntry.movie.posterUrl ? (
+          <Image
+            height={80}
+            width={60}
+            src={diaryEntry.movie.posterUrl}
+            alt={`${diaryEntry.movie.title} poster`}
+            className="rounded-lg object-cover shadow-lg"
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-[60px] h-[80px] bg-base-200 rounded-lg flex items-center justify-center">
+            <svg
+              className="w-8 h-8 text-base-content/40"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"
+              />
+            </svg>
           </div>
         )}
       </div>
-
+      {/* Movie Details */}
+      <div className="flex-grow min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <h3 className="font-semibold text-lg text-white leading-tight truncate">{diaryEntry.movie.title}</h3>
+          <PiHeartFill className="text-accent text-xl ml-2" />
+        </div>
+        <div className="flex items-center gap-2 mb-2">
+          <StarRating rating={diaryEntry.rating} size="sm" />
+        </div>
+        {diaryEntry.review && (
+          <p className="text-sm text-white/70 leading-relaxed truncate">
+            {truncateReview(diaryEntry.review)}
+          </p>
+        )}
+      </div>
       {/* Menu Column */}
-      <div className="col-span-1 flex justify-end">
+      <div className="flex-shrink-0 flex justify-end">
         <DiaryEntryMenu
           diaryEntry={diaryEntry}
           onView={onView}

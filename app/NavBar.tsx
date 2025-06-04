@@ -2,21 +2,26 @@
 import { Link, Skeleton } from "@/app/components";
 // import { usePathname } from "next/navigation";
 import { signIn, signOut, useSession } from "next-auth/react";
-import { PiFilmSlate, PiGearBold, PiHouse, PiNotebook } from "react-icons/pi";
+import { PiFilmSlate, PiGearBold, PiHouse, PiNotebook, PiMagnifyingGlassBold } from "react-icons/pi";
 import Logo from "./Logo";
-import ThemeToggle from "./ThemeToggle";
 
 const NavBar = () => {
   // const currentPath = usePathname(); // to edit pa
 
   return (
     <div className="mb-4 flex container max-w-7xl mx-auto h-24">
-      <nav className="navbar flex justify-between">
-        <Link href="/">
-          <Logo />
-        </Link>
-
-        <AuthStatus />
+      <nav className="navbar flex justify-between items-center w-full">
+        <div className="flex items-center gap-4">
+          <Link href="/">
+            <Logo />
+          </Link>
+          <Link href="/profile">
+            <button className="ml-4 px-6 py-2 rounded-full bg-accent text-white font-bold text-lg shadow-md hover:bg-accent/80 transition">My Profile</button>
+          </Link>
+        </div>
+        <div className="flex items-center gap-4">
+          <AuthStatus />
+        </div>
       </nav>
     </div>
   );
@@ -38,51 +43,24 @@ const AuthStatus = () => {
       <div>
         <NavLinks />
       </div>
-      {/* <div>
-        <label className="input bg-primary text-primary-content">
-          <PiMagnifyingGlassBold className="text-xl" />
-          <input type="search" className="grow" placeholder="Search" />
-        </label>
-      </div> */}
-      <div className="nav-links">
-        <button onClick={() => signOut({ callbackUrl: "/" })}>Log Out</button>
-      </div>
-      <div>
-        <button className="btn btn-primary">
-          <ThemeToggle />
-        </button>
-      </div>
-      <div>
-        <button className="btn btn-primary">
-          <PiGearBold className="text-xl" />
-        </button>
-      </div>
-
       <div className="dropdown dropdown-end">
-        {/* <NavLinks /> */}
-        {/* <div
+        <div
           tabIndex={0}
           role="button"
-          className="btn btn-ghost btn-circle avatar"
+          className="btn btn-primary"
         >
-          <Image
-            alt="Picture of user"
-            className="rounded-full"
-            width={200}
-            height={200}
-            src={session!.user!.image!}
-          />
-        </div> */}
-        {/* <div tabIndex={0} className="menu menu-sm dropdown-content p-2 w-48">
-          <span>{session!.user!.email!}</span>
-
-          <ThemeToggle />
-          <div className="nav-links">
-            <button onClick={() => signOut({ callbackUrl: "/" })}>
+          <PiGearBold className="text-xl" />
+        </div>
+        <div tabIndex={0} className="menu menu-sm dropdown-content p-2 w-48 bg-base-100 shadow-lg rounded-box">
+          <div className="flex flex-col gap-2">
+            <button 
+              className="btn btn-ghost justify-start"
+              onClick={() => signOut({ callbackUrl: "/" })}
+            >
               Log Out
             </button>
           </div>
-        </div> */}
+        </div>
       </div>
     </div>
   );
@@ -90,7 +68,6 @@ const AuthStatus = () => {
 
 const NavLinks = () => {
   const links = [
-    { icon: <PiHouse />, label: `Dashboard`, href: "/" },
     { icon: <PiNotebook />, label: "Diary", href: "/diaries" },
     { icon: <PiFilmSlate />, label: "Movie", href: "/movies" },
   ];
@@ -102,6 +79,7 @@ const NavLinks = () => {
           <Link href={link.href}>{link.label}</Link>
         </button>
       ))}
+      
     </div>
   );
 };
