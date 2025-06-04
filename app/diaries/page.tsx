@@ -67,7 +67,7 @@ const DiaryPage = async () => {
             width={100}
             height={100}
             alt="User profile"
-            className="rounded-full border-4 border-accent shadow-lg"
+            className="rounded-full border-3 border-[#605dff] shadow-lg"
             quality={100}
             placeholder="empty"
             priority

@@ -75,7 +75,7 @@ const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
               className="flex-none w-56 h-80"
             >
               <div
-                className={`w-full h-full bg-gray-300 rounded-2xl overflow-hidden shadow-lg relative snap-center transition-transform duration-300`}
+                className={`w-full h-full bg-gray-300 rounded-2xl overflow-hidden shadow-lg relative snap-center transition-all duration-300 group`}
                 style={{
                   transform: `scale(${scale})`,
                   opacity,
@@ -88,7 +88,7 @@ const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
                     src={movie.posterUrl}
                     alt={movie.title}
                     fill
-                    className="object-cover"
+                    className="object-cover transition-transform duration-700 group-hover:scale-110"
                     sizes="224px"
                     priority={offset === 0}
                   />
@@ -97,14 +97,49 @@ const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
                     No Image
                   </div>
                 )}
-                {/* Overlay for genre and title */}
-                <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/80 to-transparent p-4 flex flex-col items-center opacity-0 hover:opacity-100 transition-opacity duration-300">
-                  <span className="text-white text-base font-semibold mb-1 drop-shadow">
-                    {movie.genres[0]?.genre.genreName || 'Unknown Genre'}
-                  </span>
-                  <span className="text-white text-lg font-bold drop-shadow text-center">
-                    {movie.title}
-                  </span>
+                {/* Base overlay - always visible but subtle */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+
+                {/* Hover overlay - enhanced on hover */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                {/* Movie details - slides up on hover */}
+                <div className="absolute bottom-0 left-0 right-0 p-4 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out">
+                  <div className="text-center space-y-2">
+                    <h3 className="text-sm font-semibold leading-tight line-clamp-2">
+                      {movie.title}
+                    </h3>
+                    <p className="text-xs text-white/80 font-medium">
+                      {movie.releasedYear}
+                    </p>
+                    {/* Genres */}
+                    {movie.genres.length > 0 && (
+                      <div className="flex flex-wrap gap-1 justify-center mt-2">
+                        {movie.genres.slice(0, 2).map((movieGenre) => (
+                          <span
+                            key={movieGenre.genre.id}
+                            className="text-xs bg-white/25 backdrop-blur-sm px-2 py-1 rounded-full border border-white/20"
+                          >
+                            {movieGenre.genre.genreName}
+                          </span>
+                        ))}
+                        {movie.genres.length > 2 && (
+                          <span className="text-xs text-white/70 bg-white/15 backdrop-blur-sm px-2 py-1 rounded-full">
+                            +{movie.genres.length - 2}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Subtle title overlay for non-hover state */}
+                <div className="absolute bottom-0 left-0 right-0 p-3 text-white group-hover:opacity-0 transition-opacity duration-300">
+                  <div className="text-center">
+                    <h3 className="text-xs font-medium leading-tight line-clamp-1 drop-shadow-lg">
+                      {movie.title}
+                    </h3>
+                  </div>
                 </div>
               </div>
             </Link>

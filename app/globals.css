@@ -33,10 +33,10 @@ html, body {
     @apply hover:text-red-400 transition-colors;
   }
   .bg-accent {
-    background-color: #a259ff !important;
+    background-color: #605dff !important;
   }
   .text-accent {
-    color: #a259ff !important;
+    color: #605dff !important;
   }
   .scrollbar-hide {
     -ms-overflow-style: none;

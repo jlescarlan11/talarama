@@ -38,9 +38,6 @@ const StarRating: React.FC<StarRatingProps> = ({
             <FaStar size={20} />
           </button>
         ))}
-        <span className="ml-2 text-sm text-gray-600">
-          {rating > 0 ? `${rating}/10` : "No rating"}
-        </span>
       </div>
       {error && <div className="text-error text-sm">{error}</div>}
     </div>
