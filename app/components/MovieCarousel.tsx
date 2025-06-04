@@ -1,6 +1,7 @@
 'use client';
 import React, { useRef, useEffect, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { MovieWithGenres } from '../types/movie';
 
 interface MovieCarouselProps {
@@ -68,40 +69,45 @@ const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
             zIndex = 10;
           }
           return (
-            <div
+            <Link
+              href={`/movies/${movie.id}`}
               key={movie.id + '-' + offset}
-              className={`flex-none w-56 h-80 bg-gray-300 rounded-2xl overflow-hidden shadow-lg relative snap-center transition-transform duration-300`}
-              style={{
-                transform: `scale(${scale})`,
-                opacity,
-                zIndex,
-                pointerEvents: offset === 0 ? 'auto' : 'none',
-              }}
+              className="flex-none w-56 h-80"
             >
-              {movie.posterUrl ? (
-                <Image
-                  src={movie.posterUrl}
-                  alt={movie.title}
-                  fill
-                  className="object-cover"
-                  sizes="224px"
-                  priority={offset === 0}
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400 text-xl font-bold">
-                  No Image
+              <div
+                className={`w-full h-full bg-gray-300 rounded-2xl overflow-hidden shadow-lg relative snap-center transition-transform duration-300`}
+                style={{
+                  transform: `scale(${scale})`,
+                  opacity,
+                  zIndex,
+                  pointerEvents: 'auto'
+                }}
+              >
+                {movie.posterUrl ? (
+                  <Image
+                    src={movie.posterUrl}
+                    alt={movie.title}
+                    fill
+                    className="object-cover"
+                    sizes="224px"
+                    priority={offset === 0}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400 text-xl font-bold">
+                    No Image
+                  </div>
+                )}
+                {/* Overlay for genre and title */}
+                <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/80 to-transparent p-4 flex flex-col items-center opacity-0 hover:opacity-100 transition-opacity duration-300">
+                  <span className="text-white text-base font-semibold mb-1 drop-shadow">
+                    {movie.genres[0]?.genre.genreName || 'Unknown Genre'}
+                  </span>
+                  <span className="text-white text-lg font-bold drop-shadow text-center">
+                    {movie.title}
+                  </span>
                 </div>
-              )}
-              {/* Overlay for genre and title */}
-              <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/80 to-transparent p-4 flex flex-col items-center">
-                <span className="text-white text-base font-semibold mb-1 drop-shadow">
-                  {movie.genres[0]?.genre.genreName || 'Unknown Genre'}
-                </span>
-                <span className="text-white text-lg font-bold drop-shadow text-center">
-                  {movie.title}
-                </span>
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>
