@@ -15,11 +15,7 @@ interface DiaryMonthGroupProps {
   isLastGroup?: boolean;
 }
 
-const DiaryMonthGroup: React.FC<DiaryMonthGroupProps> = ({
-  monthYear,
-  entries,
-  isFirstGroup = false,
-}) => {
+const DiaryMonthGroup: React.FC<DiaryMonthGroupProps> = ({ entries }) => {
   const router = useRouter();
   const [viewModalEntry, setViewModalEntry] =
     useState<DiaryEntryWithMovie | null>(null);
@@ -49,11 +45,16 @@ const DiaryMonthGroup: React.FC<DiaryMonthGroupProps> = ({
   return (
     <>
       <div className="space-y-3">
-        {entries.map((entry, index) => (
-          <div key={entry.id} className="grid grid-cols-12 gap-4 items-center py-4 border-b border-white/10 last:border-b-0">
+        {entries.map((entry) => (
+          <div
+            key={entry.id}
+            className="grid grid-cols-12 gap-4 items-center py-4 border-b border-white/10 last:border-b-0"
+          >
             {/* Day of the Month */}
             <div className="col-span-2 flex flex-col items-center">
-              <span className="text-3xl font-bold text-accent drop-shadow-lg">{new Date(entry.watchedDate).getDate()}</span>
+              <span className="text-3xl font-bold text-accent drop-shadow-lg">
+                {new Date(entry.watchedDate).getDate()}
+              </span>
               <span className="text-xs text-white/50 mt-1">Day</span>
             </div>
             {/* Entry content spans remaining columns */}

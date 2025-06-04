@@ -80,7 +80,7 @@ const GroupedDiaryEntries: React.FC<GroupedDiaryEntriesProps> = ({
     <div className="space-y-8">
       {/* Month Header */}
       {sortedMonthKeys.map((monthYear, index) => (
-        <div key={monthYear} className="bg-[#22124a] rounded-xl p-6 shadow-md">
+        <div key={monthYear} className=" rounded-xl p-6 shadow-md">
           <div className="flex items-center gap-3 mb-4">
             <div className="bg-accent/20 rounded-full p-2">
               <PiCalendarBlank className="text-accent text-2xl" />

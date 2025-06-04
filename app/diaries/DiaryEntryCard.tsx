@@ -1,11 +1,11 @@
 "use client";
 // components/DiaryEntryCard.tsx
-import React from "react";
 import Image from "next/image";
-import StarRating from "./StarRating";
-import DiaryEntryMenu from "./DiaryEntryMenu";
-import { DiaryEntryWithMovie } from "./types/diary";
+import React from "react";
 import { PiHeartFill } from "react-icons/pi";
+import DiaryEntryMenu from "./DiaryEntryMenu";
+import StarRating from "./StarRating";
+import { DiaryEntryWithMovie } from "./types/diary";
 
 interface DiaryEntryCardProps {
   diaryEntry: DiaryEntryWithMovie;
@@ -17,22 +17,11 @@ interface DiaryEntryCardProps {
 
 const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({
   diaryEntry,
-  showFullDate = false,
+
   onView,
   onEdit,
   onDelete,
 }) => {
-  const formatDate = (date: Date): string => {
-    if (showFullDate) {
-      return new Intl.DateTimeFormat("en-US", {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-      }).format(new Date(date));
-    }
-    return new Date(date).getDate().toString();
-  };
-
   const truncateReview = (review: string, maxLength: number = 120): string => {
     return review.length > maxLength
       ? review.substring(0, maxLength) + "..."
@@ -40,7 +29,7 @@ const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({
   };
 
   return (
-    <div className="flex items-center gap-4 bg-[#2a1846] rounded-xl p-4 shadow-md">
+    <div className="flex items-center gap-4 bg-[#2a1846]/20 rounded-xl p-4 shadow-md">
       {/* Date Column (hidden, now handled by parent) */}
       {/* Movie Poster */}
       <div className="flex-shrink-0">
@@ -75,7 +64,9 @@ const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({
       {/* Movie Details */}
       <div className="flex-grow min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <h3 className="font-semibold text-lg text-white leading-tight truncate">{diaryEntry.movie.title}</h3>
+          <h3 className="font-semibold text-lg text-white leading-tight truncate">
+            {diaryEntry.movie.title}
+          </h3>
           <PiHeartFill className="text-accent text-xl ml-2" />
         </div>
         <div className="flex items-center gap-2 mb-2">

@@ -3,8 +3,8 @@ import AppLogo from "../public/appLogo.png";
 
 const Logo = () => {
   return (
-    <div className="flex items-center mt-2">
-      <Image src={AppLogo} alt="App Logo" width={200} height={100} />
+    <div className="flex items-center">
+      <Image src={AppLogo} alt="App Logo" width={100} height={50} />
     </div>
   );
 };

@@ -1,6 +1,5 @@
 "use client";
 
-import ErrorMessage from "@/app/components/ErrorMessage";
 import React from "react";
 import { FieldErrors, UseFormRegister } from "react-hook-form";
 import StarRating from "../new/StarRating";
@@ -59,7 +58,6 @@ const DiaryFormFields: React.FC<DiaryFormFieldsProps> = ({
               errors.watchedDate ? "input-error" : ""
             }`}
           />
-          <ErrorMessage>{errors.watchedDate?.message}</ErrorMessage>
         </div>
       </div>
 
@@ -79,7 +77,6 @@ const DiaryFormFields: React.FC<DiaryFormFieldsProps> = ({
           }`}
           maxLength={2000}
         />
-        <ErrorMessage>{errors.review?.message}</ErrorMessage>
       </div>
 
       {/* Star rating */}

@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Movie } from "../types/diary";
-import ErrorMessage from "@/app/components/ErrorMessage";
 
 interface MovieSearchProps {
   movies: Movie[];
@@ -17,7 +16,6 @@ const MovieSearch: React.FC<MovieSearchProps> = ({
   selectedMovie,
   onMovieSelect,
   error,
-  disabled = false,
 }) => {
   const [searchTerm, setSearchTerm] = useState(selectedMovie?.title || "");
   const [isOpen, setIsOpen] = useState(false);
@@ -87,9 +85,7 @@ const MovieSearch: React.FC<MovieSearchProps> = ({
   return (
     <div className="form-control w-full" ref={dropdownRef}>
       <label className="label">
-        <span className="label-text font-semibold">
-          Movie
-        </span>
+        <span className="label-text font-semibold">Movie</span>
       </label>
       <div className="relative">
         <input
@@ -127,15 +123,12 @@ const MovieSearch: React.FC<MovieSearchProps> = ({
           </div>
         )}
 
-        {isOpen &&
-          searchTerm.trim() !== "" &&
-          filteredMovies.length === 0 && (
-            <div className="absolute z-10 w-full mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg p-4 text-center text-base-content/60">
-              No movies found matching &quot;{searchTerm}&quot;
-            </div>
-          )}
+        {isOpen && searchTerm.trim() !== "" && filteredMovies.length === 0 && (
+          <div className="absolute z-10 w-full mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg p-4 text-center text-base-content/60">
+            No movies found matching &quot;{searchTerm}&quot;
+          </div>
+        )}
       </div>
-      <ErrorMessage>{error}</ErrorMessage>
     </div>
   );
 };
