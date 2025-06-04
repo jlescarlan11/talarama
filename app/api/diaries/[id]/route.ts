@@ -124,10 +124,7 @@ export async function DELETE(
       where: { id: diaryEntry.id },
     });
 
-    return NextResponse.json(
-      { message: "Diary entry deleted successfully" },
-      { status: 200 }
-    );
+    return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
     console.error("Error deleting diary entry:", error);
     return NextResponse.json(
