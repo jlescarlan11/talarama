@@ -2,96 +2,83 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback } from "react";
-import { Genre } from "../types/movie";
-import { SORT_OPTIONS, DEFAULT_GENRE_OPTION } from "../contants/movieConstants";
+import { Genre } from "@prisma/client";
+import { useEffect, useState } from "react";
 
-interface MovieFiltersProps {
-  genres: Genre[];
-}
-
-const MovieFiltersComponent = ({ genres }: MovieFiltersProps) => {
+const MovieFiltersComponent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [genres, setGenres] = useState<Genre[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const currentSort = searchParams.get("sort") || "";
-  const currentGenre = searchParams.get("genre") || "all";
-
-  const updateFilters = useCallback(
-    (newFilters: Record<string, string>) => {
-      const params = new URLSearchParams(searchParams.toString());
-
-      Object.entries(newFilters).forEach(([key, value]) => {
-        if (value && value !== "all" && value !== "") {
-          params.set(key, value);
-        } else {
-          params.delete(key);
+  useEffect(() => {
+    const fetchGenres = async () => {
+      try {
+        const response = await fetch("/api/genres");
+        if (response.ok) {
+          const data = await response.json();
+          setGenres(data);
         }
-      });
+      } catch (error) {
+        console.error("Error fetching genres:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-      router.push(`?${params.toString()}`, { scroll: false });
-    },
-    [router, searchParams]
-  );
+    fetchGenres();
+  }, []);
 
-  const handleSortChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    updateFilters({ sort: event.target.value });
+  const handleGenreChange = (genreId: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (genreId) {
+      params.set("genre", genreId);
+    } else {
+      params.delete("genre");
+    }
+    router.push(`/movies?${params.toString()}`);
   };
 
-  const handleGenreChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    updateFilters({ genre: event.target.value });
+  const handleSortChange = (sort: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (sort) {
+      params.set("sort", sort);
+    } else {
+      params.delete("sort");
+    }
+    router.push(`/movies?${params.toString()}`);
   };
 
-  const clearAllFilters = () => {
-    router.push("/movies", { scroll: false });
-  };
-
-  const hasActiveFilters =
-    currentSort !== "" || currentGenre !== "all" || searchParams.get("search");
+  if (isLoading) {
+    return <div className="h-10 bg-base-200 rounded-lg animate-pulse" />;
+  }
 
   return (
-    <div className="flex">
-      <div className="flex items-center space-x-2">
-        {/* Genre Filter */}
-        <div className="form-control w-full sm:w-auto">
-          <select
-            className="select "
-            value={currentGenre}
-            onChange={handleGenreChange}
-          >
-            <option value={DEFAULT_GENRE_OPTION.value}>
-              {DEFAULT_GENRE_OPTION.label}
-            </option>
-            {genres.map((genre) => (
-              <option key={genre.id} value={genre.id}>
-                {genre.genreName}
-              </option>
-            ))}
-          </select>
-        </div>
+    <div className="flex flex-wrap gap-2">
+      <select
+        className="select select-bordered w-full sm:w-auto"
+        onChange={(e) => handleGenreChange(e.target.value)}
+        value={searchParams.get("genre") || ""}
+      >
+        <option value="">All Genres</option>
+        {genres.map((genre) => (
+          <option key={genre.id} value={genre.id}>
+            {genre.genreName}
+          </option>
+        ))}
+      </select>
 
-        {/* Sort Filter */}
-        <div className="form-control w-full sm:w-auto">
-          <select
-            className="select"
-            value={currentSort}
-            onChange={handleSortChange}
-          >
-            {SORT_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Clear Filters Button */}
-        {hasActiveFilters && (
-          <button onClick={clearAllFilters} className="btn btn-primary">
-            Clear all filters
-          </button>
-        )}
-      </div>
+      <select
+        className="select select-bordered w-full sm:w-auto"
+        onChange={(e) => handleSortChange(e.target.value)}
+        value={searchParams.get("sort") || ""}
+      >
+        <option value="">Sort By</option>
+        <option value="title_asc">Title (A-Z)</option>
+        <option value="title_desc">Title (Z-A)</option>
+        <option value="year_desc">Newest First</option>
+        <option value="year_asc">Oldest First</option>
+      </select>
     </div>
   );
 };

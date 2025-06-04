@@ -1,8 +1,8 @@
 import React from "react";
 import MovieForm from "../_components/MovieForm";
 
-const NewMoviePAge = () => {
+const NewMoviePage = () => {
   return <MovieForm />;
 };
 
-export default NewMoviePAge;
+export default NewMoviePage;
