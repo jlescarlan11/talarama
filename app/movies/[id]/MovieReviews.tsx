@@ -15,13 +15,6 @@ const MovieReviews = ({ reviews }: Props) => {
     }).format(date);
   };
 
-  const getRatingColor = (rating: number) => {
-    if (rating >= 8) return "text-green-400";
-    if (rating >= 6) return "text-yellow-400";
-    if (rating >= 4) return "text-orange-400";
-    return "text-red-400";
-  };
-
   if (reviews.length === 0) {
     return (
       <div className="mt-16">
