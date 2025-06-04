@@ -1,10 +1,12 @@
 // app/api/diary/[id]/route.ts
 
+import { getServerSession } from "next-auth";
+import { NextResponse } from "next/server";
 import authOptions from "@/app/auth/authOptions";
 import { diaryEntrySchema } from "@/app/validationSchemas";
 import prisma from "@/prisma/client";
-import { getServerSession } from "next-auth";
-import { NextRequest, NextResponse } from "next/server";
+
+export const runtime = "edge"; // Explicitly opt into Edge runtime
 
 interface RouteParams {
   params: {
@@ -12,7 +14,7 @@ interface RouteParams {
   };
 }
 
-export async function PATCH(request: NextRequest, { params }: RouteParams) {
+export async function PATCH(request: Request, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -68,7 +70,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       data: {
         movieId,
         rating,
-        review: review.trim(),
+        review: review?.trim(), // Safe navigation in case review is undefined
         watchedDate: new Date(watchedDate),
         updatedAt: new Date(),
       },
@@ -95,7 +97,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(request: Request, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
 
