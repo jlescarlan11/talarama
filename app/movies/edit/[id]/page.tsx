@@ -4,7 +4,7 @@ import React from "react";
 import MovieForm from "../../_components/MovieForm";
 
 interface Props {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 const EditMoviePage = async ({ params }: Props) => {

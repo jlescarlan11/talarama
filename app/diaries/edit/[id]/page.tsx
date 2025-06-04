@@ -4,12 +4,12 @@ import prisma from "@/prisma/client";
 import { notFound } from "next/navigation";
 
 type Props = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
   searchParams: { [key: string]: string | string[] | undefined };
 };
 
 const EditDiaryPage = async ({ params }: Props) => {
-  const { id } = params;
+  const { id } = await params;
 
   const movies = await prisma.movie.findMany();
   const diaryEntry = await prisma.diaryEntry.findUnique({
