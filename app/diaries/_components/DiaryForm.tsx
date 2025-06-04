@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -14,14 +14,23 @@ import MoviePreview from "./MoviePreview";
 interface DiaryFormProps {
   movies: Movie[];
   diary?: DiaryEntryWithMovie;
+  initialMovie?: Movie | null;
 }
 
-const DiaryForm: React.FC<DiaryFormProps> = ({ movies, diary }) => {
+const DiaryForm: React.FC<DiaryFormProps> = ({ movies, diary, initialMovie }) => {
   const router = useRouter();
   const { register, handleSubmit, setValue, trigger, formState: { errors }, setError, watch } = useForm<DiaryFormData>();
-  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(initialMovie || null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const watchedFields = watch();
+
+  // Set initial movie when component mounts
+  useEffect(() => {
+    if (initialMovie) {
+      setSelectedMovie(initialMovie);
+      setValue("movieId", initialMovie.id);
+    }
+  }, [initialMovie, setValue]);
 
   const handleMovieSelect = (movie: Movie) => {
     setSelectedMovie(movie);

@@ -14,7 +14,7 @@ export async function GET(
   const userId = session.user.id;
 
   try {
-    const existingLike = await prisma.likedBy.findUnique({
+    const existingWatchlist = await prisma.watchedList.findUnique({
       where: {
         movieId_userId: {
           movieId,
@@ -23,9 +23,9 @@ export async function GET(
       },
     });
 
-    return NextResponse.json({ liked: !!existingLike });
+    return NextResponse.json({ inWatchlist: !!existingWatchlist });
   } catch (error) {
-    console.error("Error checking like status:", error);
+    console.error("Error checking watchlist status:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
@@ -44,8 +44,8 @@ export async function POST(
   const userId = session.user.id;
 
   try {
-    // Check if the like already exists
-    const existingLike = await prisma.likedBy.findUnique({
+    // Check if the movie is already in the watchlist
+    const existingWatchlist = await prisma.watchedList.findUnique({
       where: {
         movieId_userId: {
           movieId,
@@ -54,9 +54,9 @@ export async function POST(
       },
     });
 
-    if (existingLike) {
-      // Unlike the movie
-      await prisma.likedBy.delete({
+    if (existingWatchlist) {
+      // Remove from watchlist
+      await prisma.watchedList.delete({
         where: {
           movieId_userId: {
             movieId,
@@ -64,20 +64,20 @@ export async function POST(
           },
         },
       });
-      return NextResponse.json({ liked: false });
+      return NextResponse.json({ inWatchlist: false });
     }
 
-    // Like the movie
-    await prisma.likedBy.create({
+    // Add to watchlist
+    await prisma.watchedList.create({
       data: {
         movieId,
         userId,
       },
     });
 
-    return NextResponse.json({ liked: true });
+    return NextResponse.json({ inWatchlist: true });
   } catch (error) {
-    console.error("Error toggling like:", error);
+    console.error("Error toggling watchlist:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

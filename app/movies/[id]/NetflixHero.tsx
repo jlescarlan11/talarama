@@ -122,6 +122,8 @@ const NetflixHero = ({ movie, counts, session }: Props) => {
               movieId={movie.id}
               session={session}
               counts={counts}
+              movieTitle={movie.title}
+              posterUrl={movie.posterUrl || null}
             />
           </div>
         </div>
