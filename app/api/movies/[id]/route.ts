@@ -102,3 +102,46 @@ export async function DELETE(
 
   return NextResponse.json({});
 }
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    const movieId = params.id;
+
+    const movie = await prisma.movie.findUnique({
+      where: { id: movieId },
+      include: {
+        genres: {
+          include: {
+            genre: true,
+          },
+        },
+        likedBy: session ? {
+          where: {
+            userId: session.user.id,
+          },
+        } : false,
+        _count: {
+          select: {
+            likedBy: true,
+          },
+        },
+      },
+    });
+
+    if (!movie) {
+      return NextResponse.json({ error: "Movie not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(movie);
+  } catch (error) {
+    console.error("Error fetching movie:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
