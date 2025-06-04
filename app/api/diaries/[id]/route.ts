@@ -1,13 +1,13 @@
 // app/api/diary/[id]/route.ts
 
 import { getServerSession } from "next-auth";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import authOptions from "@/app/auth/authOptions";
 import { diaryEntrySchema } from "@/app/validationSchemas";
 import prisma from "@/prisma/client";
 
 export async function PATCH(
-  request: Request,
+  request: NextRequest,
   {
     params,
   }: {
@@ -99,8 +99,8 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -109,7 +109,8 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const params = await context.params;
+    const { id } = params;
 
     // Verify diary entry exists and belongs to user
     const diaryEntry = await prisma.diaryEntry.findFirst({
