@@ -19,6 +19,9 @@ export interface MovieWithGenres {
     genreId: string;
     genre: Genre;
   }[];
+  diaryEntries?: {
+    rating: number;
+  }[];
   _count?: {
     diaryEntries?: number;
   };

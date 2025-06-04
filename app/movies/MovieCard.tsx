@@ -12,6 +12,9 @@ interface MovieWithGenres extends Movie {
   _count?: {
     diaryEntries?: number;
   };
+  diaryEntries?: {
+    rating: number;
+  }[];
 }
 
 interface MovieCardProps {
@@ -19,10 +22,11 @@ interface MovieCardProps {
 }
 
 const MovieCard = ({ movie }: MovieCardProps) => {
-  // Calculate rating for the movie
+  // Calculate average rating for the movie
   const getMovieRating = (movie: MovieWithGenres): number | undefined => {
-    if (movie._count?.diaryEntries) {
-      return Math.min(10, Math.max(1, movie._count.diaryEntries / 2));
+    if (movie.diaryEntries && movie.diaryEntries.length > 0) {
+      const totalRating = movie.diaryEntries.reduce((sum, entry) => sum + entry.rating, 0);
+      return totalRating / movie.diaryEntries.length;
     }
     return undefined;
   };
