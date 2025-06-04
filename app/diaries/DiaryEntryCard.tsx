@@ -3,16 +3,23 @@
 import React from "react";
 import Image from "next/image";
 import StarRating from "./StarRating";
+import DiaryEntryMenu from "./DiaryEntryMenu";
 import { DiaryEntryWithMovie } from "./types/diary";
 
 interface DiaryEntryCardProps {
   diaryEntry: DiaryEntryWithMovie;
   showFullDate?: boolean;
+  onView?: (entry: DiaryEntryWithMovie) => void;
+  onEdit?: (entry: DiaryEntryWithMovie) => void;
+  onDelete?: (entry: DiaryEntryWithMovie) => void;
 }
 
 const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({
   diaryEntry,
   showFullDate = false,
+  onView,
+  onEdit,
+  onDelete,
 }) => {
   const formatDate = (date: Date): string => {
     if (showFullDate) {
@@ -35,7 +42,7 @@ const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({
     <div className="grid grid-cols-10">
       {/* Date Column */}
       <div className="flex-shrink-0 col-span-2">
-        <div className=" text-2xl font-bold text-primary">
+        <div className="text-2xl font-bold text-primary">
           {formatDate(diaryEntry.watchedDate)}
         </div>
       </div>
@@ -85,15 +92,24 @@ const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({
       </div>
 
       {/* Movie Details */}
-
-      <div className="col-span-4">
+      <div className="col-span-3">
         {diaryEntry.review && (
-          <div className="mt-3">
+          <div className="">
             <p className="text-sm text-base-content/70 leading-relaxed">
               {truncateReview(diaryEntry.review)}
             </p>
           </div>
         )}
+      </div>
+
+      {/* Menu Column */}
+      <div className="col-span-1 flex justify-end">
+        <DiaryEntryMenu
+          diaryEntry={diaryEntry}
+          onView={onView}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
       </div>
     </div>
   );
