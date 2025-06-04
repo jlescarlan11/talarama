@@ -19,7 +19,14 @@ interface DiaryFormProps {
 
 const DiaryForm: React.FC<DiaryFormProps> = ({ movies, diary, initialMovie }) => {
   const router = useRouter();
-  const { register, handleSubmit, setValue, trigger, formState: { errors }, setError, watch } = useForm<DiaryFormData>();
+  const { register, handleSubmit, setValue, trigger, formState: { errors }, setError, watch } = useForm<DiaryFormData>({
+    defaultValues: {
+      movieId: diary?.movieId || initialMovie?.id || "",
+      rating: diary?.rating || 0,
+      review: diary?.review || "",
+      watchedDate: diary?.watchedDate ? new Date(diary.watchedDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+    }
+  });
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(initialMovie || null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const watchedFields = watch();
@@ -29,8 +36,14 @@ const DiaryForm: React.FC<DiaryFormProps> = ({ movies, diary, initialMovie }) =>
     if (initialMovie) {
       setSelectedMovie(initialMovie);
       setValue("movieId", initialMovie.id);
+    } else if (diary?.movie) {
+      const movie = movies.find(m => m.id === diary.movieId);
+      if (movie) {
+        setSelectedMovie(movie);
+        setValue("movieId", movie.id);
+      }
     }
-  }, [initialMovie, setValue]);
+  }, [initialMovie, diary, movies, setValue]);
 
   const handleMovieSelect = (movie: Movie) => {
     setSelectedMovie(movie);

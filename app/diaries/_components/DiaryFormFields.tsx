@@ -45,7 +45,6 @@ const DiaryFormFields: React.FC<DiaryFormFieldsProps> = ({
             selectedMovie={selectedMovie}
             onMovieSelect={onMovieSelect}
             error={errors.movieId?.message}
-            disabled={isEditMode}
           />
         </div>
 

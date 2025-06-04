@@ -64,8 +64,6 @@ const MovieSearch: React.FC<MovieSearchProps> = ({
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (disabled) return;
-
     const value = e.target.value;
     setSearchTerm(value);
     setIsOpen(true);
@@ -83,35 +81,30 @@ const MovieSearch: React.FC<MovieSearchProps> = ({
   };
 
   const handleInputFocus = () => {
-    if (!disabled) {
-      setIsOpen(true);
-    }
+    setIsOpen(true);
   };
 
   return (
     <div className="form-control w-full" ref={dropdownRef}>
       <label className="label">
         <span className="label-text font-semibold">
-          Movie {disabled && "(Cannot be changed when editing)"}
+          Movie
         </span>
       </label>
       <div className="relative">
         <input
           ref={inputRef}
           type="text"
-          placeholder={
-            disabled ? "Movie selection locked" : "Search for a movie..."
-          }
+          placeholder="Search for a movie..."
           value={searchTerm}
           onChange={handleInputChange}
           onFocus={handleInputFocus}
-          disabled={disabled}
           className={`input input-bordered w-full ${
             error ? "input-error" : ""
-          } ${disabled ? "input-disabled" : ""}`}
+          }`}
         />
 
-        {isOpen && !disabled && filteredMovies.length > 0 && (
+        {isOpen && filteredMovies.length > 0 && (
           <div className="absolute z-10 w-full mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
             {filteredMovies.map((movie) => (
               <div
@@ -135,7 +128,6 @@ const MovieSearch: React.FC<MovieSearchProps> = ({
         )}
 
         {isOpen &&
-          !disabled &&
           searchTerm.trim() !== "" &&
           filteredMovies.length === 0 && (
             <div className="absolute z-10 w-full mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg p-4 text-center text-base-content/60">
