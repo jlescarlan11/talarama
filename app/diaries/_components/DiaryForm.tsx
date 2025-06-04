@@ -1,30 +1,12 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import React, { useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { DiaryEntryWithMovie, Movie } from "../types/diary";
-import DiaryFormFields from "./DiaryFormFields";
-import MoviePreview from "./MoviePreview";
-
-// Validation schema
-const diarySchema = z.object({
-  movieId: z.string().min(1, "Please select a movie"),
-  rating: z
-    .number()
-    .min(1, "Please provide a rating")
-    .max(5, "Rating cannot exceed 5"),
-  review: z
-    .string()
-    .min(10, "Review must be at least 10 characters long")
-    .max(2000, "Review cannot exceed 2000 characters"),
-  watchedDate: z.string().min(1, "Please select a watched date"),
-});
-
-type DiaryFormData = z.infer<typeof diarySchema>;
+import MovieSearch from "./MovieSearch";
+import StarRating from "../new/StarRating";
+import { Movie, DiaryFormData, FormErrors } from "../types/diary";
+import Image from "next/image";
 
 interface DiaryFormProps {
   movies: Movie[];
@@ -33,32 +15,15 @@ interface DiaryFormProps {
 
 const DiaryForm: React.FC<DiaryFormProps> = ({ movies, diary }) => {
   const router = useRouter();
-  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(
-    diary ? movies.find((m) => m.id === diary.movieId) || null : null
-  );
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setError,
-    setValue,
-    watch,
-    trigger,
-  } = useForm<DiaryFormData>({
-    resolver: zodResolver(diarySchema),
-    defaultValues: {
-      movieId: diary?.movieId || "",
-      rating: diary?.rating || 0,
-      review: diary?.review || "",
-      watchedDate: diary?.watchedDate
-        ? new Date(diary.watchedDate).toISOString().split("T")[0]
-        : new Date().toISOString().split("T")[0],
-    },
+  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+  const [formData, setFormData] = useState<DiaryFormData>({
+    movieId: "",
+    rating: 0,
+    review: "",
+    watchedDate: new Date().toISOString().split("T")[0], // Default to today
   });
-
-  const watchedFields = watch();
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleMovieSelect = (movie: Movie) => {
     setSelectedMovie(movie);

@@ -19,11 +19,9 @@ const MovieSearch: React.FC<MovieSearchProps> = ({
   error,
   disabled = false,
 }) => {
-  const [searchTerm, setSearchTerm] = useState(selectedMovie?.title || "");
-  const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [filteredMovies, setFilteredMovies] = useState<Movie[]>([]);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (searchTerm.trim() === "") {

@@ -1,7 +1,11 @@
+"use client";
+
 // components/NetflixActions.tsx
 import { Session } from "next-auth";
 import { PiNoteBold } from "react-icons/pi";
 import { MovieCounts } from "./types";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 interface Props {
   movieId: string;
@@ -10,19 +14,66 @@ interface Props {
 }
 
 const NetflixActions = ({ movieId, session, counts }: Props) => {
+  const router = useRouter();
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(counts.likedBy);
+  const [inWatchlist, setInWatchlist] = useState(false);
+
+  const handleLogNow = () => {
+    router.push(`/diaries/new?movieId=${movieId}`);
+  };
+
+  const handleLike = async () => {
+    if (!session) return;
+
+    try {
+      const response = await fetch(`/api/movies/${movieId}/like`, {
+        method: "POST",
+      });
+
+      if (!response.ok) throw new Error("Failed to toggle like");
+
+      const data = await response.json();
+      setIsLiked(data.liked);
+      setLikeCount((prev) => (data.liked ? prev + 1 : prev - 1));
+    } catch (error) {
+      console.error("Error toggling like:", error);
+    }
+  };
+
+  const handleWatchlist = async () => {
+    if (!session) return;
+
+    try {
+      const response = await fetch(`/api/movies/${movieId}/watchlist`, {
+        method: "POST",
+      });
+
+      if (!response.ok) throw new Error("Failed to toggle watchlist");
+
+      const data = await response.json();
+      setInWatchlist(data.inWatchlist);
+    } catch (error) {
+      console.error("Error toggling watchlist:", error);
+    }
+  };
+
   return (
     <div className="flex flex-col space-y-4">
       <div className="flex space-x-2">
         {session && (
           <>
             {/* Primary Action */}
-            <button className="btn btn-primary">
+            <button className="btn btn-primary" onClick={handleLogNow}>
               <PiNoteBold className="text-xl" />
               Log Now
             </button>
 
             {/* Secondary Actions */}
-            <button className="btn btn-accent">
+            <button 
+              className={`btn ${inWatchlist ? 'btn-success' : 'btn-accent'}`}
+              onClick={handleWatchlist}
+            >
               <svg
                 className="w-5 h-5"
                 fill="none"
@@ -36,13 +87,16 @@ const NetflixActions = ({ movieId, session, counts }: Props) => {
                   d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                 />
               </svg>
-              Add to Watchlist
+              {inWatchlist ? 'In Watchlist' : 'Add to Watchlist'}
             </button>
 
-            <button className="btn btn-secondary">
+            <button 
+              className={`btn ${isLiked ? 'btn-error' : 'btn-secondary'}`}
+              onClick={handleLike}
+            >
               <svg
                 className="w-5 h-5"
-                fill="none"
+                fill={isLiked ? "currentColor" : "none"}
                 stroke="currentColor"
                 viewBox="0 0 24 24"
               >
@@ -53,7 +107,7 @@ const NetflixActions = ({ movieId, session, counts }: Props) => {
                   d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
                 />
               </svg>
-              Like
+              {isLiked ? 'Unlike' : 'Like'}
             </button>
           </>
         )}
@@ -80,7 +134,7 @@ const NetflixActions = ({ movieId, session, counts }: Props) => {
               clipRule="evenodd"
             />
           </svg>
-          {counts.likedBy}
+          {likeCount}
         </span>
         <span className="flex items-center gap-1">
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
