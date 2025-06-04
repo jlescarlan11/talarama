@@ -12,7 +12,6 @@ const DiaryPage = async () => {
 
   if (!session) return NextResponse.json({}, { status: 401 });
 
-  // Fetch real stats from the database
   const diaryEntries = await prisma.diaryEntry.findMany({
     where: {
       userId: session.user.id,
@@ -30,10 +29,8 @@ const DiaryPage = async () => {
     },
   });
 
-  // Calculate stats
   const totalMovies = diaryEntries.length;
-  
-  // Calculate favorite genre
+
   const genreCounts = diaryEntries.reduce((acc, entry) => {
     entry.movie.genres.forEach(({ genre }) => {
       acc[genre.genreName] = (acc[genre.genreName] || 0) + 1;
@@ -41,19 +38,19 @@ const DiaryPage = async () => {
     return acc;
   }, {} as Record<string, number>);
 
-  const favoriteGenre = Object.entries(genreCounts)
-    .sort(([, a], [, b]) => b - a)[0]?.[0] || "None";
+  const favoriteGenre =
+    Object.entries(genreCounts).sort(([, a], [, b]) => b - a)[0]?.[0] || "None";
 
   const stats = [
-    { 
-      label: "diary entries", 
+    {
+      label: "diary entries",
       value: totalMovies,
-      icon: <PiBookOpenText className="text-2xl text-accent" /> 
+      icon: <PiBookOpenText className="text-2xl text-accent" />,
     },
-    { 
-      label: "top genre", 
-      value: favoriteGenre.toLowerCase(), 
-      icon: <PiHeartFill className="text-sm text-accent" /> 
+    {
+      label: "top genre",
+      value: favoriteGenre.toLowerCase(),
+      icon: <PiHeartFill className="text-sm text-accent" />,
     },
   ];
 
@@ -72,7 +69,9 @@ const DiaryPage = async () => {
             priority
           />
           <div className="flex flex-col items-center md:items-start gap-2">
-            <p className="text-2xl font-bold text-white">{session.user.username!}</p>
+            <p className="text-2xl font-bold text-white">
+              {session.user.username!}
+            </p>
             <p className="text-base text-white/70">i watch movies for fun.</p>
           </div>
         </div>
@@ -82,10 +81,16 @@ const DiaryPage = async () => {
               {idx > 0 && <div className="h-10 w-px bg-white/30 mx-6" />}
               <div className="flex flex-col items-center min-w-[120px]">
                 <div className="flex items-center gap-3 mb-1">
-                  {React.cloneElement(stat.icon, { className: 'text-4xl text-accent' })}
-                  <span className="text-4xl font-extrabold text-white">{stat.value}</span>
+                  {React.cloneElement(stat.icon, {
+                    className: "text-4xl text-accent",
+                  })}
+                  <span className="text-4xl font-extrabold text-white">
+                    {stat.value}
+                  </span>
                 </div>
-                <span className="text-lg text-white/70 font-medium text-center">{stat.label}</span>
+                <span className="text-lg text-white/70 font-medium text-center">
+                  {stat.label}
+                </span>
               </div>
             </React.Fragment>
           ))}

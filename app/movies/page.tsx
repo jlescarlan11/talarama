@@ -1,4 +1,5 @@
 // app/movies/page.tsx
+import Link from "next/link";
 import { Suspense } from "react";
 import { MovieService } from "../services/movieService";
 import MovieFiltersComponent from "./MovieFilters";
@@ -19,11 +20,29 @@ const MoviePage = async ({ searchParams }: MoviesPageProps) => {
   const movies = await MovieService.getMovies({ sort, genre, search });
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center gap-3 mb-8">
-        <h1 className="text-3xl font-bold text-white">Movies</h1>
+    <div className="container max-w-7xl mx-auto pb-12">
+      {/* Header with breadcrumb navigation */}
+      <div className="mb-4">
+        <div className="mb-6">
+          <div className="text-sm breadcrumbs">
+            <ul>
+              <li>
+                <Link href="/" className="hover:underline">
+                  Home
+                </Link>
+              </li>
+              <li>Movies</li>
+            </ul>
+          </div>
+        </div>
+
+        <h1 className="text-3xl font-bold mb-2">Discover Movies</h1>
+        <p className="text-base-content/70 max-w-2xl">
+          Explore our entire movie collection with advanced search and filtering options.
+        </p>
       </div>
 
+      {/* Main Content */}
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Suspense fallback={<MovieFiltersSkeleton />}>
@@ -38,6 +57,12 @@ const MoviePage = async ({ searchParams }: MoviesPageProps) => {
           <MovieGrid movies={movies} />
         </Suspense>
       </div>
+
+      <footer className="footer footer-center p-4 mt-12 text-base-content border-t border-base-300">
+        <div>
+          <p className="text-sm">Browse and discover your favorite movies</p>
+        </div>
+      </footer>
     </div>
   );
 };
