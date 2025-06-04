@@ -1,18 +1,17 @@
 // components/ClientTabs.tsx
 "use client";
 import { useState, ReactNode } from "react";
+import WatchlistContent from "./WatchlistContent";
 
 interface ClientTabsProps {
   favoritesContent: ReactNode;
   diariesContent: ReactNode;
-  watchlistContent?: ReactNode;
   statisticsContent?: ReactNode;
 }
 
 const ClientTabs = ({
   favoritesContent,
   diariesContent,
-  watchlistContent,
   statisticsContent,
 }: ClientTabsProps) => {
   const [activeTab, setActiveTab] = useState("favorites");
@@ -64,12 +63,7 @@ const ClientTabs = ({
 
       {activeTab === "watchlist" && (
         <div role="tabpanel" className="p-6">
-          {watchlistContent || (
-            <>
-              <h3 className="text-xl font-bold mb-4">Watchlist</h3>
-              <p>Items you&apos;re watching would appear here.</p>
-            </>
-          )}
+          <WatchlistContent />
         </div>
       )}
 
