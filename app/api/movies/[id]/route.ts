@@ -13,7 +13,7 @@ export async function PATCH(
 
   if (!session) return NextResponse.json({}, { status: 401 });
 
-  const { id } = await params;
+  const { id } = params;
 
   try {
     const body = await request.json();
@@ -88,7 +88,7 @@ export async function DELETE(
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({}, { status: 401 });
 
-  const { id } = await params;
+  const { id } = params;
   const movie = await prisma.movie.findUnique({
     where: { id },
   });
