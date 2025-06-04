@@ -1,16 +1,12 @@
-import { Mansalva } from "next/font/google";
-import { PiFilmReel } from "react-icons/pi";
-
-const mansalva = Mansalva({ subsets: ["latin"], weight: "400" });
+import Image from "next/image";
+import AppLogo from "../public/appLogo.png";
+import Link from "next/link";
 
 const Logo = () => {
   return (
-    <button className="border-none shadow-none !bg-transparent hover:!bg-transparent">
-      <div className="flex  items-center text-2xl  ">
-        <PiFilmReel />
-        <p className={`${mansalva.className} !tracking-[-0.1em]`}>Talarama</p>
-      </div>
-    </button>
+    <Link href="/" className="flex items-center mt-2">
+      <Image src={AppLogo} alt="App Logo" width={200} height={100} />
+    </Link>
   );
 };
 

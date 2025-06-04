@@ -2,7 +2,7 @@
 import { Link, Skeleton } from "@/app/components";
 // import { usePathname } from "next/navigation";
 import { signIn, signOut, useSession } from "next-auth/react";
-import { PiFilmSlate, PiGearBold, PiHouse, PiNotebook, PiMagnifyingGlassBold } from "react-icons/pi";
+import { PiFilmSlate, PiGearBold, PiNotebook } from "react-icons/pi";
 import Logo from "./Logo";
 
 const NavBar = () => {
@@ -16,7 +16,9 @@ const NavBar = () => {
             <Logo />
           </Link>
           <Link href="/profile">
-            <button className="ml-4 px-6 py-2 rounded-full bg-accent text-white font-bold text-lg shadow-md hover:bg-accent/80 transition">My Profile</button>
+            <button className="ml-4 px-6 py-2 rounded-full bg-accent text-white font-bold text-lg shadow-md hover:bg-accent/80 transition">
+              My Profile
+            </button>
           </Link>
         </div>
         <div className="flex items-center gap-4">
@@ -28,7 +30,7 @@ const NavBar = () => {
 };
 
 const AuthStatus = () => {
-  const { status, data: session } = useSession();
+  const { status } = useSession();
 
   if (status === "loading") return <Skeleton width="3rem" />;
   if (status === "unauthenticated")
@@ -44,16 +46,15 @@ const AuthStatus = () => {
         <NavLinks />
       </div>
       <div className="dropdown dropdown-end">
-        <div
-          tabIndex={0}
-          role="button"
-          className="btn btn-primary"
-        >
+        <div tabIndex={0} role="button" className="btn btn-primary">
           <PiGearBold className="text-xl" />
         </div>
-        <div tabIndex={0} className="menu menu-sm dropdown-content p-2 w-48 bg-base-100 shadow-lg rounded-box">
+        <div
+          tabIndex={0}
+          className="menu menu-sm dropdown-content p-2 w-48 bg-base-100 shadow-lg rounded-box"
+        >
           <div className="flex flex-col gap-2">
-            <button 
+            <button
               className="btn btn-ghost justify-start"
               onClick={() => signOut({ callbackUrl: "/" })}
             >
@@ -79,7 +80,6 @@ const NavLinks = () => {
           <Link href={link.href}>{link.label}</Link>
         </button>
       ))}
-      
     </div>
   );
 };
