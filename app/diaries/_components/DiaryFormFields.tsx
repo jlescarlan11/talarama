@@ -1,11 +1,11 @@
 "use client";
 
-import React from "react";
-import { UseFormRegister, FieldErrors } from "react-hook-form";
-import MovieSearch from "./MovieSearch";
-import StarRating from "../new/StarRating";
 import ErrorMessage from "@/app/components/ErrorMessage";
+import React from "react";
+import { FieldErrors, UseFormRegister } from "react-hook-form";
+import StarRating from "../new/StarRating";
 import { Movie } from "../types/diary";
+import MovieSearch from "./MovieSearch";
 
 interface DiaryFormData {
   movieId: string;
@@ -33,7 +33,6 @@ const DiaryFormFields: React.FC<DiaryFormFieldsProps> = ({
   errors,
   watchedFields,
   onRatingChange,
-  isEditMode,
 }) => {
   return (
     <>
@@ -85,9 +84,6 @@ const DiaryFormFields: React.FC<DiaryFormFieldsProps> = ({
 
       {/* Star rating */}
       <div className="form-control">
-        <label className="label">
-          <span className="label-text font-semibold">Rating</span>
-        </label>
         <StarRating
           rating={watchedFields.rating}
           onRatingChange={onRatingChange}

@@ -1,13 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import MovieSearch from "./MovieSearch";
-import StarRating from "../new/StarRating";
-import { Movie, DiaryFormData, FormErrors, DiaryEntryWithMovie } from "../types/diary";
-import Image from "next/image";
+import { DiaryEntryWithMovie, DiaryFormData, Movie } from "../types/diary";
 import DiaryFormFields from "./DiaryFormFields";
 import MoviePreview from "./MoviePreview";
 
@@ -17,17 +14,33 @@ interface DiaryFormProps {
   initialMovie?: Movie | null;
 }
 
-const DiaryForm: React.FC<DiaryFormProps> = ({ movies, diary, initialMovie }) => {
+const DiaryForm: React.FC<DiaryFormProps> = ({
+  movies,
+  diary,
+  initialMovie,
+}) => {
   const router = useRouter();
-  const { register, handleSubmit, setValue, trigger, formState: { errors }, setError, watch } = useForm<DiaryFormData>({
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    trigger,
+    formState: { errors },
+    setError,
+    watch,
+  } = useForm<DiaryFormData>({
     defaultValues: {
       movieId: diary?.movieId || initialMovie?.id || "",
       rating: diary?.rating || 0,
       review: diary?.review || "",
-      watchedDate: diary?.watchedDate ? new Date(diary.watchedDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-    }
+      watchedDate: diary?.watchedDate
+        ? new Date(diary.watchedDate).toISOString().split("T")[0]
+        : new Date().toISOString().split("T")[0],
+    },
   });
-  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(initialMovie || null);
+  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(
+    initialMovie || null
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const watchedFields = watch();
 
@@ -37,7 +50,7 @@ const DiaryForm: React.FC<DiaryFormProps> = ({ movies, diary, initialMovie }) =>
       setSelectedMovie(initialMovie);
       setValue("movieId", initialMovie.id);
     } else if (diary?.movie) {
-      const movie = movies.find(m => m.id === diary.movieId);
+      const movie = movies.find((m) => m.id === diary.movieId);
       if (movie) {
         setSelectedMovie(movie);
         setValue("movieId", movie.id);
