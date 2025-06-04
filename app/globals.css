@@ -38,4 +38,11 @@ html, body {
   .text-accent {
     color: #a259ff !important;
   }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
