@@ -40,6 +40,27 @@ const MyDiaries = async () => {
     },
   });
 
+  const getDiaryStats = () => {
+    if (diaryEntries.length === 0) return null;
+
+    const totalRating = diaryEntries.reduce(
+      (sum, entry) => sum + entry.rating,
+      0
+    );
+    const averageRating = totalRating / diaryEntries.length;
+
+    const currentYear = new Date().getFullYear();
+    const thisYearEntries = diaryEntries.filter(
+      (entry) => new Date(entry.watchedDate).getFullYear() === currentYear
+    );
+
+    return {
+      totalEntries: diaryEntries.length,
+      averageRating: Math.round(averageRating * 10) / 10,
+      thisYearCount: thisYearEntries.length,
+    };
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Grouped Diary Entries */}
