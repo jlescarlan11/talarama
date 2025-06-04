@@ -6,8 +6,6 @@ import authOptions from "@/app/auth/authOptions";
 import { diaryEntrySchema } from "@/app/validationSchemas";
 import prisma from "@/prisma/client";
 
-export const runtime = "edge"; // Explicitly opt into Edge runtime
-
 export async function PATCH(
   request: Request,
   {
