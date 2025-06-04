@@ -51,9 +51,6 @@ const MovieReviews = ({ reviews }: Props) => {
     <div className="mt-16">
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-2xl font-bold">Reviews ({reviews.length})</h2>
-        <button className="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-md font-semibold transition-colors">
-          Write Review
-        </button>
       </div>
 
       <div className="space-y-6">
