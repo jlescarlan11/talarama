@@ -3,15 +3,8 @@
 import React from "react";
 import { FieldErrors, UseFormRegister } from "react-hook-form";
 import StarRating from "../new/StarRating";
-import { Movie } from "../types/diary";
+import { Movie, DiaryFormData } from "../types/diary";
 import MovieSearch from "./MovieSearch";
-
-interface DiaryFormData {
-  movieId: string;
-  rating: number;
-  review: string;
-  watchedDate: string;
-}
 
 interface DiaryFormFieldsProps {
   movies: Movie[];
