@@ -3,7 +3,16 @@ import { getServerSession } from "next-auth";
 import authOptions from "../auth/authOptions";
 import prisma from "@/prisma/client";
 import MovieGrid from "../movies/MovieGrid";
-import { MovieWithGenres } from "../movies/types";
+import { Movie, MovieCategorizesAs, Genre } from "@prisma/client";
+
+type MovieWithGenres = Movie & {
+  genres: (MovieCategorizesAs & {
+    genre: Genre;
+  })[];
+  _count?: {
+    diaryEntries?: number;
+  };
+};
 
 const Watchlist = async () => {
   const session = await getServerSession(authOptions);

@@ -3,6 +3,7 @@
 import { Genre, Movie, MovieCategorizesAs } from "@prisma/client";
 import MovieCard from "./MovieCard";
 import EmptyMovieState from "./EmptyMovieState";
+import { ReactElement } from "react";
 
 interface MovieWithGenres extends Movie {
   genres: (MovieCategorizesAs & {
@@ -17,7 +18,7 @@ interface MovieGridProps {
   movies: MovieWithGenres[];
   emptyStateTitle?: string;
   emptyStateDescription?: string;
-  emptyStateIcon?: string;
+  emptyStateIcon?: ReactElement;
 }
 
 const MovieGrid = ({

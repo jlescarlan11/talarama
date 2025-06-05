@@ -1,20 +1,21 @@
 // components/movies/EmptyMovieState.tsx
 "use client";
+import { ReactElement } from "react";
 
 interface EmptyMovieStateProps {
   title?: string;
   description?: string;
-  icon?: string;
+  icon?: ReactElement;
 }
 
 const EmptyMovieState = ({
   title = "No movies found",
   description = "Try adjusting your search or explore a different filter",
-  icon = "🎬",
+  icon,
 }: EmptyMovieStateProps) => {
   return (
     <div className="flex flex-col items-center justify-center min-h-[40vh] px-4">
-      <div className="text-6xl mb-6 animate-pulse">{icon}</div>
+      <div className="text-6xl mb-6 animate-pulse">{icon || "🎬"}</div>
       <h3 className="text-xl font-bold mb-3 text-base-content">{title}</h3>
       <p className="text-base-content/70 text-center mb-4 max-w-md leading-relaxed">
         {description}

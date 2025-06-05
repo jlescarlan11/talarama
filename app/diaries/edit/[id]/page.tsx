@@ -5,7 +5,6 @@ import { notFound } from "next/navigation";
 
 type Props = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
 const EditDiaryPage = async ({ params }: Props) => {
