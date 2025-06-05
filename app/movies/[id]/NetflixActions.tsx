@@ -13,6 +13,11 @@ interface Props {
   posterUrl: string | null;
   isLiked: boolean;
   onLikeChange: (isLiked: boolean) => void;
+  counts: {
+    diaryEntries: number;
+    watchedBy: number;
+    likedBy: number;
+  };
 }
 
 const NetflixActions = ({ movieId, movieTitle, posterUrl, isLiked, onLikeChange }: Props) => {

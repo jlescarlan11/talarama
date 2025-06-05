@@ -2,23 +2,31 @@
 
 // components/NetflixHero.tsx
 import Image from "next/image";
-import { MovieWithReviews, MovieCounts } from "./types";
+import { MovieWithReviews } from "./types";
 import NetflixActions from "./NetflixActions";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import type { Session } from "next-auth";
+
+interface MovieCounts {
+  diaryEntries: number;
+  watchedBy: number;
+  likedBy: number;
+}
 
 interface Props {
   movie: MovieWithReviews;
   counts: MovieCounts;
+  session: Session | null;
 }
 
-const NetflixHero = ({ movie, counts }: Props) => {
-  const { data: session } = useSession();
+const NetflixHero = ({ movie, counts, session }: Props) => {
+  const { data: sessionData } = useSession();
   const [isLiked, setIsLiked] = useState(false);
 
   useEffect(() => {
     const checkLikeStatus = async () => {
-      if (!session) return;
+      if (!sessionData) return;
 
       try {
         const response = await fetch(`/api/movies/${movie.id}/like`);
@@ -32,7 +40,7 @@ const NetflixHero = ({ movie, counts }: Props) => {
     };
 
     checkLikeStatus();
-  }, [movie.id, session]);
+  }, [movie.id, sessionData]);
 
   const director = [movie.directorFirstName, movie.directorLastName]
     .filter(Boolean)

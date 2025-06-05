@@ -72,8 +72,8 @@ export const useDiaryForm = ({ movies, diary }: UseDiaryFormProps) => {
       const payload = {
         movieId: data.movieId,
         rating: data.rating,
-        review: data.review.trim() || undefined,
-        watchedDate: data.watchedDate,
+        notes: data.review?.trim() || undefined,
+        date: data.watchedDate,
       };
 
       if (diary) {
