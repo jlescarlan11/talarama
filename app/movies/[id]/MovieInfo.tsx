@@ -43,17 +43,17 @@ const MovieInfo = ({ movie }: Props) => {
   return (
     <div className="card bg-base-200 shadow-xl">
       <div className="card-body">
-        <h2 className="card-title text-2xl mb-6 text-base-content">Movie Information</h2>
+        <h2 className="card-title text-2xl mb-6">Movie Information</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {infoItems.map((item) => (
             <div key={item.label} className="flex items-center space-x-4">
-              <div className="text-2xl text-base-content">{item.icon}</div>
+              <div className="text-2xl">{item.icon}</div>
               <div>
                 <div className="text-sm text-base-content/60 font-medium uppercase tracking-wide">
                   {item.label}
                 </div>
-                <div className="text-lg font-semibold text-base-content">{item.value}</div>
+                <div className="text-lg font-semibold">{item.value}</div>
               </div>
             </div>
           ))}

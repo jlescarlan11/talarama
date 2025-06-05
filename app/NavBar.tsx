@@ -24,7 +24,7 @@ const NavBar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="sticky bg-info py-2 top-0 z-50 border-b border-info-content/20">
+    <header className="sticky bg-[#14082b] py-2 top-0 z-50 border-b border-base-300">
       <nav
         className="container max-w-7xl mx-auto px-4 h-14 sm:h-16"
         role="navigation"
@@ -62,12 +62,12 @@ const NavBar: React.FC = () => {
       {/* Mobile Navigation */}
       <div
         id="mobile-menu"
-        className={`fixed inset-0 bg-info z-50 transform transition-transform duration-300 ease-in-out sm:hidden ${
+        className={`fixed inset-0 bg-base-100 z-50 transform transition-transform duration-300 ease-in-out sm:hidden ${
           isMenuOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
         <div className="flex flex-col h-full">
-          <div className="flex justify-between items-center p-4 border-b border-info-content/20">
+          <div className="flex justify-between items-center p-4 border-b border-base-300">
             <Link
               href="/"
               aria-label="Home"

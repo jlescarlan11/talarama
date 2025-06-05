@@ -91,7 +91,7 @@ const NetflixHero = ({ movie, counts }: Props) => {
             <div className="flex items-center gap-4 mb-6 text-sm sm:text-base">
               {averageRating > 0 && (
                 <div className="flex items-center gap-2">
-                  <span className="text-warning font-bold text-lg">
+                  <span className="text-yellow-400 font-bold text-lg">
                     {averageRating.toFixed(1)}
                   </span>
                   <div className="flex">
@@ -100,8 +100,8 @@ const NetflixHero = ({ movie, counts }: Props) => {
                         key={star}
                         className={`w-4 h-4 ${
                           star <= averageRating
-                            ? "text-warning"
-                            : "text-base-300"
+                            ? "text-yellow-400"
+                            : "text-gray-600"
                         }`}
                         fill="currentColor"
                         viewBox="0 0 20 20"
@@ -112,14 +112,14 @@ const NetflixHero = ({ movie, counts }: Props) => {
                   </div>
                 </div>
               )}
-              <span className="text-base-content/50">
+              <span className="text-neutral-content/50">
                 {movie.releasedYear}
               </span>
-              <span className="text-base-content/50">
+              <span className="text-neutral-content/50">
                 {Math.floor(movie.duration / 60)}h {movie.duration % 60}m
               </span>
               {director && (
-                <span className="text-base-content/50">Dir. {director}</span>
+                <span className="text-neutral-content/50">Dir. {director}</span>
               )}
             </div>
 
