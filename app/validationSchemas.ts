@@ -19,7 +19,7 @@ export const diaryEntrySchema = z.object({
   watchedDate: z
     .string()
     .min(1, "Watched date is required")
-    .transform((date: Date) => {
+    .transform((date: string) => {
       console.log("🔍 Validating date:", date);
       const parsedDate = new Date(date);
       console.log(
