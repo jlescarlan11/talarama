@@ -1,12 +1,34 @@
 // services/movieService.ts
 import prisma from "@/prisma/client";
-import {
-  MovieFilters,
-  MovieQueryOptions,
-  SortOption,
-  Genre,
-  MovieWithGenres,
-} from "../types/movie";
+import { Movie, MovieCategorizesAs, Genre } from "@prisma/client";
+
+type MovieWithGenres = Movie & {
+  genres: (MovieCategorizesAs & {
+    genre: Genre;
+  })[];
+  _count?: {
+    diaryEntries?: number;
+  };
+};
+
+type MovieFilters = {
+  search?: string;
+  genre?: string;
+  sort?: string;
+};
+
+type MovieQueryOptions = {
+  where?: any;
+  orderBy?: any;
+};
+
+type SortOption =
+  | "title-asc"
+  | "title-desc"
+  | "dateAdded-desc"
+  | "dateAdded-asc"
+  | "releasedYear-desc"
+  | "releasedYear-asc";
 
 export class MovieService {
   static async getGenres(): Promise<Genre[]> {

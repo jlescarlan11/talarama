@@ -88,7 +88,7 @@ const DiaryEntryViewModal: React.FC<DiaryEntryViewModalProps> = ({
             </div>
 
             {/* Movie Info */}
-            {entry.movie.releaseYear && (
+            {entry.movie.releasedYear && (
               <div className="mb-4 p-3 bg-base-200 rounded-lg">
                 <h5 className="font-medium text-base-content mb-2">
                   Movie Information
@@ -96,7 +96,7 @@ const DiaryEntryViewModal: React.FC<DiaryEntryViewModalProps> = ({
                 <div className="space-y-1 text-sm">
                   <p>
                     <span className="font-medium">Release Year:</span>{" "}
-                    {entry.movie.releaseYear}
+                    {entry.movie.releasedYear}
                   </p>
                 </div>
               </div>

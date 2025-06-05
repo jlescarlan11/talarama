@@ -142,7 +142,7 @@ const MovieForm = ({ movie }: { movie?: ExtendedMovie }) => {
                         }`}
                       />
                     </label>
-                    <ErrorMessage>{errors.title?.message}</ErrorMessage>
+                    <ErrorMessage message={errors.title?.message || ""} />
                   </div>
                   {/* Description */}
                   <div className="form-control">
@@ -157,7 +157,7 @@ const MovieForm = ({ movie }: { movie?: ExtendedMovie }) => {
                         }`}
                       />
                     </label>
-                    <ErrorMessage>{errors.description?.message}</ErrorMessage>
+                    <ErrorMessage message={errors.description?.message || ""} />
                   </div>
 
                   {/* Year and duration */}
@@ -177,9 +177,7 @@ const MovieForm = ({ movie }: { movie?: ExtendedMovie }) => {
                           }`}
                         />
                       </label>
-                      <ErrorMessage>
-                        {errors.releasedYear?.message}
-                      </ErrorMessage>
+                      <ErrorMessage message={errors.releasedYear?.message || ""} />
                     </div>
                     <div className="form-control">
                       <label className="floating-label">
@@ -195,7 +193,7 @@ const MovieForm = ({ movie }: { movie?: ExtendedMovie }) => {
                           }`}
                         />
                       </label>
-                      <ErrorMessage>{errors.duration?.message}</ErrorMessage>
+                      <ErrorMessage message={errors.duration?.message || ""} />
                     </div>
                   </div>
 
@@ -214,9 +212,7 @@ const MovieForm = ({ movie }: { movie?: ExtendedMovie }) => {
                           }`}
                         />
                       </label>
-                      <ErrorMessage>
-                        {errors.directorFirstName?.message}
-                      </ErrorMessage>
+                      <ErrorMessage message={errors.directorFirstName?.message || ""} />
                     </div>
                     <div className="form-control">
                       <label className="floating-label">
@@ -231,9 +227,7 @@ const MovieForm = ({ movie }: { movie?: ExtendedMovie }) => {
                           }`}
                         />
                       </label>
-                      <ErrorMessage>
-                        {errors.directorLastName?.message}
-                      </ErrorMessage>
+                      <ErrorMessage message={errors.directorLastName?.message || ""} />
                     </div>
                   </div>
 
@@ -256,7 +250,7 @@ const MovieForm = ({ movie }: { movie?: ExtendedMovie }) => {
                         }`}
                       />
                     </label>
-                    <ErrorMessage>{errors.genres?.message}</ErrorMessage>
+                    <ErrorMessage message={errors.genres?.message || ""} />
                   </div>
                 </div>
               </div>
@@ -282,7 +276,7 @@ const MovieForm = ({ movie }: { movie?: ExtendedMovie }) => {
                         }`}
                       />
                     </label>
-                    <ErrorMessage>{errors.posterUrl?.message}</ErrorMessage>
+                    <ErrorMessage message={errors.posterUrl?.message || ""} />
                   </div>
 
                   {/* Poster Preview */}

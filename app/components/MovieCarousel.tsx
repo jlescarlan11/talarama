@@ -2,7 +2,16 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { MovieWithGenres } from '../types/movie';
+import { Movie, MovieCategorizesAs, Genre } from '@prisma/client';
+
+type MovieWithGenres = Movie & {
+  genres: (MovieCategorizesAs & {
+    genre: Genre;
+  })[];
+  _count?: {
+    diaryEntries?: number;
+  };
+};
 
 interface MovieCarouselProps {
   movies: MovieWithGenres[];
