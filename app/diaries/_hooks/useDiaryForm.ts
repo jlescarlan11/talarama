@@ -23,7 +23,7 @@ export const useDiaryForm = ({ movies, diary }: UseDiaryFormProps) => {
     defaultValues: {
       movieId: diary?.movieId ?? "",
       rating: diary?.rating ?? 0,
-      review: diary?.review ?? "",
+      review: diary?.review,
       watchedDate: diary?.watchedDate
         ? new Date(diary.watchedDate).toISOString().split("T")[0]
         : new Date().toISOString().split("T")[0],
