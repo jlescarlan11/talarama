@@ -1,8 +1,8 @@
-'use client';
-import React, { useRef, useEffect, useState, useCallback } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { Movie, MovieCategorizesAs, Genre } from '@prisma/client';
+"use client";
+import React, { useRef, useEffect, useState, useCallback } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { Movie, MovieCategorizesAs, Genre } from "@prisma/client";
 
 type MovieWithGenres = Movie & {
   genres: (MovieCategorizesAs & {
@@ -25,20 +25,23 @@ interface CardStyle {
 
 const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
   const displayMovies = movies.slice(0, 14);
-  const [activeIdx, setActiveIdx] = useState(Math.floor(displayMovies.length / 2));
+  const [activeIdx, setActiveIdx] = useState(
+    Math.floor(displayMovies.length / 2)
+  );
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const [isPaused, setIsPaused] = useState(false);
 
   const getCardStyle = useCallback((offset: number): CardStyle => {
     if (offset === 0) return { scale: 1.1, opacity: 1, zIndex: 20 };
-    if (Math.abs(offset) === 1) return { scale: 0.95, opacity: 0.8, zIndex: 15 };
+    if (Math.abs(offset) === 1)
+      return { scale: 0.95, opacity: 0.8, zIndex: 15 };
     return { scale: 0.9, opacity: 0.5, zIndex: 10 };
   }, []);
 
   const scrollToActiveCard = useCallback(() => {
     if (!trackRef.current) return;
-    
+
     const children = Array.from(trackRef.current.children);
     const activeCard = children[activeIdx] as HTMLElement;
     if (!activeCard) return;
@@ -46,14 +49,17 @@ const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
     const track = trackRef.current;
     const trackRect = track.getBoundingClientRect();
     const cardRect = activeCard.getBoundingClientRect();
-    const offset = cardRect.left - trackRect.left - (trackRect.width / 2 - cardRect.width / 2);
-    
-    track.scrollTo({ left: track.scrollLeft + offset, behavior: 'smooth' });
+    const offset =
+      cardRect.left -
+      trackRect.left -
+      (trackRect.width / 2 - cardRect.width / 2);
+
+    track.scrollTo({ left: track.scrollLeft + offset, behavior: "smooth" });
   }, [activeIdx]);
 
   useEffect(() => {
     if (isPaused) return;
-    
+
     if (intervalRef.current) clearInterval(intervalRef.current);
     intervalRef.current = setInterval(() => {
       setActiveIdx((prev) => (prev + 1) % displayMovies.length);
@@ -69,15 +75,17 @@ const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
   }, [activeIdx, scrollToActiveCard]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowLeft') {
-      setActiveIdx((prev) => (prev - 1 + displayMovies.length) % displayMovies.length);
-    } else if (e.key === 'ArrowRight') {
+    if (e.key === "ArrowLeft") {
+      setActiveIdx(
+        (prev) => (prev - 1 + displayMovies.length) % displayMovies.length
+      );
+    } else if (e.key === "ArrowRight") {
       setActiveIdx((prev) => (prev + 1) % displayMovies.length);
     }
   };
 
   return (
-    <div 
+    <div
       className="movie-carousel-outer flex flex-col items-center"
       role="region"
       aria-label="Movie carousel"
@@ -88,30 +96,31 @@ const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
       <div
         ref={trackRef}
         className="movie-carousel-track flex gap-6 overflow-x-auto scrollbar-hide px-4 py-8 snap-x snap-mandatory"
-        style={{ scrollBehavior: 'smooth' }}
+        style={{ scrollBehavior: "smooth" }}
         role="list"
       >
         {[...Array(5)].map((_, i) => {
           const offset = i - 2;
-          const idx = (activeIdx + offset + displayMovies.length) % displayMovies.length;
+          const idx =
+            (activeIdx + offset + displayMovies.length) % displayMovies.length;
           const movie = displayMovies[idx];
           const { scale, opacity, zIndex } = getCardStyle(offset);
 
           return (
             <Link
               href={`/movies/${movie.id}`}
-              key={movie.id + '-' + offset}
+              key={movie.id + "-" + offset}
               className="flex-none w-56 h-80"
               role="listitem"
               aria-label={`${movie.title} (${movie.releasedYear})`}
             >
               <div
-                className={`w-full h-full bg-gray-300 rounded-2xl overflow-hidden shadow-lg relative snap-center transition-all duration-300 group`}
+                className={`w-full h-full bg-base-100 rounded-2xl overflow-hidden shadow-lg relative snap-center transition-all duration-300 group`}
                 style={{
                   transform: `scale(${scale})`,
                   opacity,
                   zIndex,
-                  pointerEvents: 'auto'
+                  pointerEvents: "auto",
                 }}
               >
                 {movie.posterUrl ? (
@@ -122,10 +131,10 @@ const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
                     className="object-cover transition-transform duration-700 group-hover:scale-110"
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     priority={offset === 0}
-                    loading={offset === 0 ? 'eager' : 'lazy'}
+                    loading={offset === 0 ? "eager" : "lazy"}
                   />
                 ) : (
-                  <div 
+                  <div
                     className="w-full h-full flex items-center justify-center text-gray-400 text-xl font-bold"
                     role="img"
                     aria-label="No poster available"
@@ -144,7 +153,11 @@ const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
                       {movie.releasedYear}
                     </p>
                     {movie.genres.length > 0 && (
-                      <div className="flex flex-wrap gap-1 justify-center mt-2" role="list" aria-label="Movie genres">
+                      <div
+                        className="flex flex-wrap gap-1 justify-center mt-2"
+                        role="list"
+                        aria-label="Movie genres"
+                      >
                         {movie.genres.slice(0, 2).map((movieGenre) => (
                           <span
                             key={movieGenre.genre.id}
@@ -155,9 +168,11 @@ const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
                           </span>
                         ))}
                         {movie.genres.length > 2 && (
-                          <span 
+                          <span
                             className="text-xs text-white/70 bg-white/15 backdrop-blur-sm px-2 py-1 rounded-full"
-                            aria-label={`${movie.genres.length - 2} more genres`}
+                            aria-label={`${
+                              movie.genres.length - 2
+                            } more genres`}
                           >
                             +{movie.genres.length - 2}
                           </span>
@@ -178,7 +193,7 @@ const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
           );
         })}
       </div>
-      <div 
+      <div
         className="flex gap-2 mt-4"
         role="tablist"
         aria-label="Carousel navigation"
@@ -187,7 +202,7 @@ const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
           <button
             key={idx}
             className={`w-3 h-3 rounded-full transition-all duration-300 ${
-              idx === activeIdx ? 'bg-violet-500' : 'bg-gray-400 opacity-50'
+              idx === activeIdx ? "bg-violet-500" : "bg-gray-400 opacity-50"
             }`}
             role="tab"
             aria-selected={idx === activeIdx}

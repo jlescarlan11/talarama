@@ -29,7 +29,7 @@ const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({
   };
 
   return (
-    <div className="flex items-center gap-4 bg-[#2a1846]/20 rounded-xl p-4 shadow-md">
+    <div className="flex items-center gap-4 bg-base-300/20 rounded-xl p-4 shadow-md">
       {/* Date Column (hidden, now handled by parent) */}
       {/* Movie Poster */}
       <div className="flex-shrink-0">

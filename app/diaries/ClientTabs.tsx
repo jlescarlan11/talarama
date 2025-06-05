@@ -22,8 +22,11 @@ const ClientTabs = ({
   const [activeTab, setActiveTab] = useState("favorites");
 
   return (
-    <div className="w-full rounded-2xl bg-[#1a1033] shadow-lg">
-      <div role="tablist" className="grid grid-cols-3 p-4 bg-[#22124a] rounded-t-2xl">
+    <div className="w-full rounded-2xl bg-base-200 shadow-lg">
+      <div
+        role="tablist"
+        className="grid grid-cols-3 p-4 bg-base-300 rounded-t-2xl"
+      >
         {tabList.map((tab) => (
           <div key={tab.key} className="relative flex justify-center">
             <button
@@ -45,7 +48,9 @@ const ClientTabs = ({
         {activeTab === "diaries" && diariesContent}
         {activeTab === "watchlist" &&
           (watchlistContent || (
-            <div className="text-center text-white/60">No watchlist items yet.</div>
+            <div className="text-center text-white/60">
+              No watchlist items yet.
+            </div>
           ))}
       </div>
     </div>

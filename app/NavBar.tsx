@@ -24,7 +24,7 @@ const NavBar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="sticky bg-[#14082b] py-2 top-0 z-50 border-b border-base-300">
+    <header className="sticky bg-base-100 py-2 top-0 z-50 border-b border-base-300">
       <nav
         className="container max-w-7xl mx-auto px-4 h-14 sm:h-16"
         role="navigation"
