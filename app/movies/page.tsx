@@ -8,13 +8,13 @@ import MovieSearch from "./MovieSearch";
 import { MovieFiltersSkeleton, MovieListSkeleton } from "./MovieSkeleton";
 
 type Props = {
-  searchParams: { [key: string]: string | string[] | undefined }
-}
+  searchParams: { [key: string]: string | string[] | undefined };
+};
 
-export default async function MoviePage({
-  searchParams,
-}: Props) {
-  const getFirstValue = (value: string | string[] | undefined): string | undefined => {
+export default async function MoviePage({ searchParams }: Props) {
+  const getFirstValue = (
+    value: string | string[] | undefined
+  ): string | undefined => {
     if (Array.isArray(value)) {
       return value[0];
     }
@@ -24,7 +24,7 @@ export default async function MoviePage({
   const sort = getFirstValue(searchParams.sort);
   const genre = getFirstValue(searchParams.genre);
   const search = getFirstValue(searchParams.search);
-  
+
   const movies = await MovieService.getMovies({ sort, genre, search });
 
   return (
@@ -46,7 +46,8 @@ export default async function MoviePage({
 
         <h1 className="text-3xl font-bold mb-2">Discover Movies</h1>
         <p className="text-base-content/70 max-w-2xl">
-          Explore our entire movie collection with advanced search and filtering options.
+          Explore our entire movie collection with advanced search and filtering
+          options.
         </p>
       </div>
 
@@ -56,7 +57,11 @@ export default async function MoviePage({
           <Suspense fallback={<MovieFiltersSkeleton />}>
             <MovieFiltersComponent />
           </Suspense>
-          <Suspense fallback={<div className="w-full sm:w-64 h-10 bg-base-200 rounded-lg" />}>
+          <Suspense
+            fallback={
+              <div className="w-full sm:w-64 h-10 bg-base-200 rounded-lg" />
+            }
+          >
             <MovieSearch />
           </Suspense>
         </div>

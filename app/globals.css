@@ -3,16 +3,6 @@
   themes: light --default, dark --prefersdark;
 }
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-rgb: 255, 255, 255;
-}
-
-body {
-  color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-rgb));
-}
-
 .movie-carousel-outer {
   overflow: hidden;
   width: 100%;
@@ -32,24 +22,5 @@ body {
   }
   100% {
     transform: translateX(calc(-1 * var(--carousel-half-width, 0px)));
-  }
-}
-
-@layer utilities {
-  .nav-links {
-    @apply transition-colors duration-200;
-  }
-  .bg-accent {
-    background-color: #605dff !important;
-  }
-  .text-accent {
-    color: #605dff !important;
-  }
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
   }
 }
