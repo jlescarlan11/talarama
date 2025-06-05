@@ -1,10 +1,8 @@
 // components/MyDiaries.tsx
 import prisma from "@/prisma/client";
 import { getServerSession } from "next-auth";
-import React from "react";
 import authOptions from "../auth/authOptions";
 import GroupedDiaryEntries from "./GroupedDiaryEntries";
-import { DiaryEntryWithMovie } from "./types/diary";
 
 const MyDiaries = async () => {
   const session = await getServerSession(authOptions);
@@ -21,7 +19,7 @@ const MyDiaries = async () => {
     );
   }
 
-  const diaryEntries: DiaryEntryWithMovie[] = await prisma.diaryEntry.findMany({
+  const diaryEntries = await prisma.diaryEntry.findMany({
     where: {
       userId: session.user.id,
     },

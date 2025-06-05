@@ -1,6 +1,7 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: light --default, dark --prefersdark;
+}
 
 :root {
   --foreground-rgb: 0, 0, 0;
@@ -26,8 +27,12 @@ body {
   width: var(--carousel-track-width, max-content);
 }
 @keyframes carousel-move {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(calc(-1 * var(--carousel-half-width, 0px))); }
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc(-1 * var(--carousel-half-width, 0px)));
+  }
 }
 
 @layer utilities {

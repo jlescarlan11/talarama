@@ -7,15 +7,13 @@ import MovieGrid from "./MovieGrid";
 import MovieSearch from "./MovieSearch";
 import { MovieFiltersSkeleton, MovieListSkeleton } from "./MovieSkeleton";
 
-type SearchParams = {
-  [key: string]: string | string[] | undefined;
-};
+type Props = {
+  searchParams: { [key: string]: string | string[] | undefined }
+}
 
 export default async function MoviePage({
   searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
+}: Props) {
   const getFirstValue = (value: string | string[] | undefined): string | undefined => {
     if (Array.isArray(value)) {
       return value[0];
