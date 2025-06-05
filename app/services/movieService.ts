@@ -1,6 +1,6 @@
 // services/movieService.ts
 import prisma from "@/prisma/client";
-import { Movie, MovieCategorizesAs, Genre } from "@prisma/client";
+import { Movie, MovieCategorizesAs, Genre, Prisma } from "@prisma/client";
 
 type MovieWithGenres = Movie & {
   genres: (MovieCategorizesAs & {
@@ -18,8 +18,8 @@ type MovieFilters = {
 };
 
 type MovieQueryOptions = {
-  where?: any;
-  orderBy?: any;
+  where?: Prisma.MovieWhereInput;
+  orderBy?: Prisma.MovieOrderByWithRelationInput;
 };
 
 type SortOption =

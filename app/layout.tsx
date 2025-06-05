@@ -1,7 +1,5 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
-import { getServerSession } from "next-auth";
-import authOptions from "./auth/authOptions";
 import NavBar from "./NavBar";
 import AuthProvider from "./auth/Provider";
 

@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import axios from "axios";
-import { MovieCounts } from "./types";
 
 interface Props {
   movieId: string;
@@ -14,10 +13,9 @@ interface Props {
   posterUrl: string | null;
   isLiked: boolean;
   onLikeChange: (isLiked: boolean) => void;
-  counts: MovieCounts;
 }
 
-const NetflixActions = ({ movieId, movieTitle, posterUrl, isLiked, onLikeChange, counts }: Props) => {
+const NetflixActions = ({ movieId, movieTitle, posterUrl, isLiked, onLikeChange }: Props) => {
   const router = useRouter();
   const { data: sessionData } = useSession();
   const [isInWatchlist, setIsInWatchlist] = useState(false);
