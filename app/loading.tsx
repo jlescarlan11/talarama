@@ -3,7 +3,7 @@ import { Skeleton } from "@/app/components";
 
 const HomeLoading = () => {
   return (
-    <div className="max-h-screen bg-base-100 flex flex-col items-center justify-start pt-12">
+    <div className="max-h-screen bg-base-100 flex flex-col items-center justify-start">
       <Skeleton height={80} width={400} className="mb-4" />
       <Skeleton height={32} width={300} className="mb-8" />
 

@@ -9,7 +9,7 @@ export default async function Home() {
   const session = await getServerSession(authOptions);
 
   return (
-    <div className="max-h-screen flex flex-col items-center justify-start pt-12">
+    <div className="max-h-screen flex flex-col items-center justify-start ">
       <h1 className="text-5xl md:text-7xl font-bold text-center text-white mb-4 drop-shadow-lg">
         {session
           ? `Welcome back, ${session.user.username}`
