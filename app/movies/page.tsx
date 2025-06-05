@@ -7,15 +7,17 @@ import MovieGrid from "./MovieGrid";
 import MovieSearch from "./MovieSearch";
 import { MovieFiltersSkeleton, MovieListSkeleton } from "./MovieSkeleton";
 
-interface MoviesPageProps {
-  searchParams: {
-    sort?: string;
-    genre?: string;
-    search?: string;
-  };
-}
+type SearchParams = {
+  sort?: string;
+  genre?: string;
+  search?: string;
+};
 
-const MoviePage = async ({ searchParams }: MoviesPageProps) => {
+export default async function MoviePage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
   const { sort, genre, search } = searchParams;
   const movies = await MovieService.getMovies({ sort, genre, search });
 
@@ -65,6 +67,4 @@ const MoviePage = async ({ searchParams }: MoviesPageProps) => {
       </footer>
     </div>
   );
-};
-
-export default MoviePage;
+}
