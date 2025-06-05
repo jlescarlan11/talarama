@@ -202,7 +202,7 @@ const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
           <button
             key={idx}
             className={`w-3 h-3 rounded-full transition-all duration-300 ${
-              idx === activeIdx ? "bg-violet-500" : "bg-base-100 opacity-50"
+              idx === activeIdx ? "bg-primary" : "bg-primary/20 opacity-50"
             }`}
             role="tab"
             aria-selected={idx === activeIdx}

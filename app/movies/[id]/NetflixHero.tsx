@@ -20,7 +20,7 @@ interface Props {
   session: Session | null;
 }
 
-const NetflixHero = ({ movie, counts, session }: Props) => {
+const NetflixHero = ({ movie, counts }: Props) => {
   const { data: sessionData } = useSession();
   const [isLiked, setIsLiked] = useState(false);
 
