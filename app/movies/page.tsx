@@ -8,9 +8,7 @@ import MovieSearch from "./MovieSearch";
 import { MovieFiltersSkeleton, MovieListSkeleton } from "./MovieSkeleton";
 
 type SearchParams = {
-  sort?: string;
-  genre?: string;
-  search?: string;
+  [key: string]: string | string[] | undefined;
 };
 
 export default async function MoviePage({
@@ -18,7 +16,17 @@ export default async function MoviePage({
 }: {
   searchParams: SearchParams;
 }) {
-  const { sort, genre, search } = searchParams;
+  const getFirstValue = (value: string | string[] | undefined): string | undefined => {
+    if (Array.isArray(value)) {
+      return value[0];
+    }
+    return value;
+  };
+
+  const sort = getFirstValue(searchParams.sort);
+  const genre = getFirstValue(searchParams.genre);
+  const search = getFirstValue(searchParams.search);
+  
   const movies = await MovieService.getMovies({ sort, genre, search });
 
   return (
