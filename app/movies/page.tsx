@@ -8,22 +8,11 @@ import MovieSearch from "./MovieSearch";
 import { MovieFiltersSkeleton, MovieListSkeleton } from "./MovieSkeleton";
 
 type Props = {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | undefined }>;
 };
 
 export default async function MoviePage({ searchParams }: Props) {
-  const getFirstValue = (
-    value: string | string[] | undefined
-  ): string | undefined => {
-    if (Array.isArray(value)) {
-      return value[0];
-    }
-    return value;
-  };
-
-  const sort = getFirstValue(searchParams.sort);
-  const genre = getFirstValue(searchParams.genre);
-  const search = getFirstValue(searchParams.search);
+  const { sort, genre, search } = await searchParams;
 
   const movies = await MovieService.getMovies({ sort, genre, search });
 

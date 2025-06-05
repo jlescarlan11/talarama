@@ -17,7 +17,7 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({
       role="alert"
       aria-live="assertive"
     >
-      <div className="text-red-500 mb-4">
+      <div className="text-error mb-4">
         <svg 
           className="w-12 h-12 mx-auto" 
           fill="none" 
@@ -33,8 +33,8 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({
           />
         </svg>
       </div>
-      <h2 className="text-xl font-semibold mb-2">{title}</h2>
-      <p className="text-gray-600 mb-4">{message}</p>
+      <h2 className="text-xl font-semibold mb-2 text-base-content">{title}</h2>
+      <p className="text-base-content/70 mb-4">{message}</p>
       {retry && (
         <button
           onClick={retry}

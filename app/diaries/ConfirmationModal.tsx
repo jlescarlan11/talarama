@@ -28,8 +28,8 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
   return (
     <div className="modal modal-open">
-      <div className="modal-box">
-        <h3 className="font-bold text-lg mb-4">{title}</h3>
+      <div className="modal-box bg-base-100">
+        <h3 className="font-bold text-lg mb-4 text-base-content">{title}</h3>
         <p className="text-base-content/80 mb-6">{message}</p>
 
         <div className="modal-action">
@@ -44,7 +44,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           </button>
         </div>
       </div>
-      <div className="modal-backdrop" onClick={onCancel}></div>
+      <div className="modal-backdrop bg-base-300/50" onClick={onCancel}></div>
     </div>
   );
 };
