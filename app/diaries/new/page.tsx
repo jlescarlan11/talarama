@@ -2,15 +2,15 @@ import prisma from "@/prisma/client";
 import DiaryForm from "../_components/DiaryForm";
 
 interface Props {
-  searchParams: {
+  searchParams: Promise<{
     movieId?: string;
     title?: string;
     posterUrl?: string;
-  };
+  }>;
 }
 
 const DiaryPage = async ({ searchParams }: Props) => {
-  const { movieId, title, posterUrl } = searchParams;
+  const { movieId, title, posterUrl } = await searchParams;
 
   const movies = await prisma.movie.findMany({
     orderBy: {
@@ -21,7 +21,7 @@ const DiaryPage = async ({ searchParams }: Props) => {
   // If movieId is provided, find the movie in the database
   let initialMovie = null;
   if (movieId) {
-    initialMovie = movies.find(movie => movie.id === movieId);
+    initialMovie = movies.find((movie) => movie.id === movieId);
   }
 
   // If movie not found in database but we have title and posterUrl from URL
