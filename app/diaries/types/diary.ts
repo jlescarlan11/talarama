@@ -14,7 +14,7 @@ export interface Movie {
 export interface DiaryFormData {
   movieId: string;
   rating: number;
-  review: string;
+  review?: string;
   watchedDate: string;
 }
 
