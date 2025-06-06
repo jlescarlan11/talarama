@@ -18,10 +18,10 @@ const MovieReviews = ({ reviews }: Props) => {
   if (reviews.length === 0) {
     return (
       <div className="mt-16">
-        <h2 className="text-2xl font-bold mb-8 ">Reviews</h2>
-        <div className="text-center py-16 text-white/60">
+        <h2 className="text-2xl font-bold mb-8 text-base-content">Reviews</h2>
+        <div className="text-center py-16 text-base-content/60 bg-base-200 rounded-lg">
           <svg
-            className="w-16 h-16 mx-auto mb-4 opacity-50"
+            className="w-16 h-16 mx-auto mb-4 opacity-50 text-base-content/50"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -33,8 +33,10 @@ const MovieReviews = ({ reviews }: Props) => {
               d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
             />
           </svg>
-          <p className="text-lg">No reviews yet</p>
-          <p className="text-sm">Be the first to share your thoughts!</p>
+          <p className="text-lg text-base-content/80">No reviews yet</p>
+          <p className="text-sm text-base-content/60">
+            Be the first to share your thoughts!
+          </p>
         </div>
       </div>
     );
@@ -43,14 +45,16 @@ const MovieReviews = ({ reviews }: Props) => {
   return (
     <div className="mt-16">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-2xl font-bold">Reviews ({reviews.length})</h2>
+        <h2 className="text-2xl font-bold text-base-content">
+          Reviews ({reviews.length})
+        </h2>
       </div>
 
-      <div className="space-y-2">
+      <div className="">
         {reviews.map((review) => (
           <div
             key={review.id}
-            className=" border-t border-base-200 rounded-lg p-6 backdrop-blur-sm"
+            className="border-t border-base-300 p-6  hover:bg-base-200 transition-colors"
           >
             <div className="flex items-start gap-4">
               {/* User Avatar */}
@@ -64,9 +68,9 @@ const MovieReviews = ({ reviews }: Props) => {
                     className="rounded-full"
                   />
                 ) : (
-                  <div className="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center">
+                  <div className="w-12 h-12 bg-neutral text-neutral-content rounded-full flex items-center justify-center">
                     <svg
-                      className="w-6 h-6 text-gray-300"
+                      className="w-6 h-6"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
@@ -81,8 +85,8 @@ const MovieReviews = ({ reviews }: Props) => {
               </div>
               {/* Review Content */}
               <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <h3 className="font-semibold ">
+                <div className="flex items-center gap-3 mb-2 flex-wrap">
+                  <h3 className="font-semibold text-base-content">
                     {review.user.name || "Anonymous"}
                   </h3>
                   <div className="flex items-center gap-2">
@@ -92,8 +96,8 @@ const MovieReviews = ({ reviews }: Props) => {
                           key={star}
                           className={`w-4 h-4 ${
                             star <= review.rating
-                              ? "text-yellow-400"
-                              : "text-gray-600"
+                              ? "text-warning"
+                              : "text-base-content/30"
                           }`}
                           fill="currentColor"
                           viewBox="0 0 20 20"
@@ -103,11 +107,13 @@ const MovieReviews = ({ reviews }: Props) => {
                       ))}
                     </div>
                   </div>
-                  <span className="text-neutral-content text-sm">
+                  <span className="text-base-content/50 text-sm">
                     {formatDate(review.updatedAt)}
                   </span>
                 </div>
-                <p className="leading-relaxed mb-3">{review.review}</p>
+                <p className="leading-relaxed mb-3 text-base-content/90">
+                  {review.review}
+                </p>
               </div>
             </div>
           </div>
@@ -117,9 +123,7 @@ const MovieReviews = ({ reviews }: Props) => {
       {/* Load More Button */}
       {reviews.length >= 10 && (
         <div className="text-center mt-8">
-          <button className="bg-gray-700 hover:bg-gray-600 px-8 py-3 rounded-md font-semibold transition-colors">
-            Load More Reviews
-          </button>
+          <button className="btn btn-primary">Load More Reviews</button>
         </div>
       )}
     </div>

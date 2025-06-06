@@ -9,13 +9,13 @@ export default async function Home() {
   const session = await getServerSession(authOptions);
 
   return (
-    <div className="max-h-screen flex flex-col items-center justify-start ">
-      <h1 className="text-5xl md:text-7xl font-bold text-center text-white mb-4 drop-shadow-lg">
+    <div className="max-h-screen flex flex-col items-center justify-start bg-base-100">
+      <h1 className="text-5xl md:text-7xl font-bold text-center text-base-content mb-4 drop-shadow-lg">
         {session
           ? `Welcome back, ${session.user.username}`
           : "Welcome to Movie Diary"}
       </h1>
-      <p className="text-2xl text-center text-white/80 mb-8">
+      <p className="text-2xl text-center text-base-content/80 mb-8">
         Here&apos;s where you left off your movie roll....
       </p>
       <div className="w-full flex justify-center">

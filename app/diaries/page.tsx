@@ -55,40 +55,39 @@ const DiaryPage = async () => {
   ];
 
   return (
-    <>
-      <div className="rounded-2xl shadow-lg p-8 mb-8 flex flex-col md:flex-row items-center gap-8">
-        <div className="flex flex-col items-center md:items-start gap-4 md:flex-row md:gap-8 w-full">
+    <div className="bg-base-100 text-base-content">
+      <div className="rounded-2xl shadow-lg p-8 mb-8 bg-base-200 flex flex-col md:flex-row items-center gap-8">
+        <div className="flex flex-col items-center  gap-4 md:flex-row md:gap-8 w-full">
           <Image
             src={session.user.image!}
             width={100}
             height={100}
             alt="User profile"
-            className="rounded-full border-3 border-[#605dff] shadow-lg"
+            className="rounded-full border-3 border-primary shadow-lg"
             quality={100}
             placeholder="empty"
             priority
           />
-          <div className="flex flex-col items-center md:items-start gap-2">
-            <p className="text-2xl font-bold text-white">
+          <div className="flex flex-col items-center md:items-start gap-1">
+            <p className="text-2xl font-bold text-primary">
               {session.user.username!}
             </p>
-            <p className="text-base text-white/70">i watch movies for fun.</p>
           </div>
         </div>
         <div className="flex flex-row gap-12 w-full justify-center items-center">
           {stats.map((stat, idx) => (
             <React.Fragment key={idx}>
-              {idx > 0 && <div className="h-10 w-px bg-white/30 mx-6" />}
+              {idx > 0 && <div className="h-10 w-px bg-base-content/30 mx-6" />}
               <div className="flex flex-col items-center min-w-[120px]">
                 <div className="flex items-center gap-3 mb-1">
                   {React.cloneElement(stat.icon, {
                     className: "text-4xl text-accent",
                   })}
-                  <span className="text-4xl font-extrabold text-white">
+                  <span className="text-4xl font-extrabold text-primary">
                     {stat.value}
                   </span>
                 </div>
-                <span className="text-lg text-white/70 font-medium text-center">
+                <span className="text-lg text-base-content/70 font-medium text-center">
                   {stat.label}
                 </span>
               </div>
@@ -96,11 +95,11 @@ const DiaryPage = async () => {
           ))}
         </div>
       </div>
-      <div className="border-b border-white/10 mb-4"></div>
+      <div className="border-b border-base-content/10 mb-4"></div>
       <div>
         <TabsContainer />
       </div>
-    </>
+    </div>
   );
 };
 

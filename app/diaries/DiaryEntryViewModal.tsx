@@ -30,13 +30,6 @@ const DiaryEntryViewModal: React.FC<DiaryEntryViewModalProps> = ({
           <h3 className="text-2xl font-bold text-base-content">
             Diary Entry Details
           </h3>
-          <button
-            onClick={onClose}
-            className="btn btn-sm btn-circle btn-ghost"
-            aria-label="Close modal"
-          >
-            ✕
-          </button>
         </div>
 
         <div className="flex gap-6">

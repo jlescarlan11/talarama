@@ -4,7 +4,7 @@ import { Skeleton } from "@/app/components";
 const NewDiaryLoading = () => {
   return (
     <div className="min-h-screen py-8">
-      <div className="container mx-auto px-4 max-w-6xl">
+      <div className="container mx-auto max-w-6xl">
         {/* Header */}
         <Skeleton height={36} width={280} className="mb-8" />
 
@@ -77,4 +77,4 @@ const NewDiaryLoading = () => {
   );
 };
 
-export default NewDiaryLoading; 
+export default NewDiaryLoading;

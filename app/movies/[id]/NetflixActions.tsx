@@ -20,7 +20,13 @@ interface Props {
   };
 }
 
-const NetflixActions = ({ movieId, movieTitle, posterUrl, isLiked, onLikeChange }: Props) => {
+const NetflixActions = ({
+  movieId,
+  movieTitle,
+  posterUrl,
+  isLiked,
+  onLikeChange,
+}: Props) => {
   const router = useRouter();
   const { data: sessionData } = useSession();
   const [isInWatchlist, setIsInWatchlist] = useState(false);
@@ -33,7 +39,9 @@ const NetflixActions = ({ movieId, movieTitle, posterUrl, isLiked, onLikeChange 
 
       try {
         // Check if movie is in watchlist
-        const watchlistResponse = await fetch(`/api/movies/${movieId}/watchlist`);
+        const watchlistResponse = await fetch(
+          `/api/movies/${movieId}/watchlist`
+        );
         if (watchlistResponse.ok) {
           const watchlistData = await watchlistResponse.json();
           setIsInWatchlist(watchlistData.inWatchlist);
@@ -50,7 +58,7 @@ const NetflixActions = ({ movieId, movieTitle, posterUrl, isLiked, onLikeChange 
     const params = new URLSearchParams({
       movieId,
       title: movieTitle,
-      ...(posterUrl && { posterUrl })
+      ...(posterUrl && { posterUrl }),
     });
     router.push(`/diaries/new?${params.toString()}`);
   };
@@ -94,19 +102,26 @@ const NetflixActions = ({ movieId, movieTitle, posterUrl, isLiked, onLikeChange 
   };
 
   return (
-    <div className="flex flex-col space-y-4">
+    <div className="flex flex-col space-y-4  rounded-lg">
       <div className="flex space-x-2">
         {sessionData && (
           <>
             {/* Primary Action */}
-            <button className="btn btn-primary" onClick={handleLogNow}>
+            <button
+              className="btn bg-primary hover:bg-primary-focus text-primary-content"
+              onClick={handleLogNow}
+            >
               <PiNoteBold className="text-xl" />
               Log Now
             </button>
 
             {/* Secondary Actions */}
-            <button 
-              className={`btn ${isInWatchlist ? 'btn-success' : 'btn-accent'}`}
+            <button
+              className={`btn ${
+                isInWatchlist
+                  ? "bg-success text-success-content"
+                  : "bg-accent text-accent-content"
+              }`}
               onClick={handleWatchlist}
             >
               <svg
@@ -122,17 +137,17 @@ const NetflixActions = ({ movieId, movieTitle, posterUrl, isLiked, onLikeChange 
                   d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                 />
               </svg>
-              {isInWatchlist ? 'In Watchlist' : 'Add to Watchlist'}
+              {isInWatchlist ? "In Watchlist" : "Add to Watchlist"}
             </button>
 
             <button
               onClick={handleLike}
               disabled={isLoading}
-              className="btn btn-circle btn-ghost hover:bg-white/10"
+              className="btn btn-circle bg-neutral/10 hover:bg-neutral-focus/10 text-neutral-content"
               aria-label={isLiked ? "Unlike movie" : "Like movie"}
             >
               {isLiked ? (
-                <PiHeartFill className="text-2xl text-accent" />
+                <PiHeartFill className="text-2xl text-error " />
               ) : (
                 <PiHeart className="text-2xl" />
               )}

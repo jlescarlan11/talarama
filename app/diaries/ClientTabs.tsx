@@ -31,10 +31,10 @@ const ClientTabs = ({
           <div key={tab.key} className="relative flex justify-center">
             <button
               role="tab"
-              className={`w-1/2 px-6 py-2 rounded-full font-semibold transition-all duration-150 text-white/80 hover:text-white focus:outline-none focus:ring-2 focus:ring-accent/60 ${
+              className={`w-1/2 px-6 py-2 rounded-full font-semibold transition-all duration-150 text-base-content/80 hover:text-base-content focus:outline-none focus:ring-2 focus:ring-primary ${
                 activeTab === tab.key
-                  ? "bg-accent text-white shadow-md"
-                  : "bg-transparent"
+                  ? "bg-primary text-primary-content shadow-md"
+                  : "bg-transparent hover:bg-base-100"
               }`}
               onClick={() => setActiveTab(tab.key)}
             >
@@ -43,12 +43,12 @@ const ClientTabs = ({
           </div>
         ))}
       </div>
-      <div className="p-6">
+      <div className="p-6 bg-base-100 rounded-b-2xl">
         {activeTab === "favorites" && favoritesContent}
         {activeTab === "diaries" && diariesContent}
         {activeTab === "watchlist" &&
           (watchlistContent || (
-            <div className="text-center text-white/60">
+            <div className="text-center text-base-content/60">
               No watchlist items yet.
             </div>
           ))}

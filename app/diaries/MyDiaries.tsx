@@ -9,9 +9,9 @@ const MyDiaries = async () => {
 
   if (!session?.user?.id) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 bg-base-100">
         <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">
+          <h2 className="text-2xl font-bold mb-4 text-base-content">
             Please sign in to view your diary
           </h2>
         </div>
@@ -43,7 +43,11 @@ const MyDiaries = async () => {
     },
   });
 
-  return <GroupedDiaryEntries entries={diaryEntries} />;
+  return (
+    <div className="bg-base-100 text-base-content">
+      <GroupedDiaryEntries entries={diaryEntries} />
+    </div>
+  );
 };
 
 export default MyDiaries;

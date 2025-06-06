@@ -19,9 +19,9 @@ const Favorites = async () => {
 
   if (!session?.user?.id) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 bg-base-100">
         <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">
+          <h2 className="text-2xl font-bold mb-4 text-base-content">
             Please sign in to view your favorites
           </h2>
         </div>
@@ -67,14 +67,14 @@ const Favorites = async () => {
   }));
 
   return (
-    <div className="px-2 py-4">
+    <div className="px-2 py-4 bg-base-100">
       <MovieGrid
         movies={moviesWithGenres}
         emptyStateTitle="No favorites yet"
         emptyStateDescription="Start adding movies to your favorites by clicking the heart icon on any movie page."
         emptyStateIcon={
           <svg
-            className="w-12 h-12 text-base-content/50"
+            className="w-12 h-12 text-accent"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"

@@ -55,7 +55,6 @@ export async function POST(
     });
 
     if (existingLike) {
-      // Unlike the movie
       await prisma.likedBy.delete({
         where: {
           movieId_userId: {
@@ -128,4 +127,4 @@ export async function DELETE(
       { status: 500 }
     );
   }
-} 
+}

@@ -7,6 +7,7 @@ import {
   PiNotebook,
   PiList,
   PiX,
+  PiPlus,
 } from "react-icons/pi";
 import Logo from "./Logo";
 import React, { useState } from "react";
@@ -197,6 +198,11 @@ interface NavLinksProps {
 const NavLinks: React.FC<NavLinksProps> = ({ currentPath, onNavigate }) => {
   const links: NavLink[] = [
     {
+      icon: <PiPlus aria-hidden="true" />,
+      label: "New Diary",
+      href: "/diaries/new",
+    },
+    {
       icon: <PiNotebook aria-hidden="true" />,
       label: "Diary",
       href: "/diaries",
@@ -210,7 +216,7 @@ const NavLinks: React.FC<NavLinksProps> = ({ currentPath, onNavigate }) => {
 
   return (
     <div className="flex space-x-2">
-      {links.map((link, index) => (
+      {links.map((link) => (
         <React.Fragment key={link.href}>
           <Link
             href={link.href}
@@ -222,16 +228,6 @@ const NavLinks: React.FC<NavLinksProps> = ({ currentPath, onNavigate }) => {
           >
             {link.label}
           </Link>
-          {index === 0 && (
-            <Link
-              href="/diaries/new"
-              className="btn btn-primary h-11 px-6 text-base font-medium"
-              aria-label="Create new diary entry"
-              onClick={onNavigate}
-            >
-              New Diary
-            </Link>
-          )}
         </React.Fragment>
       ))}
     </div>
