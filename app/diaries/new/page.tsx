@@ -1,5 +1,6 @@
 import prisma from "@/prisma/client";
 import DiaryForm from "../_components/DiaryForm";
+import Link from "next/link";
 
 interface Props {
   searchParams: Promise<{
@@ -39,7 +40,28 @@ const DiaryPage = async ({ searchParams }: Props) => {
     };
   }
 
-  return <DiaryForm movies={movies} initialMovie={initialMovie} />;
+  return (
+    <>
+      <div className="mb-6">
+        <div className="text-sm breadcrumbs">
+          <ul>
+            <li>
+              <Link href="/" className="hover:underline">
+                Home
+              </Link>
+            </li>
+            <li>
+              <Link href="/diaries" className="hover:underline">
+                Diary
+              </Link>
+            </li>
+            <li>New Entry</li>
+          </ul>
+        </div>
+      </div>
+      <DiaryForm movies={movies} initialMovie={initialMovie} />
+    </>
+  );
 };
 
 export default DiaryPage;

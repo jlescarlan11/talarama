@@ -6,6 +6,7 @@ import TabsContainer from "./TabsContainer";
 import { PiHeartFill, PiBookOpenText } from "react-icons/pi";
 import React from "react";
 import prisma from "@/prisma/client";
+import Link from "next/link";
 
 const DiaryPage = async () => {
   const session = await getServerSession(authOptions);
@@ -56,6 +57,18 @@ const DiaryPage = async () => {
 
   return (
     <div className="bg-base-100 text-base-content">
+      <div className="mb-6">
+        <div className="text-sm breadcrumbs">
+          <ul>
+            <li>
+              <Link href="/" className="hover:underline">
+                Home
+              </Link>
+            </li>
+            <li>Diary</li>
+          </ul>
+        </div>
+      </div>
       <div className="rounded-2xl shadow-lg p-8 mb-8 bg-base-200 flex flex-col md:flex-row items-center gap-8">
         <div className="flex flex-col items-center  gap-4 md:flex-row md:gap-8 w-full">
           <Image
