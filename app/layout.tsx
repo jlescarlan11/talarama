@@ -7,12 +7,17 @@ import Footer from "./components/Footer";
 
 const inter = Inter({ subsets: ["latin"] });
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
+
 export const metadata = {
   title: "Talarama",
   description: "Your personal movie diary",
   keywords: ["movies", "diary", "personal", "watchlist", "reviews"],
   authors: [{ name: "Talarama Team" }],
-  viewport: "width=device-width, initial-scale=1, maximum-scale=5",
   robots: "index, follow",
   openGraph: {
     type: "website",
