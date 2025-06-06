@@ -4,6 +4,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import authOptions from "@/app/auth/authOptions";
 
+// Add caching headers
+const CACHE_CONTROL = {
+  GET: "private, s-maxage=30, stale-while-revalidate=60", // Cache for 30 seconds, stale for 1 minute
+  POST: "no-store", // Don't cache POST requests
+};
+
 export async function POST(request: NextRequest) {
   console.log("=== DIARY ENTRY POST REQUEST START ===");
 
@@ -17,7 +23,12 @@ export async function POST(request: NextRequest) {
 
   if (!session) {
     console.log("❌ No session found - returning 401");
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { 
+      status: 401,
+      headers: {
+        "Cache-Control": CACHE_CONTROL.POST,
+      },
+    });
   }
 
   try {
@@ -106,7 +117,12 @@ export async function POST(request: NextRequest) {
     );
     console.log("=== DIARY ENTRY POST REQUEST END ===");
 
-    return NextResponse.json(newDiaryEntry, { status: 201 });
+    return NextResponse.json(newDiaryEntry, { 
+      status: 201,
+      headers: {
+        "Cache-Control": CACHE_CONTROL.POST,
+      },
+    });
   } catch (error) {
     if (error && typeof error === "object" && "code" in error) {
       console.error("Database error code:", error.code);
@@ -119,7 +135,12 @@ export async function POST(request: NextRequest) {
         error: "Internal Server Error",
         details: error instanceof Error ? error.message : String(error),
       },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: {
+          "Cache-Control": CACHE_CONTROL.POST,
+        },
+      }
     );
   }
 }

@@ -7,7 +7,10 @@ import { getServerSession } from "next-auth";
 import authOptions from "@/app/auth/authOptions";
 
 // Add caching headers
-const CACHE_CONTROL = "public, s-maxage=10, stale-while-revalidate=59";
+const CACHE_CONTROL = {
+  GET: "public, s-maxage=60, stale-while-revalidate=300", // Cache for 1 minute, stale for 5 minutes
+  POST: "no-store", // Don't cache POST requests
+};
 
 export async function GET() {
   try {
@@ -32,14 +35,19 @@ export async function GET() {
     return NextResponse.json(movies, {
       status: 200,
       headers: {
-        "Cache-Control": CACHE_CONTROL,
+        "Cache-Control": CACHE_CONTROL.GET,
       },
     });
   } catch (error) {
     console.error("Error fetching movies:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      }
     );
   }
 }
@@ -47,7 +55,12 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
 
-  if (!session) return NextResponse.json({}, { status: 401 });
+  if (!session) return NextResponse.json({}, { 
+    status: 401,
+    headers: {
+      "Cache-Control": CACHE_CONTROL.POST,
+    },
+  });
 
   try {
     const body = await request.json();
