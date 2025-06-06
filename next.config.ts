@@ -11,6 +11,16 @@ const nextConfig: NextConfig = {
       "m.media-amazon.com",
     ], // Add any other trusted domains here
   },
+  // Add experimental features that might help with server-side rendering
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '2mb'
+    }
+  },
+  // Ensure proper handling of server-side errors
+  onError: (err: Error) => {
+    console.error('Next.js build error:', err);
+  },
 };
 
 export default nextConfig;
