@@ -17,7 +17,6 @@ interface DiaryEntryCardProps {
 
 const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({
   diaryEntry,
-
   onView,
   onEdit,
   onDelete,
@@ -29,8 +28,7 @@ const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({
   };
 
   return (
-    <div className="flex items-center gap-4 bg-base-300/20 rounded-xl p-4 shadow-md">
-      {/* Date Column (hidden, now handled by parent) */}
+    <div className="flex items-center gap-2 sm:gap-4 bg-base-300/20 rounded-lg sm:rounded-xl p-2 sm:p-4 shadow-md">
       {/* Movie Poster */}
       <div className="flex-shrink-0">
         {diaryEntry.movie.posterUrl ? (
@@ -39,13 +37,13 @@ const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({
             width={60}
             src={diaryEntry.movie.posterUrl}
             alt={`${diaryEntry.movie.title} poster`}
-            className="rounded-lg object-cover shadow-lg"
+            className="rounded-lg object-cover shadow-lg w-[50px] h-[70px] sm:w-[60px] sm:h-[80px]"
             loading="lazy"
           />
         ) : (
-          <div className="w-[60px] h-[80px] bg-base-200 rounded-lg flex items-center justify-center">
+          <div className="w-[50px] h-[70px] sm:w-[60px] sm:h-[80px] bg-base-200 rounded-lg flex items-center justify-center">
             <svg
-              className="w-8 h-8 text-base-content/40"
+              className="w-6 h-6 sm:w-8 sm:h-8 text-base-content/40"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -63,17 +61,17 @@ const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({
       </div>
       {/* Movie Details */}
       <div className="flex-grow min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <h3 className="font-semibold text-lg text-white leading-tight truncate">
+        <div className="flex items-center gap-1 sm:gap-2 mb-0.5 sm:mb-1">
+          <h3 className="font-semibold text-base sm:text-lg text-white leading-tight truncate">
             {diaryEntry.movie.title}
           </h3>
-          <PiHeartFill className="text-accent text-xl ml-2" />
+          <PiHeartFill className="text-accent text-lg sm:text-xl ml-1 sm:ml-2" />
         </div>
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
           <StarRating rating={diaryEntry.rating} size="sm" />
         </div>
         {diaryEntry.review && (
-          <p className="text-sm text-white/70 leading-relaxed truncate">
+          <p className="text-xs sm:text-sm text-white/70 leading-relaxed truncate">
             {truncateReview(diaryEntry.review)}
           </p>
         )}

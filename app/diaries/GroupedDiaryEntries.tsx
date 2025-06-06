@@ -43,11 +43,11 @@ const GroupedDiaryEntries: React.FC<GroupedDiaryEntriesProps> = ({
 
   if (entries.length === 0) {
     return (
-      <div className="text-center py-12">
+      <div className="text-center py-8 sm:py-12 px-4">
         <div className="max-w-md mx-auto">
-          <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-base-300 flex items-center justify-center">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-4 rounded-full bg-base-300 flex items-center justify-center">
             <svg
-              className="w-12 h-12 text-base-content/50"
+              className="w-10 h-10 sm:w-12 sm:h-12 text-base-content/50"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -61,10 +61,10 @@ const GroupedDiaryEntries: React.FC<GroupedDiaryEntriesProps> = ({
               />
             </svg>
           </div>
-          <h3 className="text-xl font-semibold mb-2 text-base-content">
+          <h3 className="text-lg sm:text-xl font-semibold mb-2 text-base-content">
             No diary entries yet
           </h3>
-          <p className="text-base-content/70 mb-4">
+          <p className="text-sm sm:text-base text-base-content/70 mb-4 px-4">
             Start your movie journey by watching and rating your first film!
           </p>
           <button className="btn btn-primary">Add Your First Entry</button>
@@ -77,15 +77,15 @@ const GroupedDiaryEntries: React.FC<GroupedDiaryEntriesProps> = ({
   const sortedMonthKeys = sortMonthKeys(Object.keys(groupedEntries));
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 sm:space-y-8 px-2 sm:px-4">
       {/* Month Header */}
       {sortedMonthKeys.map((monthYear, index) => (
-        <div key={monthYear} className=" rounded-xl p-6 shadow-md">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="bg-accent/20 rounded-full p-2">
-              <PiCalendarBlank className="text-accent text-2xl" />
+        <div key={monthYear} className="rounded-lg sm:rounded-xl p-3 sm:p-6 shadow-md">
+          <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+            <div className="bg-accent/20 rounded-full p-1.5 sm:p-2">
+              <PiCalendarBlank className="text-accent text-xl sm:text-2xl" />
             </div>
-            <h2 className="font-bold text-lg text-white">{monthYear}</h2>
+            <h2 className="font-bold text-base sm:text-lg text-white">{monthYear}</h2>
           </div>
           <DiaryMonthGroup
             monthYear={monthYear}

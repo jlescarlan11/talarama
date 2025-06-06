@@ -16,7 +16,7 @@ const EmptyMovieState = ({
     <div className="flex flex-col items-center justify-center min-h-[40vh] px-4">
       <div className="text-6xl mb-6 animate-pulse">{"🎬"}</div>
       <h3 className="text-xl font-bold mb-3 text-base-content">{title}</h3>
-      <p className="text-base-content/70 text-center mb-4 max-w-md leading-relaxed">
+      <p className="text-base-content/70 text-center mb-4 leading-relaxed">
         {description}
       </p>
       <div className="flex gap-2 mt-2">

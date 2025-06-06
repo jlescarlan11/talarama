@@ -10,7 +10,7 @@ import {
   PiPlus,
 } from "react-icons/pi";
 import Logo from "./Logo";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 
@@ -24,32 +24,53 @@ const NavBar: React.FC = () => {
   const currentPath = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [currentPath]);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isMenuOpen]);
+
   return (
-    <header className="sticky bg-base-100 py-2 top-0 z-50 border-b border-base-300">
+    <header className="sticky bg-base-100 py-2 top-0 z-50 border-b border-base-300 shadow-sm">
       <nav
-        className="container max-w-7xl mx-auto px-4 h-14 sm:h-16"
+        className="container mx-auto px-4 h-14 sm:h-16"
         role="navigation"
         aria-label="Main navigation"
       >
         <div className="flex items-center justify-between h-full">
           <div className="flex items-center gap-4">
-            <Link href="/" aria-label="Home" className="h-8">
+            <Link 
+              href="/" 
+              aria-label="Home" 
+              className="h-8 hover-scale focus-ring"
+            >
               <Logo />
             </Link>
           </div>
 
           {/* Mobile Menu Button */}
           <button
-            className="btn btn-ghost p-2 sm:hidden"
+            className="btn btn-ghost p-2 sm:hidden hover-scale focus-ring"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label={isMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={isMenuOpen}
             aria-controls="mobile-menu"
           >
             {isMenuOpen ? (
-              <PiX className="text-2xl" />
+              <PiX className="text-2xl" aria-hidden="true" />
             ) : (
-              <PiList className="text-2xl" />
+              <PiList className="text-2xl" aria-hidden="true" />
             )}
           </button>
 
@@ -63,9 +84,12 @@ const NavBar: React.FC = () => {
       {/* Mobile Navigation */}
       <div
         id="mobile-menu"
-        className={`fixed inset-0 bg-base-100 z-50 transform transition-transform duration-300 ease-in-out sm:hidden ${
+        className={`fixed inset-0 bg-base-100 z-50 transform transition-transform duration-[var(--transition-duration)] ease-[var(--transition-timing)] sm:hidden ${
           isMenuOpen ? "translate-x-0" : "translate-x-full"
         }`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Mobile menu"
       >
         <div className="flex flex-col h-full">
           <div className="flex justify-between items-center p-4 border-b border-base-300">
@@ -73,16 +97,16 @@ const NavBar: React.FC = () => {
               href="/"
               aria-label="Home"
               onClick={() => setIsMenuOpen(false)}
-              className="h-8"
+              className="h-8 hover-scale focus-ring"
             >
               <Logo />
             </Link>
             <button
-              className="btn btn-ghost p-2"
+              className="btn btn-ghost p-2 hover-scale focus-ring"
               onClick={() => setIsMenuOpen(false)}
               aria-label="Close menu"
             >
-              <PiX className="text-2xl" />
+              <PiX className="text-2xl" aria-hidden="true" />
             </button>
           </div>
           <div className="flex-1 overflow-y-auto p-4">

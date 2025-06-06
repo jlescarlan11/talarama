@@ -4,7 +4,7 @@
 import Image from "next/image";
 import { MovieWithReviews } from "./types";
 import NetflixActions from "./NetflixActions";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 import type { Session } from "next-auth";
 import { PiStar } from "react-icons/pi";
@@ -19,29 +19,13 @@ interface Props {
   movie: MovieWithReviews;
   counts: MovieCounts;
   session: Session | null;
+  initialWatchlistStatus: boolean;
+  initialLikeStatus: boolean;
 }
 
-const NetflixHero = ({ movie, counts }: Props) => {
+const NetflixHero = ({ movie, counts, initialWatchlistStatus, initialLikeStatus }: Props) => {
   const { data: sessionData } = useSession();
-  const [isLiked, setIsLiked] = useState(false);
-
-  useEffect(() => {
-    const checkLikeStatus = async () => {
-      if (!sessionData) return;
-
-      try {
-        const response = await fetch(`/api/movies/${movie.id}/like`);
-        if (response.ok) {
-          const data = await response.json();
-          setIsLiked(data.liked);
-        }
-      } catch (error) {
-        console.error("Error checking like status:", error);
-      }
-    };
-
-    checkLikeStatus();
-  }, [movie.id, sessionData]);
+  const [isLiked, setIsLiked] = useState(initialLikeStatus);
 
   const director = [movie.directorFirstName, movie.directorLastName]
     .filter(Boolean)
@@ -153,6 +137,7 @@ const NetflixHero = ({ movie, counts }: Props) => {
               posterUrl={movie.posterUrl || null}
               isLiked={isLiked}
               onLikeChange={setIsLiked}
+              initialWatchlistStatus={initialWatchlistStatus}
             />
           </div>
         </div>

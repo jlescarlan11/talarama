@@ -31,7 +31,7 @@ const ClientTabs = ({
           <div key={tab.key} className="relative flex justify-center">
             <button
               role="tab"
-              className={`w-1/2 px-6 py-2 rounded-full font-semibold transition-all duration-150 text-base-content/80 hover:text-base-content focus:outline-none focus:ring-2 focus:ring-primary ${
+              className={`text-xs sm:text-base px-6 py-2 rounded-full font-semibold transition-all duration-150 text-base-content/80 hover:text-base-content focus:outline-none focus:ring-2 focus:ring-primary ${
                 activeTab === tab.key
                   ? "bg-primary text-primary-content shadow-md"
                   : "bg-transparent hover:bg-base-100"
@@ -43,7 +43,7 @@ const ClientTabs = ({
           </div>
         ))}
       </div>
-      <div className="p-6 bg-base-100 rounded-b-2xl">
+      <div className="p-2 sm:p-6 bg-base-100 rounded-b-2xl">
         {activeTab === "favorites" && favoritesContent}
         {activeTab === "diaries" && diariesContent}
         {activeTab === "watchlist" &&

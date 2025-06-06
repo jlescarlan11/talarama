@@ -3,12 +3,13 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { PiMagnifyingGlass, PiX } from "react-icons/pi";
+import { PiMagnifyingGlass } from "react-icons/pi";
 
 const MovieSearch = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [isSearching, setIsSearching] = useState(false);
 
   // Initialize search query from URL params
   useEffect(() => {
@@ -26,57 +27,50 @@ const MovieSearch = () => {
         params.delete("search");
       }
 
-      router.push(`?${params.toString()}`, { scroll: false });
+      router.push(`/movies?${params.toString()}`, { scroll: false });
     },
     [router, searchParams]
   );
 
   const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsSearching(true);
     updateSearch(searchQuery);
-  };
-
-  const handleClearSearch = () => {
-    setSearchQuery("");
-    updateSearch("");
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
+    setIsSearching(true);
   };
 
   // Real-time search with debounce
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      updateSearch(searchQuery);
-    }, 300);
+      if (isSearching) {
+        updateSearch(searchQuery);
+        setIsSearching(false);
+      }
+    }, 500); // Increased debounce time to 500ms for better performance
 
     return () => clearTimeout(timeoutId);
-  }, [searchQuery, updateSearch]);
+  }, [searchQuery, updateSearch, isSearching]);
 
   return (
-    <form onSubmit={handleSearchSubmit} className="relative w-full max-w-sm ">
-      <label className="input w-full flex items-center gap-2">
-        <PiMagnifyingGlass className="text-lg" />
-        <input
-          type="search"
-          className="grow w-full"
-          value={searchQuery}
-          onChange={handleSearchChange}
-          placeholder="Search movies by title, year, or genre..."
-        />
-      </label>
-
-      {searchQuery && (
-        <button
-          type="button"
-          onClick={handleClearSearch}
-          className="absolute right-3 top-1/2 transform -translate-y-1/2 btn btn-ghost btn-sm btn-circle"
-        >
-          <PiX className="h-4 w-4" />
-        </button>
-      )}
-    </form>
+    <div>
+      <form onSubmit={handleSearchSubmit} className="">
+        <label className="input  flex items-center gap-2">
+          <PiMagnifyingGlass className="h-[1em] opacity-50" />
+          <input
+            type="search"
+            className="grow w-full"
+            value={searchQuery}
+            onChange={handleSearchChange}
+            placeholder="Search movies..."
+            aria-label="Search movies"
+          />
+        </label>
+      </form>
+    </div>
   );
 };
 

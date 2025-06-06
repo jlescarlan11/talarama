@@ -57,6 +57,34 @@ const MovieDetailPage = async ({ params }: Props) => {
 
   if (!movie) return notFound();
 
+  // Get initial watchlist and like status if user is logged in
+  let initialWatchlistStatus = false;
+  let initialLikeStatus = false;
+
+  if (session?.user?.id) {
+    const [watchlistStatus, likeStatus] = await Promise.all([
+      prisma.watchedList.findUnique({
+        where: {
+          movieId_userId: {
+            movieId: id,
+            userId: session.user.id,
+          },
+        },
+      }),
+      prisma.likedBy.findUnique({
+        where: {
+          movieId_userId: {
+            movieId: id,
+            userId: session.user.id,
+          },
+        },
+      }),
+    ]);
+
+    initialWatchlistStatus = !!watchlistStatus;
+    initialLikeStatus = !!likeStatus;
+  }
+
   const movieWithReviews: MovieWithReviews = {
     ...movie,
     genres: movie.genres.map((mg) => mg.genre),
@@ -87,6 +115,8 @@ const MovieDetailPage = async ({ params }: Props) => {
         movie={movieWithReviews}
         counts={movie._count}
         session={session}
+        initialWatchlistStatus={initialWatchlistStatus}
+        initialLikeStatus={initialLikeStatus}
       />
 
       {/* Reviews Section */}

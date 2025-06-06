@@ -74,16 +74,16 @@ const DiaryPage = async () => {
             </p>
           </div>
         </div>
-        <div className="flex flex-row gap-12 w-full justify-center items-center">
+        <div className="flex flex-row sm:gap-12 w-full justify-center items-center">
           {stats.map((stat, idx) => (
             <React.Fragment key={idx}>
               {idx > 0 && <div className="h-10 w-px bg-base-content/30 mx-6" />}
-              <div className="flex flex-col items-center min-w-[120px]">
+              <div className="flex flex-col items-center sm:min-w-[120px]">
                 <div className="flex items-center gap-3 mb-1">
                   {React.cloneElement(stat.icon, {
-                    className: "text-4xl text-accent",
+                    className: "text-lg sm:text-4xl text-accent",
                   })}
-                  <span className="text-4xl font-extrabold text-primary">
+                  <span className="text-lg sm:text-4xl font-extrabold text-primary">
                     {stat.value}
                   </span>
                 </div>

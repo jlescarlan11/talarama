@@ -3,7 +3,7 @@
 // components/NetflixActions.tsx
 import { PiNoteBold, PiHeart, PiHeartFill } from "react-icons/pi";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 import axios from "axios";
 
@@ -18,6 +18,7 @@ interface Props {
     watchedBy: number;
     likedBy: number;
   };
+  initialWatchlistStatus: boolean;
 }
 
 const NetflixActions = ({
@@ -26,33 +27,12 @@ const NetflixActions = ({
   posterUrl,
   isLiked,
   onLikeChange,
+  initialWatchlistStatus,
 }: Props) => {
   const router = useRouter();
   const { data: sessionData } = useSession();
-  const [isInWatchlist, setIsInWatchlist] = useState(false);
+  const [isInWatchlist, setIsInWatchlist] = useState(initialWatchlistStatus);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Check initial state when component mounts
-  useEffect(() => {
-    const checkInitialState = async () => {
-      if (!sessionData) return;
-
-      try {
-        // Check if movie is in watchlist
-        const watchlistResponse = await fetch(
-          `/api/movies/${movieId}/watchlist`
-        );
-        if (watchlistResponse.ok) {
-          const watchlistData = await watchlistResponse.json();
-          setIsInWatchlist(watchlistData.inWatchlist);
-        }
-      } catch (error) {
-        console.error("Error checking initial state:", error);
-      }
-    };
-
-    checkInitialState();
-  }, [movieId, sessionData]);
 
   const handleLogNow = () => {
     const params = new URLSearchParams({

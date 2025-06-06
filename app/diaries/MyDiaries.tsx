@@ -2,7 +2,7 @@
 import prisma from "@/prisma/client";
 import { getServerSession } from "next-auth";
 import authOptions from "../auth/authOptions";
-import GroupedDiaryEntries from "./GroupedDiaryEntries";
+import GroupedDiaryEntriesWrapper from "./GroupedDiaryEntriesWrapper";
 
 const MyDiaries = async () => {
   const session = await getServerSession(authOptions);
@@ -45,7 +45,7 @@ const MyDiaries = async () => {
 
   return (
     <div className="bg-base-100 text-base-content">
-      <GroupedDiaryEntries entries={diaryEntries} />
+      <GroupedDiaryEntriesWrapper entries={diaryEntries} />
     </div>
   );
 };

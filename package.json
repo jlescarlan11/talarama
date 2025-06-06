@@ -15,6 +15,7 @@
     "@prisma/client": "^6.8.2",
     "@radix-ui/colors": "^3.0.0",
     "@radix-ui/themes": "^3.2.1",
+    "@supabase/supabase-js": "^2.49.10",
     "axios": "^1.9.0",
     "bcrypt": "^6.0.0",
     "classnames": "^2.5.1",

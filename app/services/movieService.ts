@@ -44,9 +44,12 @@ export class MovieService {
     const whereClause: MovieQueryOptions["where"] = {};
 
     if (genre && genre !== "all") {
+      const genreIds = genre.split(",");
       whereClause.genres = {
         some: {
-          genreId: genre,
+          genreId: {
+            in: genreIds,
+          },
         },
       };
     }

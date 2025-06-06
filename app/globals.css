@@ -3,12 +3,68 @@
   themes: light --default, dark --prefersdark;
 }
 
+@theme {
+  /* Typography */
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-size-base: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --line-height-normal: 1.5;
+  
+  /* Spacing */
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 1rem;
+  --spacing-md: 1.5rem;
+  --spacing-lg: 2rem;
+  --spacing-xl: 2.5rem;
+  
+  /* Container */
+  --container-max-width: 1280px;
+  
+  /* Transitions */
+  --transition-duration: 200ms;
+  --transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Base styles */
+@layer base {
+  html {
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-normal);
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-size: var(--font-size-xl);
+    line-height: 1.2;
+  }
+  
+  @media (min-width: 768px) {
+    html {
+      font-size: var(--font-size-lg);
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+      font-size: var(--font-size-2xl);
+    }
+  }
+}
+
+/* Container */
+@layer components {
+  .container {
+    @apply mx-auto px-4 max-w-[var(--container-max-width)];
+  }
+}
+
+/* Existing carousel styles */
 .movie-carousel-outer {
   overflow: hidden;
   width: 100%;
   display: flex;
   justify-content: center;
 }
+
 .movie-carousel-track {
   display: flex;
   align-items: center;
@@ -16,11 +72,23 @@
   animation: carousel-move var(--carousel-duration, 18s) linear infinite;
   width: var(--carousel-track-width, max-content);
 }
+
 @keyframes carousel-move {
   0% {
     transform: translateX(0);
   }
   100% {
     transform: translateX(calc(-1 * var(--carousel-half-width, 0px)));
+  }
+}
+
+/* Accessibility */
+@layer utilities {
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+  }
+  
+  .hover-scale {
+    @apply transition-transform duration-[var(--transition-duration)] hover:scale-105;
   }
 }

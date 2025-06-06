@@ -29,13 +29,23 @@ const MovieFiltersComponent = () => {
     fetchGenres();
   }, []);
 
-  const handleGenreChange = (genreId: string) => {
+  const handleGenreClick = (genreId: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (genreId) {
-      params.set("genre", genreId);
+    const currentGenres = params.get("genre")?.split(",") || [];
+    
+    if (currentGenres.includes(genreId)) {
+      // Remove genre if already selected
+      const newGenres = currentGenres.filter(id => id !== genreId);
+      if (newGenres.length > 0) {
+        params.set("genre", newGenres.join(","));
+      } else {
+        params.delete("genre");
+      }
     } else {
-      params.delete("genre");
+      // Add genre if not selected
+      params.set("genre", [...currentGenres, genreId].join(","));
     }
+    
     router.push(`/movies?${params.toString()}`);
   };
 
@@ -53,31 +63,39 @@ const MovieFiltersComponent = () => {
     return <div className="h-10 bg-base-200 rounded-lg animate-pulse" />;
   }
 
-  return (
-    <div className="flex flex-wrap gap-2">
-      <select
-        className="select select-bordered w-full sm:w-auto"
-        onChange={(e) => handleGenreChange(e.target.value)}
-        value={searchParams.get("genre") || ""}
-      >
-        <option value="">All Genres</option>
-        {genres.map((genre) => (
-          <option key={genre.id} value={genre.id}>
-            {genre.genreName}
-          </option>
-        ))}
-      </select>
+  const selectedGenres = searchParams.get("genre")?.split(",") || [];
 
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Genre Filters */}
+      <div className="flex flex-wrap gap-2">
+        {genres.map((genre) => (
+          <button
+            key={genre.id}
+            onClick={() => handleGenreClick(genre.id)}
+            className={`badge badge-lg ${
+              selectedGenres.includes(genre.id)
+                ? "badge-primary"
+                : "badge-outline hover:badge-primary"
+            }`}
+          >
+            {genre.genreName}
+          </button>
+        ))}
+      </div>
+
+      {/* Sort Options */}
       <select
         className="select select-bordered w-full sm:w-auto"
         onChange={(e) => handleSortChange(e.target.value)}
-        value={searchParams.get("sort") || ""}
+        value={searchParams.get("sort") || "title-asc"}
       >
-        <option value="">Sort By</option>
-        <option value="title_asc">Title (A-Z)</option>
-        <option value="title_desc">Title (Z-A)</option>
-        <option value="year_desc">Newest First</option>
-        <option value="year_asc">Oldest First</option>
+        <option value="title-asc">Title (A-Z)</option>
+        <option value="title-desc">Title (Z-A)</option>
+        <option value="releasedYear-desc">Newest First</option>
+        <option value="releasedYear-asc">Oldest First</option>
+        <option value="dateAdded-desc">Recently Added</option>
+        <option value="dateAdded-asc">Oldest Added</option>
       </select>
     </div>
   );
