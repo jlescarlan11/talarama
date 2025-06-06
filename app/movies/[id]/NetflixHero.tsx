@@ -24,7 +24,7 @@ interface Props {
 }
 
 const NetflixHero = ({ movie, counts, initialWatchlistStatus, initialLikeStatus }: Props) => {
-  const { data: sessionData } = useSession();
+  useSession();
   const [isLiked, setIsLiked] = useState(initialLikeStatus);
 
   const director = [movie.directorFirstName, movie.directorLastName]

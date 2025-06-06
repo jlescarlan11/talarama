@@ -1,5 +1,5 @@
 import React from "react";
-import { CardSkeleton, TextSkeleton } from "@/app/components/Skeleton";
+import { TextSkeleton } from "@/app/components/Skeleton";
 import { Skeleton } from "@/app/components";
 
 const LoadingMovieDetailPage = () => {
