@@ -1,5 +1,5 @@
 import prisma from "@/prisma/client";
-import { Genre } from "@prisma/client";
+import { Genre, Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
 import { movieSchema } from "@/app/validationSchemas";
@@ -119,6 +119,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(newMovie, { status: 201 });
   } catch (error) {
     console.error("Error creating movie:", error);
+    
+    // Check if the error is due to a duplicate movie
+    if (error instanceof Prisma.PrismaClientKnownRequestError && 
+        error.code === 'P2002' && 
+        Array.isArray(error.meta?.target) &&
+        error.meta.target.includes('title_releasedYear')) {
+      return NextResponse.json(
+        { error: "A movie with this title and release year already exists" },
+        { status: 409 }
+      );
+    }
+
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

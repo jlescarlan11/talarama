@@ -57,6 +57,8 @@ model Movie {
   diaryEntries DiaryEntry[]
   watchedBy    WatchedList[]
   likedBy      LikedBy[]
+
+  @@unique([title, releasedYear])
 }
 
 model Genre {

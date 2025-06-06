@@ -3,7 +3,7 @@
 import { Genre, Movie, MovieCategorizesAs } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
-import { PiStar } from "react-icons/pi";
+import { PiStarFill } from "react-icons/pi";
 
 interface MovieWithGenres extends Movie {
   genres: (MovieCategorizesAs & {
@@ -25,7 +25,10 @@ const MovieCard = ({ movie }: MovieCardProps) => {
   // Calculate average rating for the movie
   const getMovieRating = (movie: MovieWithGenres): number | undefined => {
     if (movie.diaryEntries && movie.diaryEntries.length > 0) {
-      const totalRating = movie.diaryEntries.reduce((sum, entry) => sum + entry.rating, 0);
+      const totalRating = movie.diaryEntries.reduce(
+        (sum, entry) => sum + entry.rating,
+        0
+      );
       return totalRating / movie.diaryEntries.length;
     }
     return undefined;
@@ -59,7 +62,7 @@ const MovieCard = ({ movie }: MovieCardProps) => {
         {rating !== undefined && (
           <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
             <div className="badge badge-primary gap-1 shadow-lg">
-              <PiStar className="h-3 w-3" />
+              <PiStarFill className="h-3 w-3" />
               {rating.toFixed(1)}
             </div>
           </div>

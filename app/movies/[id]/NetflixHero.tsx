@@ -1,13 +1,13 @@
 "use client";
 
 // components/NetflixHero.tsx
-import Image from "next/image";
-import { MovieWithReviews } from "./types";
-import NetflixActions from "./NetflixActions";
-import { useState } from "react";
-import { useSession } from "next-auth/react";
 import type { Session } from "next-auth";
-import { PiStar } from "react-icons/pi";
+import { useSession } from "next-auth/react";
+import Image from "next/image";
+import { useState } from "react";
+import { PiStarFill } from "react-icons/pi";
+import NetflixActions from "./NetflixActions";
+import { MovieWithReviews } from "./types";
 
 interface MovieCounts {
   diaryEntries: number;
@@ -23,7 +23,12 @@ interface Props {
   initialLikeStatus: boolean;
 }
 
-const NetflixHero = ({ movie, counts, initialWatchlistStatus, initialLikeStatus }: Props) => {
+const NetflixHero = ({
+  movie,
+  counts,
+  initialWatchlistStatus,
+  initialLikeStatus,
+}: Props) => {
   useSession();
   const [isLiked, setIsLiked] = useState(initialLikeStatus);
 
@@ -89,7 +94,7 @@ const NetflixHero = ({ movie, counts, initialWatchlistStatus, initialLikeStatus 
                   </span>
                   <div className="flex">
                     {[1, 2, 3, 4, 5].map((star) => (
-                      <PiStar
+                      <PiStarFill
                         key={star}
                         className={`w-4 h-4 ${
                           star <= averageRating
