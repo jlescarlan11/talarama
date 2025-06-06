@@ -113,43 +113,50 @@ export class MovieService {
   }
 
   static async getMovies(filters: MovieFilters): Promise<MovieWithGenres[]> {
-    const { sort } = await filters;
-    const whereClause = await this.buildWhereClause(filters);
-    const orderBy = this.buildOrderByClause(sort);
+    try {
+      const { sort } = await filters;
+      const whereClause = await this.buildWhereClause(filters);
+      const orderBy = this.buildOrderByClause(sort);
 
-    const movies = await prisma.movie.findMany({
-      where: whereClause,
-      orderBy,
-      include: {
-        genres: {
-          include: {
-            genre: true,
+      const movies = await prisma.movie.findMany({
+        where: whereClause,
+        orderBy,
+        include: {
+          genres: {
+            include: {
+              genre: true,
+            },
+          },
+          diaryEntries: {
+            select: {
+              rating: true,
+            },
+          },
+          _count: {
+            select: {
+              diaryEntries: true,
+            },
           },
         },
-        diaryEntries: {
-          select: {
-            rating: true,
-          },
-        },
+      });
+
+      return movies.map((movie) => ({
+        ...movie,
+        genres: movie.genres.map(({ movieId, genreId, genre }) => ({
+          movieId,
+          genreId,
+          genre,
+        })),
         _count: {
-          select: {
-            diaryEntries: true,
-          },
+          diaryEntries: movie._count?.diaryEntries || 0,
         },
-      },
-    });
-
-    return movies.map((movie) => ({
-      ...movie,
-      genres: movie.genres.map(({ movieId, genreId, genre }) => ({
-        movieId,
-        genreId,
-        genre,
-      })),
-      _count: {
-        diaryEntries: movie._count?.diaryEntries || 0,
-      },
-    }));
+      }));
+    } catch (error) {
+      console.error('Error fetching movies:', error);
+      throw error;
+    } finally {
+      await prisma.$disconnect();
+    }
   }
 
   static async getMovieCount(filters: MovieFilters): Promise<number> {
@@ -158,33 +165,40 @@ export class MovieService {
   }
 
   static async getFeaturedMovies(): Promise<MovieWithGenres[]> {
-    const movies = await prisma.movie.findMany({
-      take: 10,
-      orderBy: [{ createdAt: "desc" }, { releasedYear: "desc" }],
-      include: {
-        genres: {
-          include: {
-            genre: true,
+    try {
+      const movies = await prisma.movie.findMany({
+        take: 10,
+        orderBy: [{ createdAt: "desc" }, { releasedYear: "desc" }],
+        include: {
+          genres: {
+            include: {
+              genre: true,
+            },
+          },
+          _count: {
+            select: {
+              diaryEntries: true,
+            },
           },
         },
-        _count: {
-          select: {
-            diaryEntries: true,
-          },
-        },
-      },
-    });
+      });
 
-    return movies.map((movie) => ({
-      ...movie,
-      genres: movie.genres.map(({ movieId, genreId, genre }) => ({
-        movieId,
-        genreId,
-        genre,
-      })),
-      _count: {
-        diaryEntries: movie._count?.diaryEntries || 0,
-      },
-    }));
+      return movies.map((movie) => ({
+        ...movie,
+        genres: movie.genres.map(({ movieId, genreId, genre }) => ({
+          movieId,
+          genreId,
+          genre,
+        })),
+        _count: {
+          diaryEntries: movie._count?.diaryEntries || 0,
+        },
+      }));
+    } catch (error) {
+      console.error('Error fetching featured movies:', error);
+      throw error;
+    } finally {
+      await prisma.$disconnect();
+    }
   }
 }
