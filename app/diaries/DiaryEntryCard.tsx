@@ -2,7 +2,6 @@
 // components/DiaryEntryCard.tsx
 import Image from "next/image";
 import React from "react";
-import { PiHeartFill } from "react-icons/pi";
 import DiaryEntryMenu from "./DiaryEntryMenu";
 import StarRating from "./StarRating";
 import { DiaryEntryWithMovie } from "./types/diary";
@@ -65,7 +64,6 @@ const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({
           <h3 className="font-semibold text-base sm:text-lg text-white leading-tight truncate">
             {diaryEntry.movie.title}
           </h3>
-          <PiHeartFill className="text-accent text-lg sm:text-xl ml-1 sm:ml-2" />
         </div>
         <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
           <StarRating rating={diaryEntry.rating} size="sm" />
