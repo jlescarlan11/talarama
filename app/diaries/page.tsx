@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import Image from "next/image";
-import { NextResponse } from "next/server";
+import EmptyState from "../components/EmptyState";
 import authOptions from "../auth/authOptions";
 import TabsContainer from "./TabsContainer";
 import { PiHeartFill, PiBookOpenText } from "react-icons/pi";
@@ -11,7 +11,7 @@ import Link from "next/link";
 const DiaryPage = async () => {
   const session = await getServerSession(authOptions);
 
-  if (!session) return NextResponse.json({}, { status: 401 });
+  if (!session) return <EmptyState title="Sign in to your diary" description="Keep track of the films you watch, your reviews, and your watchlist." href="/api/auth/signin?callbackUrl=%2Fdiaries" action="Sign in with Google" />;
 
   const diaryEntries = await prisma.diaryEntry.findMany({
     where: {

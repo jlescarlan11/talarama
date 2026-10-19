@@ -1,4 +1,5 @@
 "use client";
+import EmptyState from "./EmptyState";
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -58,7 +59,7 @@ const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
   }, [activeIdx]);
 
   useEffect(() => {
-    if (isPaused) return;
+    if (isPaused || displayMovies.length < 2 || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
 
     if (intervalRef.current) clearInterval(intervalRef.current);
     intervalRef.current = setInterval(() => {
@@ -74,6 +75,10 @@ const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
     scrollToActiveCard();
   }, [activeIdx, scrollToActiveCard]);
 
+  useEffect(() => {
+    setActiveIdx((index) => displayMovies.length ? Math.min(index, displayMovies.length - 1) : 0);
+  }, [displayMovies.length]);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowLeft") {
       setActiveIdx(
@@ -84,12 +89,16 @@ const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
     }
   };
 
+  if (!displayMovies.length) return <EmptyState title="No movies yet" description="Movies will appear here once the catalog has entries." href="/movies" action="Browse movies" />;
+
   return (
     <div
       className="movie-carousel-outer flex flex-col items-center"
       role="region"
       aria-label="Movie carousel"
       onKeyDown={handleKeyDown}
+      onFocus={() => setIsPaused(true)}
+      onBlur={() => setIsPaused(false)}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >

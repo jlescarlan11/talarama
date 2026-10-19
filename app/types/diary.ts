@@ -1,8 +1,8 @@
 export interface DiaryCreatePayload {
   movieId: string;
-  date: string;
+  watchedDate: string;
   rating: number;
-  notes?: string;
+  review?: string;
 }
 
 export interface DiaryEntry extends DiaryCreatePayload {

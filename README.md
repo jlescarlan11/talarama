@@ -1,36 +1,25 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Talarama
 
-## Getting Started
+A movie review and diary application built with Next.js, React, NextAuth, Prisma and PostgreSQL.
 
-First, run the development server:
+## Development
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Use Node 22 LTS (22.14 or newer) and npm 11. Install with `npm ci`, then run `npx prisma generate`.
+Copy `.env.example` to `.env` and replace placeholders with **development** credentials. Real environment files are ignored. `DATABASE_URL` and `DIRECT_URL` must point at the same database; the latter bypasses any pooler. Prisma CLI reads `.env`; Next.js also reads `.env.local` but the Prisma CLI does not automatically use it.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+For a brand-new empty development database, see [database setup and migration findings](docs/migrations.md) before running any migration command. Existing populated databases need a reviewed schema/history comparison and backup; do not reset them or replay historical migrations.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Run `npm run dev` and open http://localhost:3000. No TMDB token is required in phase 0.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+For Google OAuth, create a development web client with origin `http://localhost:3000` and redirect URI `http://localhost:3000/api/auth/callback/google`. Set both Google variables and a random `NEXTAUTH_SECRET` (for example generated with `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`). Do not commit or share the output. Sign in with an existing linked Google account and confirm its existing diary remains; sign out and sign in again. Automated tests use synthetic sessions and do not prove real OAuth works.
 
-## Learn More
+## Checks
 
-To learn more about Next.js, take a look at the following resources:
+- `npm run lint` — direct ESLint.
+- `npm run typecheck` — TypeScript without emitting application code.
+- `npm test` — focused logic, component, hook and route regression tests.
+- `npm run test:integration` — real database route journeys on a separate disposable database (see docs/migrations.md).
+- `npm run test:e2e` — anonymous browser journeys against a local test server.
+- `npm run build` — production compilation. Requires development database configuration for database-backed page rendering.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Read [phase-0 verification](docs/phase-0-verification.md) for the actual checks run and remaining limitations. The [approved roadmap](docs/superpowers/plans/2026-10-19-talarama-upgrade-roadmap.md) describes later phases; they are not implemented here.

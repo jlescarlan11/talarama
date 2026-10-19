@@ -1,6 +1,8 @@
 "use client";
 
 import axios from "axios";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { diaryFormSchema } from "@/app/validationSchemas";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -29,6 +31,7 @@ const DiaryForm: React.FC<DiaryFormProps> = ({
     setError,
     watch,
   } = useForm<DiaryFormData>({
+    resolver: zodResolver(diaryFormSchema),
     defaultValues: {
       movieId: diary?.movieId || initialMovie?.id || "",
       rating: diary?.rating || 0,

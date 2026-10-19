@@ -17,10 +17,6 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '2mb'
     }
   },
-  // Ensure proper handling of server-side errors
-  onError: (err: Error) => {
-    console.error('Next.js build error:', err);
-  },
 };
 
 export default nextConfig;

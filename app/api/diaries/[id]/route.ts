@@ -13,7 +13,7 @@ export async function PATCH(
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -34,7 +34,9 @@ export async function PATCH(
       );
     }
 
-    const body = await request.json();
+    let body: unknown;
+    try { body = await request.json(); }
+    catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }); }
     const validation = diaryEntrySchema.safeParse(body);
 
     if (!validation.success) {
@@ -65,7 +67,7 @@ export async function PATCH(
       data: {
         movieId,
         rating,
-        review: review?.trim(), // Safe navigation in case review is undefined
+        review,
         watchedDate: new Date(watchedDate),
         updatedAt: new Date(),
       },
@@ -83,8 +85,8 @@ export async function PATCH(
     });
 
     return NextResponse.json(updatedEntry, { status: 200 });
-  } catch (error) {
-    console.error("Error updating diary entry:", error);
+  } catch {
+    console.error("Diary update failed");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -99,7 +101,7 @@ export async function DELETE(
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -125,8 +127,8 @@ export async function DELETE(
     });
 
     return NextResponse.json({ success: true }, { status: 200 });
-  } catch (error) {
-    console.error("Error deleting diary entry:", error);
+  } catch {
+    console.error("Diary deletion failed");
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

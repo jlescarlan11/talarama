@@ -43,3 +43,8 @@ next-env.d.ts
 
 populate.js
 populatediary.js
+
+!.env.example
+/.superpowers/
+/playwright-report/
+/test-results/

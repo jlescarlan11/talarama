@@ -157,8 +157,6 @@ export class MovieService {
     } catch (error) {
       console.error('Error fetching movies:', error);
       throw error;
-    } finally {
-      await prisma.$disconnect();
     }
   }
 
@@ -200,8 +198,6 @@ export class MovieService {
     } catch (error) {
       console.error('Error fetching featured movies:', error);
       throw error;
-    } finally {
-      await prisma.$disconnect();
     }
   }
 }
