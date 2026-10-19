@@ -33,7 +33,7 @@ beforeAll(async () => {
   await admin.$executeRawUnsafe(`CREATE SCHEMA "${schema}"`);
   await admin.$executeRawUnsafe(`CREATE SCHEMA "${restoredSchema}"`);
   // Replay real historical SQL first; seed representative old records BEFORE the new migration.
-  for (const directory of readdirSync('prisma/migrations').filter(x => /^\d/.test(x) && !x.includes('phase1') && !x.includes('phase3')).sort()) {
+  for (const directory of readdirSync('prisma/migrations').filter(x => /^\d/.test(x) && !x.includes('phase1') && !x.includes('phase3') && !x.includes('phase4')).sort()) {
     // PostgreSQL simple protocol supports multi-statement historical scripts through pg tooling.
     const sql = readFileSync(`prisma/migrations/${directory}/migration.sql`, 'utf8');
     await runSql(sql, url);
@@ -53,6 +53,8 @@ beforeAll(async () => {
   await runSql(readFileSync(`prisma/migrations/${migration}/migration.sql`, 'utf8'), url);
   const diaryMigration = readdirSync('prisma/migrations').find(x => x.includes('phase3'))!;
   await runSql(readFileSync(`prisma/migrations/${diaryMigration}/migration.sql`, 'utf8'), url);
+  const communityMigration = readdirSync('prisma/migrations').find(x=>x.includes('phase4'))!;
+  await runSql(readFileSync(`prisma/migrations/${communityMigration}/migration.sql`,'utf8'),url);
 }, 60000);
 
 async function runSql(sql: string, target: URL) {
@@ -78,7 +80,7 @@ it('preserves legacy IDs, values, accounts and relationships through SQL migrati
   // Restore the pre-upgrade backup first, then apply the same additive migrations.
   await admin.$executeRawUnsafe(`DROP SCHEMA "${restoredSchema}" CASCADE`);
   await runSql(legacyDump.replaceAll(schema,restoredSchema),restoreUrl);
-  for(const phase of ['phase1','phase3']) {
+  for(const phase of ['phase1','phase3','phase4']) {
    const directory=readdirSync('prisma/migrations').find(name=>name.includes(phase))!;
    await runSql(readFileSync(`prisma/migrations/${directory}/migration.sql`,'utf8'),restoreUrl);
   }

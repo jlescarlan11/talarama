@@ -4,6 +4,7 @@ import { Prisma, type PrismaClient } from '@prisma/client';
 import { diaryEntrySchema, type DiaryInput } from '@/app/lib/diary/contracts';
 import { calendarDate, parseCalendarDate, validateWatchedDate } from '@/app/lib/diary/dates';
 import { removeLoggedMovie } from './watchlistService';
+import {consumeMutation} from '@/app/lib/rateLimit';
 export class DiaryError extends Error {
     constructor(message: string, public status: number) { super(message); }
 }
@@ -29,6 +30,7 @@ export async function createDiaryEntry(userId: string, input: DiaryInput, { db =
     if (replay)
         return { entry: serializeEntry(replay), replayed: true };
     try {
+        await consumeMutation(userId,'diary',{db});
         const entry = await db.$transaction(async (tx) => {
             const data = await dataFor(userId, input, tx);
             const entry = await tx.diaryEntry.create({ data: { ...data, userId } });
@@ -38,6 +40,9 @@ export async function createDiaryEntry(userId: string, input: DiaryInput, { db =
         return { entry: serializeEntry(entry), replayed: false };
     }
     catch (error) {
+        // A concurrent first submission may have committed while admission was pending.
+        const recovered = await db.diaryEntry.findUnique({where:key});
+        if(recovered) return {entry:serializeEntry(recovered),replayed:true};
         if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
             const entry = await db.diaryEntry.findUnique({ where: key });
             if (entry)
@@ -49,6 +54,7 @@ export async function createDiaryEntry(userId: string, input: DiaryInput, { db =
 export async function updateDiaryEntry(userId: string, id: string, input: DiaryInput, { db = prisma }: {
     db?: PrismaClient;
 } = {}) {
+    await consumeMutation(userId,'diary',{db});
     return db.$transaction(async (tx) => {
         const existing = await tx.diaryEntry.findFirst({ where: { id, userId } });
         if (!existing)
@@ -71,6 +77,7 @@ export async function updateDiaryEntry(userId: string, id: string, input: DiaryI
 export async function deleteDiaryEntry(userId: string, id: string, { db = prisma }: {
     db?: PrismaClient;
 } = {}) {
+    await consumeMutation(userId,'diary',{db});
     const result = await db.diaryEntry.deleteMany({ where: { id, userId } });
     if (!result.count)
         throw new DiaryError('Diary entry not found', 404);

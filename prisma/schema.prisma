@@ -14,6 +14,11 @@ model User {
   username      String?       @unique
   email         String        @unique
   timeZone      String?
+  bio           String        @default("")
+  profilePublished Boolean    @default(false)
+  showFavorites Boolean       @default(false)
+  role          MemberRole    @default(MEMBER)
+  reports       EntryReport[]
   emailVerified DateTime?
   image         String?
   accounts      Account[]
@@ -121,6 +126,8 @@ model DiaryEntry {
   isRewatch Boolean @default(false)
   containsSpoilers Boolean @default(false)
   clientRequestId String?
+  moderationState ModerationState @default(VISIBLE)
+  reports EntryReport[]
   watchedDate DateTime
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -131,6 +138,57 @@ model DiaryEntry {
 
   @@unique([userId, clientRequestId])
   @@index([userId, watchedDate, id])
+  @@index([createdAt, id])
+}
+
+enum MemberRole {
+ MEMBER
+ ADMIN
+}
+
+enum ModerationState {
+ VISIBLE
+ HIDDEN
+}
+
+model EntryReport {
+ id String @id @default(uuid())
+ reporterId String
+ entryId String
+ reason String
+ createdAt DateTime @default(now())
+ resolvedAt DateTime?
+ reporter User @relation(fields:[reporterId], references:[id], onDelete:Cascade)
+ entry DiaryEntry @relation(fields:[entryId], references:[id], onDelete:Cascade)
+ @@unique([reporterId, entryId])
+ @@index([createdAt, id])
+}
+
+// Audit IDs intentionally survive deletion of accounts, reports or diary entries.
+model ModerationAudit {
+ id String @id @default(uuid())
+ adminId String
+ reportId String
+ entryId String
+ action String
+ createdAt DateTime @default(now())
+}
+
+model UsernameMappingAudit {
+ id String @id @default(uuid())
+ reviewer String
+ mappings Json
+ createdAt DateTime @default(now())
+}
+
+model MutationBucket {
+ userId String
+ kind String
+ windowStart DateTime
+ count Int
+ expiresAt DateTime
+ @@id([userId, kind, windowStart])
+ @@index([expiresAt])
 }
 
 enum DiaryVisibility {

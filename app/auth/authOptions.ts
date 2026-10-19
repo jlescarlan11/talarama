@@ -2,6 +2,7 @@ import prisma from "@/prisma/client";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import { allocateUsername } from '@/app/services/profileService';
 
 const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -14,8 +15,7 @@ const authOptions: NextAuthOptions = {
           id: profile.sub,
           name: profile.name,
           email: profile.email,
-          username: profile.email.split("@")[0], // Generate username from email
-          image: profile.picture.replace(/=s96-c/, "=s500-c"),
+          image: typeof profile.picture === 'string' ? profile.picture.replace(/=s96-c/, "=s500-c") : null,
         };
       },
     }),
@@ -30,15 +30,21 @@ const authOptions: NextAuthOptions = {
       return baseUrl;
     },
     async jwt({ token, user }) {
-      // If user object is available (sign in), pull user from DB to get updated username
-      if (user || !token.username) {
+      // Refresh display data from persisted identity. Never trust an update payload's role or ID.
+      if (token.id || user?.id || token.sub) {
         const dbUser = await prisma.user.findUnique({
-          where: { email: token.email! },
+          where: { id: token.id || user?.id || token.sub },
+          select: { id: true, username: true, name: true, image: true },
         });
 
         if (dbUser) {
           token.id = dbUser.id;
           token.username = dbUser.username!;
+          token.name = dbUser.name;
+          token.picture = dbUser.image;
+        } else {
+          token.id = '';
+          token.username = '';
         }
       }
       return token;
@@ -47,25 +53,15 @@ const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.username = token.username as string;
+        session.user.name = token.name;
+        session.user.image = token.picture;
       }
       return session;
     },
   },
   events: {
     async createUser({ user }) {
-      const base = user.email?.split("@")[0] ?? "user";
-      let username = base;
-      let count = 1;
-
-      while (await prisma.user.findUnique({ where: { username } })) {
-        username = `${base}${count}`;
-        count++;
-      }
-
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { username },
-      });
+      await allocateUsername(user.id);
     },
   },
 };

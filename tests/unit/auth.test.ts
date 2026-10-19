@@ -1,6 +1,8 @@
 import { expect, it, vi } from 'vitest';
 import authOptions from '@/app/auth/authOptions';
-vi.mock('@/prisma/client', () => ({ default: {} }));
+const db=vi.hoisted(()=>({find:vi.fn()}));
+vi.mock('@/prisma/client', () => ({ default: {user:{findUnique:db.find}} }));
+vi.mock('server-only',()=>({}));
 
 it('keeps the database user ID in the browser session for linked-account authorization', async () => {
   const callback = authOptions.callbacks?.session;
@@ -13,4 +15,12 @@ it('does not allow an external post-login redirect', async () => {
   if (!callback) throw new Error('Missing redirect callback');
   expect(await callback({ url: 'https://untrusted.example/path', baseUrl: 'http://localhost:3000' })).toBe('http://localhost:3000');
   expect(await callback({ url: '/diaries', baseUrl: 'http://localhost:3000' })).toBe('http://localhost:3000/diaries');
+});
+it('refreshes session display from the persisted member ID and ignores injected update identity',async()=>{
+ db.find.mockResolvedValue({id:'legacy-user-id',username:'updated_handle',name:'Updated name',image:null});
+ const callback=authOptions.callbacks!.jwt!;
+ const token=await callback({token:{id:'legacy-user-id',username:'old',email:'old@example.invalid'},trigger:'update',session:{id:'intruder',username:'forged',role:'ADMIN'}} as never);
+ expect(db.find).toHaveBeenCalledWith({where:{id:'legacy-user-id'},select:{id:true,username:true,name:true,image:true}});
+ expect(token).toMatchObject({id:'legacy-user-id',username:'updated_handle',name:'Updated name',picture:null});
+ expect(token).not.toHaveProperty('role');
 });

@@ -3,7 +3,10 @@ import { ZodError } from 'zod';
 import { DiaryError } from '@/app/services/diaryEntryService';
 export { json } from '@/app/lib/movies/http';
 import { json } from '@/app/lib/movies/http';
+import {RateLimitError} from '@/app/lib/rateLimit';
+import {communityError} from '@/app/lib/community/http';
 export function diaryError(error: unknown) {
+    if(error instanceof RateLimitError)return communityError(error);
     if (error instanceof DiaryError)
         return json({ error: error.message }, error.status);
     if (error instanceof ZodError)

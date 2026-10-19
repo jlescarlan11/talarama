@@ -4,6 +4,8 @@ import authOptions from '@/app/auth/authOptions';
 import prisma from '@/prisma/client';
 import { setLibraryEntry } from '@/app/services/movieLibraryService';
 import { json } from './http';
+import {RateLimitError} from '@/app/lib/rateLimit';
+import {communityError} from '@/app/lib/community/http';
 
 export type MovieContext = { params: Promise<{ id: string }> };
 export async function libraryHandler(context: MovieContext, kind: 'favorite' | 'watchlist', present?: boolean) {
@@ -20,7 +22,7 @@ export async function libraryHandler(context: MovieContext, kind: 'favorite' | '
       value = !!(kind === 'favorite' ? await prisma.likedBy.findUnique({ where }) : await prisma.watchlistEntry.findUnique({ where }));
     } else await setLibraryEntry(userId, movieId, kind, present);
     return json(kind === 'favorite' ? { liked: value } : { inWatchlist: value });
-  } catch { return json({ error: 'Could not update your library. Please try again.' }, 503); }
+  } catch(error) { if(error instanceof RateLimitError)return communityError(error);return json({ error: 'Could not update your library. Please try again.' }, 503); }
 }
 export async function retiredCatalogWrite() {
   const session = await getServerSession(authOptions);
