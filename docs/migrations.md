@@ -25,3 +25,7 @@ Browser tests also create an isolated schema and run a local server on port 3100
 5. Rehearse reconciliation and restore with representative legacy data. Compare IDs, counts, orphan checks, account sign-in, and diary relationships before and after. Only then plan deployment as a separate authorized action.
 
 Phase 0 deliberately does not invent an automatic reconciliation against an unknown populated database.
+
+## Phase 3 additive diary migration
+
+The current chain contains26 migrations. The phase3 migration makes rating nullable, adds PRIVATE-default visibility, flags/retry identity and nullable saved timezone, and maps Prisma WatchlistEntry to physical WatchedList. No log dates, old ratings/text, IDs or relationships are converted/deleted. [Diary operations](diary-operations.md) documents preview-first date handling, explicit reviewed manifests, uncertain-commit recovery and backup/restore evidence. The original phase1 development baseline/history remains intact; phase3 was deployed locally after a new backup, without reset. Production/staging application remains a separate reviewed operation.

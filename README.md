@@ -24,12 +24,20 @@ For Google OAuth, create a development web client with origin `http://localhost:
 - `npm run check:env` — report missing configuration names without displaying values.
 - `npm run build` — production compilation. Requires development database configuration for database-backed page rendering.
 
-Read [phase-0 verification](docs/phase-0-verification.md), [phase-1 verification](docs/phase-1-verification.md) and [phase-2 verification](docs/phase-2-verification.md) for measured checks and limitations. [Catalog operations](docs/catalog-operations.md) covers provider configuration, additive migration, dry-run matching, explicit reviewed apply and recovery.
+Read [phase-0 verification](docs/phase-0-verification.md), [phase-1 verification](docs/phase-1-verification.md) [phase-2 verification](docs/phase-2-verification.md) and [phase-3 verification](docs/phase-3-verification.md) for measured checks and limitations. [Catalog operations](docs/catalog-operations.md) covers provider configuration, additive migration, dry-run matching, explicit reviewed apply and recovery.
 
 ## Discovery and saving
 
 `/movies` browses popular movies with genre/year filters; Search by title supports title and optional year. Mode, query, filters, popular sort and page are shareable URL state. Search updates after 300 ms; obsolete requests cannot replace current results. Provider metadata is read-only until a signed-in member explicitly saves or logs.
 
-External and mapped cards use `/movies/tmdb/[tmdbId]`. Existing `/movies/[id]` links and unmatched local titles remain readable. If the provider fails, saved detail snapshots and local library actions remain available. Missing artwork/year/runtime/credits have fallbacks; TMDB's ten-point score is separate from current Talarama diary ratings on five points. The later community/privacy model is not part of phase 2.
+External and mapped cards use `/movies/tmdb/[tmdbId]`. Existing `/movies/[id]` links and unmatched local titles remain readable. If the provider fails, saved detail snapshots and local library actions remain available. Missing artwork/year/runtime/credits have fallbacks; TMDB scores use ten points; personal diary ratings use integer1–5 or no rating. Public diary reviews/counts/ratings are withheld until the phase4 publication model launches.
 
 Favorite/watchlist POST means **add**, DELETE means **remove**. Both are idempotent. External actions first call authenticated `POST /api/movies/import` with only `{ "tmdbId": 123 }`, then use the returned local movie ID. All personal action responses are `no-store`. Manual catalog creation/edit/deletion is retired for ordinary members; metadata operations use the trusted server provider workflow. No new schema migration is required for phase 2.
+
+## Personal diary
+
+`/diaries` keeps viewing history, favorites and watchlist separate. Logs may be unrated and have no review; multiple viewings of the same movie/date are supported. Search history by movie title, year or rating; month groups and stable pagination retain the selected calendar date. Viewing logs and distinct movie counts are shown separately.
+
+The shared log form initializes your saved timezone from the browser (UTC fallback), validates actual/non-future calendar dates, and keeps drafts/request identity through failed saves. Saving removes that movie from your watchlist atomically; deleting a log does not restore it. Favorites remain independent. Entries default Private. Public intent is stored but publishes nothing until profile publication and community controls launch in phase4.
+
+Phase3 adds a migration without converting legacy timestamps. Read [diary operations](docs/diary-operations.md) before previewing or explicitly reviewing date normalization. `npm run diary:dates -- preview .superpowers/new-preview.json` writes a fresh report without database changes and accepts only loopback development/test databases. Do not apply unreviewed ambiguous conversions or reset populated data.

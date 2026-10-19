@@ -30,26 +30,26 @@
 
 ### Task 1: Shared contract, dates and additive schema
 
-**Files:** Create `app/lib/diary/{contracts,dates,legacy-dates}.ts`, `scripts/diary-dates.ts`, additive phase3 migration; modify `prisma/schema.prisma`, `app/validationSchemas.ts`, diary type reexports; test `tests/diary/contracts.test.ts`, `tests/integration/diary/migration.test.ts`.
+**Files:** Create `app/lib/diary/{contracts,dates,legacy-dates}.ts`, `scripts/diary-dates.ts`, additive phase3 migration; modify `prisma/schema.prisma`, `app/validationSchemas.ts`, diary type reexports; test `tests/diary/contracts.test.ts`, `tests/integration/catalog/catalog.test.ts`.
 
 **Interfaces:** `diaryEntrySchema` parses strict shared payload; `DiaryInput` is inferred output. `calendarDate(Date|string)` serializes UTC date, `todayInTimeZone(zone,now?)`, `parseCalendarDate(value)`, `validateWatchedDate(value,zone,now?)`. User.timeZone nullable means uninitialized, effective UTC. `previewLegacyDates` emits original/candidates/ambiguity; reviewed apply checks originals transactionally.
 
-- [ ] Write failing contract/date tests: null/integer scale, empty/trimmed/max review, invalid leap/rollover/timestamps, timezone boundary/future validation, legacy ambiguous previews.
-- [ ] Run `npm test -- tests/diary`; expect missing implementation/old required-rating failures.
-- [ ] Implement pure helpers/strict schema; additive SQL nullable rating/default empty review, visibility PRIVATE, flags false, nullable request ID and unique index, nullable saved timezone; rename mapped model and all clients without physical rename.
-- [ ] Seed historical fixtures before SQL, compare old IDs/values/accounts/links and original timestamps, verify defaults/multiple nullable IDs; backup/restore and compare. Run `npm run test:integration -- tests/integration/diary/migration.test.ts` and `npm run test:migrations`; expect preservation and no drift.
-- [ ] Commit local contract/schema deliverable.
+- [x] Write failing contract/date tests: null/integer scale, empty/trimmed/max review, invalid leap/rollover/timestamps, timezone boundary/future validation, legacy ambiguous previews.
+- [x] Run `npm test -- tests/diary`; expect missing implementation/old required-rating failures.
+- [x] Implement pure helpers/strict schema; additive SQL nullable rating/default empty review, visibility PRIVATE, flags false, nullable request ID and unique index, nullable saved timezone; rename mapped model and all clients without physical rename.
+- [x] Seed historical fixtures before SQL, compare old IDs/values/accounts/links and original timestamps, verify defaults/multiple nullable IDs; backup/restore and compare. Run `npm run test:integration -- tests/integration/catalog/catalog.test.ts` and `npm run test:migrations`; expect preservation and no drift.
+- [x] Commit local contract/schema deliverable.
 
 ### Task 2: Owner services and authenticated handlers
 
 **Files:** `app/services/{diaryEntryService,watchlistService}.ts`, `app/lib/diary/http.ts`, diary handlers, timezone initialization handler, movieDetailService and detail rating/review consumers; integration `tests/integration/diary.test.ts`.
 
-**Interfaces:** `createDiaryEntry(userId,input,{db?})` returns entry/replayed; unique retries return original. `updateDiaryEntry(userId,id,input)` full replacement preserves request identity. `deleteDiaryEntry(userId,id)` scoped delete. `listDiaryEntries(userId,filters)` order watchedDate DESC/id DESC, 20-page keyset, query/year/rating, log/distinct counts. Timezone initialization writes once by updateMany where null; invalid zones reject.
+**Interfaces:** `createDiaryEntry(userId,input,{db?})` returns entry/replayed; unique retries return original. `updateDiaryEntry(userId,id,input)` preserves request identity and an unchanged legacy timestamp; ordinary edits leave watchlist intent intact, actual movie changes use guarded cleanup. `deleteDiaryEntry(userId,id)` scoped delete. `listDiaryEntries(userId,filters)` order watchedDate DESC/id DESC, 20-page keyset, query/year/rating, log/distinct counts. Timezone initialization writes once by updateMany where null; invalid zones reject.
 
-- [ ] Write failing real database tests for concurrent same-key creates, same-day new IDs, timezone validation, two owners, replay after watchlist re-add, rollback on watchlist failure and missing movie, edit/delete ownership and no restore, filtered deterministic pagination, no private queries on public movie reads.
-- [ ] Run targeted integration; expect old behavior failures.
-- [ ] Implement transaction services, safe errors/serialization, no-store authenticated GET/POST/PATCH/DELETE. Authenticate before parsing. Remove all public diary queries/aggregates until phase4; detail explains community unavailable.
-- [ ] Run targeted then full units/integration; expect pass. Commit local service deliverable.
+- [x] Write failing real database tests for concurrent same-key creates, same-day new IDs, timezone validation, two owners, replay after watchlist re-add, rollback on watchlist failure and missing movie, edit/delete ownership and no restore, filtered deterministic pagination, no private queries on public movie reads.
+- [x] Run targeted integration; expect old behavior failures.
+- [x] Implement transaction services, safe errors/serialization, no-store authenticated GET/POST/PATCH/DELETE. Authenticate before parsing. Remove all public diary queries/aggregates until phase4; detail explains community unavailable.
+- [x] Run targeted then full units/integration; expect pass. Commit local service deliverable.
 
 ### Task 3: One accessible log form and private library
 
@@ -57,18 +57,18 @@
 
 **Interfaces:** Form uses DiaryInput, persistent request UUID per mounted draft, initializes timezone before save, preserves draft on failures, defaults private/null/empty, explicit rewatch/spoiler/public intent. Movie details import explicitly then navigate to this form. Diary URL filters q/year/rating/cursor preserve library tabs; counts distinguish all owner logs and distinct movies.
 
-- [ ] Write failing form/browser tests for unrated empty log, retry UUID, draft error preservation, flags/visibility edit, same-date rewatch, date stability, filters/pages, keyboard and small viewport.
-- [ ] Run tests; expect required rating/missing controls failures.
-- [ ] Consolidate form/hook/types, accessible labeled fields/error focus/loading state; explain automatic watchlist removal and phase4 publication gate. Implement UTC grouping/display, bounded server queries and stable next-page links, independent favorites/watchlist/history. Preserve existing dialogs with focus handling or use accessible native details/confirmation dialog.
-- [ ] Run complete units and browser tests at 360/768/1440, light/dark/reduced motion; inspect screenshots. Commit UI deliverable.
+- [x] Write failing form/browser tests for unrated empty log, retry UUID, draft error preservation, flags/visibility edit, same-date rewatch, date stability, filters/pages, keyboard and small viewport.
+- [x] Run tests; expect required rating/missing controls failures.
+- [x] Consolidate form/hook/types, accessible labeled fields/error focus/loading state; explain automatic watchlist removal and phase4 publication gate. Implement UTC grouping/display, bounded server queries and stable next-page links, independent favorites/watchlist/history. Preserve existing dialogs with focus handling or use accessible native details/confirmation dialog.
+- [x] Run complete units and browser tests at 360/768/1440, light/dark/reduced motion; inspect screenshots. Commit UI deliverable.
 
 ### Task 4: Final verification and independent review
 
 **Files:** `docs/phase-3-verification.md`, `docs/diary-operations.md`, plan progress.
 
-- [ ] Run Prisma generation after own browser server exits; lint/types/full units/integration/migrations/browser/build; full/runtime audits. Expected all pass; record exact failures and corrections.
-- [ ] Review phase range from 1973d2f independently, with spec/plan/review focus and ledger rulings; fix important findings with RED→GREEN regression and full affected suites.
-- [ ] Document preservation/restore/date preview evidence, external credential limitations and runtime cancellation limitation. Check approved docs unchanged and original checkout untouched; commit all work locally and leave clean checkout intact.
+- [x] Run Prisma generation after own browser server exits; lint/types/full units/integration/migrations/browser/build; full/runtime audits. Expected all pass; record exact failures and corrections.
+- [x] Review phase range from 1973d2f independently, with spec/plan/review focus and ledger rulings; fix important findings with RED→GREEN regression and full affected suites.
+- [x] Document preservation/restore/date preview evidence, external credential limitations and runtime cancellation limitation. Check approved docs unchanged and original checkout untouched; commit all work locally and leave clean checkout intact.
 
 ## Decisions
 
@@ -76,3 +76,9 @@
 - Timezone is introduced now solely for date correctness; profile editing/publication/moderation remain phase4.
 - Visibility PUBLIC records intent only; no phase3 public diary rendering or aggregate. Explain in form.
 - Legacy UTC-midnight records already conform; non-midnight records stay untouched until explicit reviewed conversion. Browser display uses UTC date deterministically in the interim.
+
+## Execution record
+
+- Existing historical catalog SQL/backup harness was extended for phase3 preservation and pre-upgrade restoration; a second migration harness was not duplicated. See the verification report's rulings.
+- One independent review of1973d2f..635b36e found four Important issues. Legacy edit preservation, retryable timezone initialization, changed drafts after uncertain creates, and edit watchlist replay were each reproduced failing and fixed. Overlapping movie-change retries also have a real PostgreSQL regression and optimistic guard. No Critical/Minor issues were returned.
+- The reviewer set phase4 implementation aside under the approved boundary; public diary suppression was reviewed. Fixes are verified by regression/full suites, without another reviewer dispatch.
