@@ -1,6 +1,8 @@
 import { defineConfig } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
 import { resolve } from 'node:path';
+import { mkdirSync } from 'node:fs';
+mkdirSync('.superpowers', { recursive: true });
 try { process.loadEnvFile('.env'); } catch { /* CI supplies environment directly. */ }
 if (!process.env.TEST_DATABASE_URL) throw new Error('Set TEST_DATABASE_URL to a disposable database ending in _test');
 const database = new URL(process.env.TEST_DATABASE_URL);

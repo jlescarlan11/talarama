@@ -1,0 +1,85 @@
+name: Local release checks
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: talarama_test
+          POSTGRES_PASSWORD: synthetic-ci-only
+          POSTGRES_DB: talarama_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U talarama_test -d talarama_test"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      CI: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+      TALARAMA_DISABLE_COMPILER_CACHE: '1'
+      DATABASE_URL: postgresql://talarama_test:synthetic-ci-only@127.0.0.1:5432/talarama_build
+      DIRECT_URL: postgresql://talarama_test:synthetic-ci-only@127.0.0.1:5432/talarama_build
+      TEST_DATABASE_URL: postgresql://talarama_test:synthetic-ci-only@127.0.0.1:5432/talarama_test
+      NEXTAUTH_URL: http://127.0.0.1:3000
+      NEXTAUTH_SECRET: synthetic-ci-secret-never-use-outside-disposable-tests
+      GOOGLE_CLIENT_ID: ''
+      GOOGLE_CLIENT_SECRET: ''
+      TMDB_READ_TOKEN: ''
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: talarama_test
+      PGPASSWORD: synthetic-ci-only
+      PGDATABASE: talarama_test
+      PG_BIN: /usr/lib/postgresql/17/bin
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '22.14.0'
+          package-manager-cache: false
+      - run: npm install --global npm@11.6.1
+      - name: Install matching PostgreSQL backup/restore tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client-17
+          "$PG_BIN/pg_dump" --version
+      - run: npm ci
+      - run: npx prisma generate
+      - name: Prepare disposable build database and screenshot output
+        run: |
+          mkdir -p .superpowers
+          "$PG_BIN/createdb" talarama_build
+          npx prisma db push --skip-generate
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run test:integration
+      - run: npm run test:migrations
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      # Playwright owns/exits its fixture server before generation/build.
+      - run: npx prisma generate
+      - run: npm run build
+      - run: npm audit
+      - run: npm audit --omit=dev
+      # No credential-bearing logs, database dumps, auth state or test artifacts are uploaded.

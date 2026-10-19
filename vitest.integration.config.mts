@@ -1,5 +1,7 @@
 import { defineConfig } from 'vitest/config';
 import { fileURLToPath } from 'node:url';
+import { mkdirSync } from 'node:fs';
+mkdirSync('.superpowers', { recursive: true });
 export default defineConfig({
   oxc: { jsx: { runtime: 'automatic' } },
   css: { postcss: { plugins: [] } },
