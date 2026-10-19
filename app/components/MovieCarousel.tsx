@@ -1,4 +1,5 @@
 "use client";
+import {isCommonsPosterUrl} from '@/app/lib/movies/poster-credit';
 import EmptyState from "./EmptyState";
 import React, { useRef, useEffect, useState, useCallback, useSyncExternalStore } from "react";
 import { movieHref } from "@/app/lib/movies/links";
@@ -148,6 +149,8 @@ const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
                 {movie.posterUrl ? (
                   <Image
                     src={movie.posterUrl}
+                    unoptimized={isCommonsPosterUrl(movie.posterUrl)}
+                    referrerPolicy="no-referrer"
                     alt={`Poster for ${movie.title}`}
                     fill
                     className="object-cover transition-transform duration-700 group-hover:scale-110"

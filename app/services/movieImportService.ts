@@ -9,7 +9,7 @@ type Dependencies = { db?: PrismaClient; provider?: { details(id: number): Promi
 export function movieMetadata(detail: CatalogMovie | WikidataMovie) {
   return { title: detail.title, description: detail.description, releasedYear: detail.releasedYear, duration: detail.duration,
     posterUrl: detail.posterUrl, backdropUrl: detail.backdropUrl, tmdbScore: detail.tmdbScore,
-    credits: { cast: detail.cast, directors: detail.directors } as Prisma.InputJsonValue,
+    credits: { cast: detail.cast, directors: detail.directors, ...(detail.posterCredit?{posterCredit:{...detail.posterCredit}}:{}) } as Prisma.InputJsonValue,
     metadataRefreshedAt: new Date(),
   };
 }

@@ -6,7 +6,7 @@ import { importWikidataMovie } from '@/app/services/wikidataImportService';
 import { seedLocalPreview } from '@/scripts/lib/local-preview-seed';
 import type { WikidataMovie } from '@/app/lib/tmdb/types';
 let scope: Awaited<ReturnType<typeof createRetentionFixture>>;
-const detail: WikidataMovie = { localId:null,wikidataId:'Q25188',tmdbId:null,title:'Same title',description:'CC0 description',releasedYear:2010,duration:148,posterUrl:null,backdropUrl:null,tmdbScore:null,tmdbVoteCount:null,genres:[{wikidataId:'Q471839',name:'Science Fiction'}],cast:[],directors:[] };
+const detail: WikidataMovie = { localId:null,wikidataId:'Q25188',tmdbId:null,title:'Same title',description:'CC0 description',releasedYear:2010,duration:148,posterUrl:'https://upload.wikimedia.org/wikipedia/commons/a/ab/Fixture_poster.jpg',posterCredit:{url:'https://upload.wikimedia.org/wikipedia/commons/a/ab/Fixture_poster.jpg',sourceUrl:'https://commons.wikimedia.org/wiki/File:Fixture_poster.jpg',license:'Public domain',licenseUrl:'https://commons.wikimedia.org/wiki/Help:Public_domain',artist:'Synthetic artist',credit:'Synthetic scan'},backdropUrl:null,tmdbScore:null,tmdbVoteCount:null,genres:[{wikidataId:'Q471839',name:'Science Fiction'}],cast:[],directors:[] };
 const provider={details:async()=>detail};
 const snapshot=async()=>({users:await scope.db.user.findMany(),accounts:await scope.db.account.findMany(),diaries:await scope.db.diaryEntry.findMany(),likes:await scope.db.likedBy.findMany(),watch:await scope.db.watchlistEntry.findMany(),legacy:await scope.db.movie.findUnique({where:{id:'wiki-legacy'}})});
 beforeAll(async()=>{scope=await createRetentionFixture(process.env.TEST_DATABASE_URL!);},60000);
@@ -27,6 +27,7 @@ it('applies actual additive SQL without changing legacy IDs, accounts, library, 
 it('converges concurrent Q imports without merging an identically titled legacy/TMDB movie',async()=>{
  const before=await snapshot();const movies=await Promise.all(Array.from({length:6},()=>importWikidataMovie('Q25188',{db:scope.db,provider})));
  expect(new Set(movies.map(movie=>movie.id)).size).toBe(1);expect(movies[0].id).not.toBe('wiki-legacy');expect(movies[0].tmdbId).toBeNull();
+ expect(movies[0]).toMatchObject({posterUrl:detail.posterUrl,credits:{posterCredit:detail.posterCredit}});
  expect(await scope.db.externalMovieIdentity.count()).toBe(1);expect(await snapshot()).toEqual(before);
  const retry={details:vi.fn(async()=>{throw Error('must not refetch');})};
  expect((await importWikidataMovie('Q25188',{db:scope.db,provider:retry})).id).toBe(movies[0].id);expect(retry.details).not.toHaveBeenCalled();

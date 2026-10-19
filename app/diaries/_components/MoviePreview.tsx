@@ -2,6 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
+import {isCommonsPosterUrl} from '@/app/lib/movies/poster-credit';
 import { FiImage } from "react-icons/fi";
 import { Movie } from "../types/diary";
 
@@ -26,6 +27,8 @@ const MoviePreview: React.FC<MoviePreviewProps> = ({ selectedMovie }) => {
               width={300}
               height={450}
               src={selectedMovie.posterUrl}
+                unoptimized={isCommonsPosterUrl(selectedMovie.posterUrl)}
+                referrerPolicy="no-referrer"
               alt={selectedMovie.title}
               className="w-full h-full object-cover"
               onError={(e) => {

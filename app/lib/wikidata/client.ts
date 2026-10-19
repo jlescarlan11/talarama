@@ -4,6 +4,7 @@ import { MetadataCache } from '@/app/lib/tmdb/cache';
 import { TmdbError } from '@/app/lib/tmdb/client';
 import type { CatalogPage, WikidataMovie } from '@/app/lib/tmdb/types';
 import { genres } from '@/app/lib/movies/catalog-query';
+import {CommonsPosters,type PosterCandidate} from './commons-posters';
 
 export const wikidataIdSchema = z.string().regex(/^Q[1-9]\d{0,11}$/);
 export const wikiGenres: Record<number, string> = { 28:'Q188473',12:'Q319221',16:'Q202866',35:'Q157443',80:'Q959790',99:'Q93204',18:'Q130232',10751:'Q1361932',14:'Q157394',36:'Q17013749',27:'Q200092',10402:'Q842256',9648:'Q1200678',10749:'Q1054574',878:'Q471839',10770:'Q506240',53:'Q2484376',10752:'Q369747',37:'Q172980' };
@@ -31,7 +32,16 @@ export class WikidataClient {
   private cache = new MetadataCache();
   private blockedUntil = 0;
   private fetcher: typeof fetch;
-  constructor({ fetcher = fetch }: { fetcher?: typeof fetch } = {}) { this.fetcher=fetcher; }
+  private posters:CommonsPosters;
+  constructor({ fetcher = fetch }: { fetcher?: typeof fetch } = {}) { this.fetcher=fetcher;this.posters=new CommonsPosters({fetcher}); }
+  private posterCandidates(entity:Entity):PosterCandidate[] {
+    const files=(property:string,explicitPoster:boolean)=>values(entity,property).filter((file):file is string=>typeof file==='string').slice(0,2).map(file=>({file,explicitPoster}));
+    return [...files('P3383',true),...files('P18',false)];
+  }
+  private async attachPosters(candidates:Map<string,PosterCandidate[]>,movies:WikidataMovie[]):Promise<WikidataMovie[]> {
+    const posters=await this.posters.resolve([...candidates.values()].flat());
+    return movies.map(movie=>{const poster=candidates.get(movie.wikidataId)?.map(candidate=>posters.get(candidate.file)).find(Boolean);return poster?{...movie,posterUrl:poster.url,posterCredit:poster}:movie;});
+  }
   private async request(url: URL): Promise<unknown> {
     if (Date.now() < this.blockedUntil) throw new TmdbError('RATE_LIMITED');
     const abort = new AbortController();
@@ -61,19 +71,20 @@ export class WikidataClient {
   }
   async details(id: string): Promise<WikidataMovie> {
     if(!wikidataIdSchema.safeParse(id).success)throw new TmdbError('INVALID_INPUT');
-    return this.cache.get(`details:${id}`,86400000,async()=>{
+    const metadata=await this.cache.get(`details:${id}`,86400000,async()=>{
       const [entity]=await this.entities([id]); validFilm(entity);
       const related=[...new Set([...ids(entity,'P136').slice(0,10),...ids(entity,'P57').slice(0,10),...ids(entity,'P161').slice(0,20)])];
       const labels=new Map((await this.entities(related,false)).map(row=>[row.id,row.labels.en?.value || row.id]));
-      return normalize(entity,labels);
+      return {movie:normalize(entity,labels),candidates:this.posterCandidates(entity)};
     });
+    return (await this.attachPosters(new Map([[id,metadata.candidates]]),[metadata.movie]))[0];
   }
   search(input: { query:string;year?:number;page?:number }) { return this.list(input); }
   discover(input: { genre?:number;year?:number;page?:number } = {}) { return this.list(input); }
   private async list(input: { query?:string;genre?:number;year?:number;page?:number }): Promise<CatalogPage> {
     const parsed=z.object({query:z.string().trim().min(1).max(200).optional(),genre:z.number().int().refine(id=>!!wikiGenres[id]).optional(),year:z.number().int().min(1800).max(9999).optional(),page:z.number().int().min(1).max(500).default(1)}).safeParse(input);
     if(!parsed.success)throw new TmdbError('INVALID_INPUT');const {query,genre,year,page}=parsed.data;
-    return this.cache.get(`list:${JSON.stringify(parsed.data)}`,query?300000:3600000,async()=>{
+    const metadata=await this.cache.get<{data:CatalogPage<WikidataMovie>;candidates:Map<string,PosterCandidate[]>}>(`list:${JSON.stringify(parsed.data)}`,query?300000:3600000,async()=>{
       let selected:string[];let total=0;let hasMore:boolean|undefined;
       if(year){
         // Candidate restriction keeps title/year queries away from a global label scan.
@@ -82,7 +93,7 @@ export class WikidataClient {
         if(query){
           const candidates=z.object({query:z.object({search:z.array(z.object({title:wikidataIdSchema})).max(100)})}).safeParse(await this.api({action:'query',list:'search',srsearch:`haswbstatement:${[...filmTypes].map(id=>`P31=${id}`).join('|')} haslabel:en inlabel:${JSON.stringify(query+'@en')}`,srsort:'incoming_links_desc',srlimit:'100',srinfo:'',srprop:''}));
           if(!candidates.success)throw new TmdbError('INVALID_RESPONSE');
-          if(!candidates.data.query.search.length)return {source:'wikidata',order:'identifier',page,totalPages:0,totalResults:0,results:[],hasMore:false};
+          if(!candidates.data.query.search.length)return {data:{source:'wikidata',order:'identifier',page,totalPages:0,totalResults:0,results:[],hasMore:false},candidates:new Map()};
           constraint=`VALUES ?film { ${candidates.data.query.search.map(row=>`wd:${row.title}`).join(' ')} }`;
         }
         const q=`PREFIX wdt:<http://www.wikidata.org/prop/direct/> PREFIX wd:<http://www.wikidata.org/entity/> PREFIX hint:<http://www.bigdata.com/queryHints#> SELECT DISTINCT ?film WHERE { ${constraint} ?film wdt:P577 ?date. FILTER(?date >= "${year}-01-01T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> && ?date < "${year+1}-01-01T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime>) hint:Prior hint:rangeSafe true. } ORDER BY ?film LIMIT 13 OFFSET ${(page-1)*12}`;
@@ -97,7 +108,8 @@ export class WikidataClient {
       }
       const rows=await this.entities([...new Set(selected)]);
       const results=rows.flatMap(row=>{try{if(year && years(row)[0]!==year)return [];return [normalize(row)];}catch(error){if(error instanceof TmdbError && error.code==='CONTENT_BLOCKED')return [];throw error;}});
-      return {source:'wikidata',order:year?'identifier':'coverage',page,totalPages:Math.min(500,Math.ceil(total/12)),totalResults:total,results,...(hasMore===undefined?{}:{hasMore})};
+      return {data:{source:'wikidata',order:year?'identifier':'coverage',page,totalPages:Math.min(500,Math.ceil(total/12)),totalResults:total,results,...(hasMore===undefined?{}:{hasMore})},candidates:new Map(rows.filter(row=>results.some(movie=>movie.wikidataId===row.id)).map(row=>[row.id,this.posterCandidates(row)]))};
     });
+    return {...metadata.data,results:await this.attachPosters(metadata.candidates,metadata.data.results)};
   }
 }

@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   images: {
     qualities: [75, 100],
-    remotePatterns: [{ protocol: 'https', hostname: 'image.tmdb.org', port: '', pathname: '/t/p/**', search: '' }, ...[
+    remotePatterns: [...['upload.wikimedia.org','thumb.wikimedia.org'].map(hostname=>({protocol:'https' as const,hostname,port:'',pathname:'/wikipedia/commons/**',search:''})), { protocol: 'https', hostname: 'image.tmdb.org', port: '', pathname: '/t/p/**', search: '' }, ...[
       "example.com",
       "posters.movieposterdb.com",
       "localc.ph",

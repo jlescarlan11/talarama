@@ -80,3 +80,19 @@ it('escapes literal operators and bounds bodies without a content-length header'
  expect(new URL(String(fetcher.mock.calls[0][0])).searchParams.get('srsearch')).toContain(`inlabel:${JSON.stringify(query+'@en')}`);
  await expect(new WikidataClient({fetcher:async()=>new Response(new Uint8Array(8*1024*1024+1))}).details('Q25188')).rejects.toMatchObject({code:'INVALID_RESPONSE'});
 });
+it('uses a verified identity-linked Commons poster in both discovery and detail without changing IDs',async()=>{
+ const main={...entity(),claims:{...entity().claims,P3383:[{mainsnak:{datavalue:{value:'Inception fixture poster.jpg'}}}]}};
+ const original=transport(main);
+ const fetcher=vi.fn<typeof fetch>(async(input,options)=>new URL(String(input)).hostname==='commons.wikimedia.org'?Response.json({query:{pages:[{title:'File:Inception fixture poster.jpg',imagerepository:'local',imageinfo:[{width:1000,height:1500,mime:'image/jpeg',thumburl:'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ab/Inception_fixture_poster.jpg/500px-Inception_fixture_poster.jpg',descriptionurl:'https://commons.wikimedia.org/wiki/File:Inception_fixture_poster.jpg',extmetadata:{License:{value:'pd'},LicenseShortName:{value:'Public domain'},AttributionRequired:{value:'false'}}}]}]}}):original(input,options));
+ const provider=new WikidataClient({fetcher});
+ for(const movie of [(await provider.discover()).results[0],await provider.details('Q25188')])expect(movie).toMatchObject({wikidataId:'Q25188',tmdbId:null,posterUrl:'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ab/Inception_fixture_poster.jpg/500px-Inception_fixture_poster.jpg',posterCredit:{license:'Public domain'}});
+});
+it('recovers artwork after a transient failure without refetching cached Wikidata metadata',async()=>{
+ const main={...entity(),claims:{...entity().claims,P3383:[{mainsnak:{datavalue:{value:'Fixture poster.jpg'}}}]}};
+ const original=transport(main);let failed=true;
+ const fetcher=vi.fn<typeof fetch>(async(input,options)=>new URL(String(input)).hostname==='commons.wikimedia.org'?(failed?new Response('',{status:503}):Response.json({query:{pages:[{title:'File:Fixture poster.jpg',imagerepository:'local',imageinfo:[{width:1000,height:1500,mime:'image/jpeg',thumburl:'https://upload.wikimedia.org/wikipedia/commons/a/ab/Fixture_poster.jpg',descriptionurl:'https://commons.wikimedia.org/wiki/File:Fixture_poster.jpg',extmetadata:{License:{value:'pd'},LicenseShortName:{value:'Public domain'},AttributionRequired:{value:'false'}}}]}]}})):original(input,options));
+ const provider=new WikidataClient({fetcher});
+ expect((await provider.details('Q25188')).posterUrl).toBeNull();expect((await provider.discover()).results[0].posterUrl).toBeNull();const reads=original.mock.calls.length;
+ failed=false;
+ expect((await provider.details('Q25188')).posterUrl).toContain('wikimedia.org');expect((await provider.discover()).results[0].posterUrl).toContain('wikimedia.org');expect(original.mock.calls.length).toBe(reads);
+});

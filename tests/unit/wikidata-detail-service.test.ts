@@ -13,3 +13,12 @@ it('keeps the saved local identity and per-member library state during provider 
  expect(mocks.like).toHaveBeenCalledWith({where:{movieId_userId:{movieId:'unchanged-local',userId:'member-a'}}});
  mocks.like.mockClear();await getWikidataMovieDetail('Q25188');expect(mocks.like).not.toHaveBeenCalled();
 });
+it('isolates malformed or mismatched poster credits from preserved cast and director snapshots',async()=>{
+ const person={wikidataId:'Q25191',name:'Saved director',character:''};
+ for(const posterCredit of [{sourceUrl:'javascript:bad'}, {url:'https://upload.wikimedia.org/wikipedia/commons/a/ab/Wrong.jpg',sourceUrl:'https://commons.wikimedia.org/wiki/File:Wrong.jpg',license:'CC0',licenseUrl:'https://creativecommons.org/publicdomain/zero/1.0/',artist:'Artist',credit:''}]){
+  mocks.identity.mockResolvedValue({movie:{id:'unchanged-local',title:'Saved',posterUrl:'https://upload.wikimedia.org/wikipedia/commons/a/ab/Actual.jpg',credits:{cast:[person],directors:[person],posterCredit},genres:[]}});
+  mocks.details.mockRejectedValue(Error('outage'));
+  const result=await getWikidataMovieDetail('Q25188');
+  expect(result?.movie.cast).toEqual([person]);expect(result?.movie.directors).toEqual([person]);expect(result?.movie.posterCredit).toBeUndefined();
+ }
+});

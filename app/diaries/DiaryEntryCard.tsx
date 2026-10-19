@@ -1,6 +1,7 @@
 "use client";
 // components/DiaryEntryCard.tsx
 import Image from "next/image";
+import {isCommonsPosterUrl} from '@/app/lib/movies/poster-credit';
 import React from "react";
 import DiaryEntryMenu from "./DiaryEntryMenu";
 import StarRating from "./StarRating";
@@ -35,6 +36,8 @@ const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({
             height={80}
             width={60}
             src={diaryEntry.movie.posterUrl}
+                unoptimized={isCommonsPosterUrl(diaryEntry.movie.posterUrl)}
+                referrerPolicy="no-referrer"
             alt={`${diaryEntry.movie.title} poster`}
             className="rounded-lg object-cover shadow-lg w-[50px] h-[70px] sm:w-[60px] sm:h-[80px]"
             loading="lazy"

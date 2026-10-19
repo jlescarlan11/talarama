@@ -28,6 +28,13 @@ it('renders honest missing metadata and separate provider/local score scales', (
   expect(screen.queryByText('Talarama 4.0/5')).not.toBeInTheDocument();
   expect(screen.queryByText('1 rating · early ratings')).not.toBeInTheDocument();
 });
+it('shows the real poster source and rights in the existing movie detail layout',()=>{
+ const posterCredit={url:'https://upload.wikimedia.org/wikipedia/commons/a/ab/Poster.jpg',sourceUrl:'https://commons.wikimedia.org/wiki/File:Poster.jpg',license:'Public domain' as const,licenseUrl:'https://commons.wikimedia.org/wiki/Help:Public_domain',artist:'Poster artist',credit:'Original scan'};
+ render(<MovieDetail movie={{...movie,posterUrl:posterCredit.url,posterCredit}} localId={null} signedIn={false} favorite={false} watchlist={false} rating={{average:null,count:0}} />);
+ expect(screen.getByRole('link',{name:'Poster source: Wikimedia Commons'})).toHaveAttribute('href',posterCredit.sourceUrl);
+ expect(screen.getByText(/Poster artist/)).toBeVisible();
+ expect(screen.getByRole('link',{name:'Public domain'})).toHaveAttribute('href',posterCredit.licenseUrl);
+});
 it('imports before saving and retries the same add intent after a lost response', async () => {
   const calls: [string, string | undefined][] = [];
   let failed = false;

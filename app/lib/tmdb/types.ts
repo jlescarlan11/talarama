@@ -1,3 +1,4 @@
+export interface PosterCredit {url:string;sourceUrl:string;license:'Public domain'|'CC0';licenseUrl:string;artist:string;credit:string}
 export interface CatalogMovie {
   localId: string | null;
   tmdbId: number;
@@ -6,6 +7,7 @@ export interface CatalogMovie {
   releasedYear: number | null;
   duration: number | null;
   posterUrl: string | null;
+  posterCredit?: PosterCredit | null;
   backdropUrl: string | null;
   tmdbScore: number | null;
   tmdbVoteCount: number;
