@@ -71,6 +71,8 @@ Playwright starts/owns a loopback server on 3100, uses synthetic persisted-sessi
 
 ## Engineering and operations
 
+`npm run retention:rehearse -- .superpowers/NEW-retention-report.jsonl` exercises expiry/refresh/termination/replay in its own new disposable schema, preserving member data and IDs. It uses synthetic transport only and cannot attach to existing data. See [local retention operations](docs/tmdb-retention-local.md); production activation and cache/backup integration remain gated. The owner confirmed noncommercial initial-release intent; licensing stays pending.
+
 [Architecture](docs/architecture.md) explains local/external identity, cache boundaries, retry safety and public eligibility. [Diary operations](docs/diary-operations.md) covers saved-zone validation, UTC calendar dates, exact legacy timestamp preservation and uncertain-create recovery. [Catalog operations](docs/catalog-operations.md) covers preview-only matching, explicit reviewed apply and durable audit recovery. [Community operations](docs/community-operations.md) covers publication, handles, moderation and quotas.
 
 Follow [migration safety](docs/migrations.md) before schema changes and [deployment/restore runbook](docs/deployment.md) before any future authorized hosting work. Fixture/empty-development preservation does not prove actual production preservation. Existing account links, local IDs and legacy values are retained; no ambiguous mapping/conversion is automatic. Member/review metadata deliberately remains generic/noindex.

@@ -55,3 +55,7 @@ Local tools intentionally refuse non-loopback/non-dev-test destinations. Do not 
 | Preservation | Authorized actual staging copy, reviewed migration history/SQL and identity/relationship/timestamp/restore comparison. |
 | Operations | Real hosting request limits, pool capacity, redacted logs, backup/restore monitoring, moderator staffing and access bootstrap procedure. |
 | Publication | Owner approval of migrations, release/licensing/terms evidence, tester invitation text and public launch. None is inferred from local readiness. |
+
+## Local follow-up
+
+On2026-10-19 the owner confirmed noncommercial initial-release intent and kept licensing pending. A [retention fixture rehearsal](tmdb-retention-local.md) exercises the database mechanism without activating it on existing data. Production provenance, scheduling, shared-cache/image/backup integration, actual staging and live-provider gates remain. The authorized loopback synthetic preview is not a hosted preview deployment.
