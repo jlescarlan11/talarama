@@ -9,6 +9,7 @@ vi.mock('server-only', () => ({}));
 import { importMovie, refreshMovie } from '@/app/services/movieImportService';
 import type { CatalogMovie } from '@/app/lib/tmdb/types';
 import { applyMappings } from '@/app/services/catalogMappingService';
+import { setLibraryEntry } from '@/app/services/movieLibraryService';
 
 const raw = process.env.TEST_DATABASE_URL;
 if (!raw || !decodeURIComponent(new URL(raw).pathname).endsWith('_test')) throw new Error('Separate _test database required');
@@ -83,6 +84,23 @@ it('converges simultaneous imports and preserves different TMDB identities shari
   expect(await db.movie.count({ where: { title: 'Same title', releasedYear: 2020 } })).toBe(3);
   expect(await db.movieCategorizesAs.count({ where: { movieId: results[0].id } })).toBe(1);
   expect((await db.diaryEntry.findUniqueOrThrow({ where: { id: 'review' } })).movieId).toBe('legacy');
+});
+it('converges retry/concurrent library intent without affecting other members or legacy rows', async () => {
+  await db.user.create({ data: { id: 'other-member', email: 'other@example.invalid' } });
+  const imported = await importMovie(99, { db, provider });
+  for (const kind of ['favorite', 'watchlist'] as const) {
+    await Promise.all(Array.from({ length: 8 }, async () => {
+      const movie = await importMovie(99, { db, provider });
+      await setLibraryEntry('owner', movie.id, kind, true, { db });
+    }));
+    await setLibraryEntry('other-member', imported.id, kind, true, { db });
+    const count = (where: { movieId: string; userId: string }) => kind === 'favorite' ? db.likedBy.count({ where }) : db.watchedList.count({ where });
+    expect(await count({ movieId: imported.id, userId: 'owner' })).toBe(1);
+    await Promise.all(Array.from({ length: 8 }, () => setLibraryEntry('owner', imported.id, kind, false, { db })));
+    expect(await count({ movieId: imported.id, userId: 'owner' })).toBe(0);
+    expect(await count({ movieId: imported.id, userId: 'other-member' })).toBe(1);
+    expect(await count({ movieId: 'legacy', userId: 'owner' })).toBe(1);
+  }
 });
 it('reuses local snapshots on retries and never clears metadata after provider failure', async () => {
   const first = await importMovie(44, { db, provider });

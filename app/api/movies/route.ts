@@ -1,17 +1,7 @@
-import prisma from "@/prisma/client";
-import { Genre, Prisma } from "@prisma/client";
-import { NextRequest, NextResponse } from "next/server";
-
-import { movieSchema } from "@/app/validationSchemas";
-import { getServerSession } from "next-auth";
-import authOptions from "@/app/auth/authOptions";
-
-// Add caching headers
-const CACHE_CONTROL = {
-  GET: "public, s-maxage=60, stale-while-revalidate=300", // Cache for 1 minute, stale for 5 minutes
-  POST: "no-store", // Don't cache POST requests
-};
-
+import prisma from '@/prisma/client';
+import { NextResponse } from 'next/server';
+import { retiredCatalogWrite } from '@/app/lib/movies/library-handler';
+const CACHE_CONTROL = { GET: 'public, s-maxage=60, stale-while-revalidate=300' };
 export async function GET() {
   try {
     const movies = await prisma.movie.findMany({
@@ -52,88 +42,4 @@ export async function GET() {
   }
 }
 
-export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
-
-  if (!session) return NextResponse.json({}, { 
-    status: 401,
-    headers: {
-      "Cache-Control": CACHE_CONTROL.POST,
-    },
-  });
-
-  try {
-    const body = await request.json();
-    const validation = movieSchema.safeParse(body);
-
-    if (!validation.success) {
-      return NextResponse.json(validation.error.format(), { status: 400 });
-    }
-
-    const data = validation.data;
-    const genreNames = data.genres.map((g: string) => g.trim());
-
-    // Use transaction to ensure data consistency
-    const newMovie = await prisma.$transaction(async (tx) => {
-      const genres: Genre[] = await Promise.all(
-        genreNames.map(async (name: string): Promise<Genre> => {
-          let genre = await tx.genre.findUnique({
-            where: { genreName: name },
-          });
-
-          if (!genre) {
-            genre = await tx.genre.create({
-              data: { genreName: name },
-            });
-          }
-
-          return genre;
-        })
-      );
-
-      return tx.movie.create({
-        data: {
-          title: data.title,
-          description: data.description,
-          releasedYear: data.releasedYear,
-          duration: data.duration,
-          posterUrl: data.posterUrl ?? null,
-          directorFirstName: data.directorFirstName,
-          directorLastName: data.directorLastName,
-          genres: {
-            create: genres.map((genre) => ({
-              genre: {
-                connect: { id: genre.id },
-              },
-            })),
-          },
-        },
-        include: {
-          genres: {
-            include: { genre: true },
-          },
-        },
-      });
-    });
-
-    return NextResponse.json(newMovie, { status: 201 });
-  } catch (error) {
-    console.error("Error creating movie:", error);
-    
-    // Check if the error is due to a duplicate movie
-    if (error instanceof Prisma.PrismaClientKnownRequestError && 
-        error.code === 'P2002' && 
-        Array.isArray(error.meta?.target) &&
-        error.meta.target.includes('title_releasedYear')) {
-      return NextResponse.json(
-        { error: "A movie with this title and release year already exists" },
-        { status: 409 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
-  }
-}
+export async function POST() { return retiredCatalogWrite(); }

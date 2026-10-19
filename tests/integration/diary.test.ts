@@ -3,6 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { PrismaClient } from '@prisma/client';
 import { beforeAll, afterAll, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
+vi.mock('server-only', () => ({}));
 
 const auth = vi.hoisted(() => ({ userId: 'phase0-owner' as string | null }));
 vi.mock('next-auth', () => ({ getServerSession: async () => auth.userId ? { user: { id: auth.userId } } : null }));
