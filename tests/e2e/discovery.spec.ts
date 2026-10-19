@@ -12,7 +12,7 @@ test('visitor browses, paginates, shares details and restores filters at every l
       await page.goto('/movies?mode=discover&genre=18&year=2020&sort=popular&page=1');
       await expect(page.getByRole('link', { name: /Fixture Moon/ })).toBeVisible();
       await expect(page.getByLabel('Genre')).toHaveValue('18');
-      const introduction = page.getByText('Explore popular films or find a title you love. Save your picks and make them part of your story.');
+      const introduction = page.getByText('Explore our entire movie collection with advanced search and filtering options.');
       expect(await introduction.evaluate(element => element.getBoundingClientRect().width)).toBeGreaterThan(Math.min(width - 80, 500));
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       await page.screenshot({ path: `.superpowers/phase2-discovery-${width}.png`, fullPage: true, caret: 'initial' });

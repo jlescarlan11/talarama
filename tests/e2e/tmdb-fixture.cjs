@@ -1,7 +1,10 @@
 // Test-process transport only. Never imported by application modules.
 const originalFetch = globalThis.fetch;
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- Node --require preload must remain CommonJS.
+const previewFetch = process.env.TALARAMA_PREVIEW_CATALOG === '1' ? require('./preview-catalog.cjs').createPreviewFetch(originalFetch) : null;
 const film = (id = 70001, title = 'Fixture Moon') => ({ id, title, adult: false, overview: 'A synthetic journey through cinema.', release_date: '2020-01-01', poster_path: null, backdrop_path: null, vote_average: 8.2, vote_count: 12 });
 globalThis.fetch = async (input, options) => {
+  if (previewFetch) return previewFetch(input, options);
   const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url);
   if (url.origin !== 'https://api.themoviedb.org') return originalFetch(input, options);
   if (url.pathname.includes('/movie/')) {

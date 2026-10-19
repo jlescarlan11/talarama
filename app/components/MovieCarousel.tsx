@@ -5,6 +5,7 @@ import { movieHref } from "@/app/lib/movies/links";
 import Image from "next/image";
 import Link from "next/link";
 import { Movie, MovieCategorizesAs, Genre } from "@prisma/client";
+import type { CatalogMovie } from "@/app/lib/tmdb/types";
 
 type MovieWithGenres = Movie & {
   genres: (MovieCategorizesAs & {
@@ -16,7 +17,7 @@ type MovieWithGenres = Movie & {
 };
 
 interface MovieCarouselProps {
-  movies: MovieWithGenres[];
+  movies: (MovieWithGenres | CatalogMovie)[];
 }
 
 interface CardStyle {
@@ -123,15 +124,16 @@ const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
           const idx =
             (activeIdx + offset + displayMovies.length) % displayMovies.length;
           const movie = displayMovies[idx];
+          const genreNames = movie.genres.map(item => 'genre' in item ? item.genre.genreName : item.name);
           const { scale, opacity, zIndex } = getCardStyle(offset);
 
           return (
             <Link
               href={movieHref(movie)}
-              key={movie.id + "-" + offset}
+              key={`${movie.tmdbId ?? ('id' in movie ? movie.id : movie.localId)}-${offset}`}
               className="flex-none w-56 h-80"
               role="listitem"
-              aria-label={`${movie.title} (${movie.releasedYear})`}
+              aria-label={`${movie.title} (${movie.releasedYear ?? 'Release year unknown'})`}
             >
               <div
                 className={`w-full h-full bg-base-100 rounded-2xl overflow-hidden shadow-lg relative snap-center transition-all duration-300 group`}
@@ -171,29 +173,29 @@ const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
                     <p className="text-xs text-white/80 font-medium">
                       {movie.releasedYear}
                     </p>
-                    {movie.genres.length > 0 && (
+                    {genreNames.length > 0 && (
                       <div
                         className="flex flex-wrap gap-1 justify-center mt-2"
                         role="list"
                         aria-label="Movie genres"
                       >
-                        {movie.genres.slice(0, 2).map((movieGenre) => (
+                        {genreNames.slice(0, 2).map((name, index) => (
                           <span
-                            key={movieGenre.genre.id}
+                            key={`${name}-${index}`}
                             className="text-xs bg-white/25 backdrop-blur-sm px-2 py-1 rounded-full border border-white/20"
                             role="listitem"
                           >
-                            {movieGenre.genre.genreName}
+                            {name}
                           </span>
                         ))}
-                        {movie.genres.length > 2 && (
+                        {genreNames.length > 2 && (
                           <span
                             className="text-xs text-white/70 bg-white/15 backdrop-blur-sm px-2 py-1 rounded-full"
                             aria-label={`${
-                              movie.genres.length - 2
+                              genreNames.length - 2
                             } more genres`}
                           >
-                            +{movie.genres.length - 2}
+                            +{genreNames.length - 2}
                           </span>
                         )}
                       </div>

@@ -181,6 +181,7 @@ const AuthStatus: React.FC<AuthStatusProps> = ({ currentPath, onNavigate }) => {
           tabIndex={0}
           className="menu menu-sm dropdown-content p-2 w-48 bg-base-100 shadow-lg rounded-lg"
         >
+          <li><Link href="/diaries/new" prefetch={false}>New Diary</Link></li>
           <li><Link href="/settings/profile" prefetch={false}>Profile settings</Link></li>
           <li>
             <button

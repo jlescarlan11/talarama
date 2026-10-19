@@ -3,6 +3,7 @@ import Discovery from './Discovery';
 import { catalogQueryString, parseCatalogQuery } from '@/app/lib/movies/catalog-query';
 import { tmdb } from '@/app/lib/tmdb/server';
 import type { CatalogInitial } from '@/app/hooks/useCatalogSearch';
+import Link from 'next/link';
 
 export default async function MoviePage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
  const raw = await searchParams;
@@ -18,5 +19,5 @@ export default async function MoviePage({ searchParams }: { searchParams: Promis
      initial = { key, data, error: null };
    } catch { initial = { key, data: null, error: 'Movie provider is unavailable. Please try again.' }; }
  } catch { /* Client displays invalid URL controls without a provider call. */ }
- return <section className="max-w-7xl mx-auto pb-12"><header className="py-8 md:py-12 space-y-3"><p className="text-primary text-sm font-semibold uppercase tracking-widest">Your next great watch</p><h1 className="text-4xl md:text-5xl font-bold">Discover movies</h1><p className="max-w-[36rem] text-base-content/70">Explore popular films or find a title you love. Save your picks and make them part of your story.</p></header><Suspense fallback={<p role="status">Loading discovery…</p>}><Discovery initial={initial} /></Suspense></section>;
+ return <section className="container max-w-7xl mx-auto pb-12"><header className="mb-6"><nav aria-label="Breadcrumb" className="text-sm breadcrumbs mb-6"><ul><li><Link href="/" className="hover:underline">Home</Link></li><li>Movies</li></ul></nav><h1 className="text-3xl font-bold mb-2">Discover Movies</h1><p className="text-base-content/70 max-w-2xl">Explore our entire movie collection with advanced search and filtering options.</p></header><Suspense fallback={<p role="status">Loading discovery…</p>}><Discovery initial={initial} /></Suspense><footer className="footer footer-center p-4 mt-12 text-base-content border-t border-base-300"><p className="text-sm">Browse and discover your favorite movies</p></footer></section>;
 }

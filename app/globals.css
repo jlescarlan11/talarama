@@ -92,47 +92,12 @@
     @apply transition-transform duration-[var(--transition-duration)] hover:scale-105;
   }
 }
-/* Shared foundations: keep the existing DaisyUI themes and component vocabulary. */
-@plugin "daisyui/theme" {
-  name: "light";
-  default: true;
-  --color-primary: oklch(42% 0.10 180);
-  --color-primary-content: oklch(99% 0.005 180);
-  --color-secondary: oklch(43% 0.06 250);
-  --color-secondary-content: oklch(99% 0.005 250);
-  --color-accent: oklch(45% 0.10 60);
-  --color-accent-content: oklch(99% 0.005 60);
-  --color-base-100: oklch(99% 0.005 85);
-  --color-base-200: oklch(96% 0.008 85);
-  --color-base-300: oklch(89% 0.012 85);
-  --color-base-content: oklch(24% 0.015 250);
-  --radius-box: 1rem;
-  --radius-field: 0.5rem;
-  --radius-selector: 0.5rem;
-}
-@plugin "daisyui/theme" {
-  name: "dark";
-  prefersdark: true;
-  --color-primary: oklch(80% 0.10 175);
-  --color-primary-content: oklch(20% 0.03 175);
-  --color-secondary: oklch(80% 0.06 250);
-  --color-secondary-content: oklch(20% 0.03 250);
-  --color-accent: oklch(82% 0.10 70);
-  --color-accent-content: oklch(20% 0.03 70);
-  --color-base-100: oklch(20% 0.012 250);
-  --color-base-200: oklch(24% 0.012 250);
-  --color-base-300: oklch(31% 0.015 250);
-  --color-base-content: oklch(94% 0.008 85);
-  --radius-box: 1rem;
-  --radius-field: 0.5rem;
-  --radius-selector: 0.5rem;
-}
+/* Preserve the original DaisyUI light/dark palette; retain accessibility improvements. */
 @layer base {
   body { background: var(--color-base-100); color: var(--color-base-content); }
   :focus-visible { outline: 3px solid var(--color-primary); outline-offset: 3px; }
   button, input, textarea, select { font: inherit; }
   button:not(:disabled), a { touch-action: manipulation; }
-  p { line-height: 1.65; }
   ::selection { background: var(--color-primary); color: var(--color-primary-content); }
 }
 @layer components {
