@@ -15,6 +15,21 @@ function poster(index) {
   }
   return artwork.get(index);
 }
+// Pinned Next16 uses native HTTPS for optimized images, bypassing global fetch.
+// Replace only this process's exported upstream transport; retain optimization,
+// URL validation and all other exports. Never permit external artwork in samples.
+const optimizerPath = require.resolve('next/dist/server/image-optimizer');
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- Node-only preview preload.
+const optimizer = require(optimizerPath);
+const descriptors = Object.getOwnPropertyDescriptors(optimizer);
+descriptors.fetchExternalImage = { enumerable: true, value: async href => {
+  const url = new URL(href);
+  const match = url.pathname.match(/^\/t\/p\/(w500|w1280)\/talarama-preview-(\d+)\.png$/);
+  const index = Number(match?.[2]);
+  if (url.origin !== 'https://image.tmdb.org' || url.search || !match || index >= films.length) throw new Error('External artwork is disabled in sample preview');
+  return { buffer: await poster(index), contentType: 'image/png', cacheControl: 'public,max-age=3600', etag: `"local-sample-${index}"` };
+} };
+require.cache[optimizerPath].exports = Object.defineProperties({}, descriptors);
 exports.createPreviewFetch = originalFetch => async (input, options) => {
   const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url);
   if (url.origin === 'https://image.tmdb.org') {

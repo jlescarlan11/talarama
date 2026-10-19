@@ -29,3 +29,21 @@ it('offers multiple preview pages, real filtering/search over invented titles an
   expect(result.posterType).toBe('image/png');
   expect(result.posterBytes).toBeGreaterThan(1000);
 });
+
+it('serves preview artwork through Next image optimization without external DNS or HTTP', () => {
+  const script = `
+    require('node:dns').promises.lookup = async () => { throw new Error('External DNS forbidden in preview artwork'); };
+    require('node:https').request = () => { throw new Error('External HTTP forbidden in preview artwork'); };
+    require('./tests/e2e/tmdb-fixture.cjs');
+    (async () => {
+      try {
+        const { fetchExternalImage } = require('next/dist/server/image-optimizer');
+        const result = await fetchExternalImage('https://image.tmdb.org/t/p/w500/talarama-preview-0.png', false, 1000000);
+        console.log(JSON.stringify({ contentType: result.contentType, size: result.buffer.length }));
+      } catch (error) { console.log(JSON.stringify({ error: error.message })); }
+    })();
+  `;
+  const output = execFileSync(process.execPath, ['-e', script], { env: { ...process.env, TALARAMA_PREVIEW_CATALOG: '1' }, encoding: 'utf8', timeout: 15000 });
+  expect(JSON.parse(output)).toMatchObject({ contentType: 'image/png', size: expect.any(Number) });
+  expect(JSON.parse(output).size).toBeGreaterThan(1000);
+});

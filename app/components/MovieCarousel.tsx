@@ -151,6 +151,7 @@ const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
                     fill
                     className="object-cover transition-transform duration-700 group-hover:scale-110"
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    onError={event => { event.currentTarget.srcset = ''; event.currentTarget.src = '/placeholder-movie.svg'; }}
                     priority={offset === 0}
                     loading={offset === 0 ? "eager" : "lazy"}
                   />
@@ -173,6 +174,7 @@ const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
                     <p className="text-xs text-white/80 font-medium">
                       {movie.releasedYear}
                     </p>
+                    <p className="text-xs text-white/90">{movie.tmdbScore === null ? 'TMDB: not rated' : `TMDB ${movie.tmdbScore.toFixed(1)}/10`}</p>
                     {genreNames.length > 0 && (
                       <div
                         className="flex flex-wrap gap-1 justify-center mt-2"
@@ -202,11 +204,13 @@ const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
                     )}
                   </div>
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 p-3 text-white group-hover:opacity-0 transition-opacity duration-300">
+                <div className="absolute bottom-0 left-0 right-0 p-3 text-white bg-gradient-to-t from-black/90 to-transparent group-hover:opacity-0 group-focus-visible:opacity-100 transition-opacity duration-300">
                   <div className="text-center">
                     <h3 className="text-xs font-medium leading-tight line-clamp-1 drop-shadow-lg">
                       {movie.title}
                     </h3>
+                    <p className="text-xs text-white/90 mt-1">{movie.releasedYear ?? 'Release year unknown'}</p>
+                    {'tmdbScore' in movie && <p className="text-xs text-white/90 mt-1">{movie.tmdbScore === null ? 'TMDB: not rated' : `TMDB ${movie.tmdbScore.toFixed(1)}/10`}</p>}
                   </div>
                 </div>
               </div>

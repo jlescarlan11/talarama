@@ -31,6 +31,8 @@ Use Node 22 (22.14 or newer, below23), npm 11 and PostgreSQL 17. CI pins Node 22
 
 For Google, create a development web client with origin `http://localhost:3000` and redirect `http://localhost:3000/api/auth/callback/google`. Set a unique random `NEXTAUTH_SECRET` (generate locally with `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`; never share output). Verify real sign-in, sign-out, sign-in again and preservation of an existing linked account's diary. Synthetic JWT tests do not establish OAuth acceptance. Read [TMDB authentication](https://developer.themoviedb.org/docs/authentication-application) to obtain a server-only API Read Access Token.
 
+For the restored original presentation with disposable sample data, run `npm run preview:local` after building. It uses a fresh loopback `_test` schema and24 invented films with local artwork, search/filtering and pagination, without real provider credentials or a login bypass. See [preview boundaries and verification](docs/original-ui-restoration.md). Stop the owned preview before rebuilding. Use the ordinary development server with a genuine local `TMDB_READ_TOKEN` for live movie results.
+
 ## Environment
 
 | Name | Purpose |

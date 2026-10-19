@@ -12,6 +12,9 @@ test('original welcome and poster carousel keep dynamic read-only discovery at m
       await expect(page.getByRole('heading', { name: 'Welcome to Movie Diary' })).toBeVisible();
       await expect(page.getByRole('region', { name: 'Movie carousel' })).toBeVisible();
       await expect(page.getByRole('listitem', { name: 'Fixture Moon (2020)' }).first()).toHaveAttribute('href', '/movies/tmdb/70001');
+      const activeCard = page.getByRole('listitem', { name: 'Fixture Moon (2020)' }).nth(2);
+      await activeCard.focus();
+      await expect(activeCard.getByText('TMDB 8.2/10').last()).toBeVisible();
       await expect(page.getByRole('link', { name: 'Discover movies', exact: true })).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       await page.screenshot({ path: `.superpowers/restored-home-${width}.png`, fullPage: true });
