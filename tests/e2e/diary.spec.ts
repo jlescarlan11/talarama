@@ -12,7 +12,9 @@ test('existing member saves, logs, edits and deletes a viewing through the brows
     expect((await page.request.get('/_next/image?url=%2FappLogoLight.png&w=128&q=100')).status()).toBe(200);
     expect((await page.request.get('/movies/new', { maxRedirects: 0 })).status()).toBe(200);
     await page.goto('/movies/browser-movie');
+    const saved = page.waitForResponse(response => response.url().endsWith('/api/movies/browser-movie/watchlist') && response.request().method() === 'POST');
     await page.getByRole('button', { name: 'Add to Watchlist' }).click();
+    expect((await saved).status()).toBe(200);
     await expect(page.getByRole('button', { name: 'In Watchlist' })).toBeVisible();
     await page.getByRole('button', { name: 'Like movie', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Unlike movie', exact: true })).toBeVisible();

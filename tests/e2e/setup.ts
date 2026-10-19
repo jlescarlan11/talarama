@@ -10,5 +10,6 @@ export default async function setup() {
     execFileSync(process.execPath, ['node_modules/prisma/build/index.js', 'db', 'push', '--skip-generate'], { env: { ...process.env, DATABASE_URL: url, DIRECT_URL: url }, stdio: 'pipe' });
     await db.user.create({ data: { id: 'browser-owner', username: 'browser_member', email: 'browser@example.invalid', image: '/appLogoLight.png', accounts: { create: { id: 'browser-google-link', type: 'oauth', provider: 'google', providerAccountId: 'synthetic-google-sub' } } } });
     await db.movie.create({ data: { id: 'browser-movie', title: 'Phase Zero Film', releasedYear: 2000, duration: 90, description: 'Synthetic test fixture' } });
+    await db.movie.create({ data: { id: 'browser-snapshot', tmdbId: 70004, title: 'Preserved Snapshot', releasedYear: null, duration: null, directorFirstName: 'Legacy', directorLastName: 'Director', description: 'Saved before provider failure.' } });
   } finally { await db.$disconnect(); }
 }

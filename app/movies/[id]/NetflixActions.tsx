@@ -48,7 +48,7 @@ const NetflixActions = ({
 
     try {
       const response = await fetch(`/api/movies/${movieId}/watchlist`, {
-        method: "POST",
+        method: isInWatchlist ? "DELETE" : "POST",
       });
 
       if (!response.ok) throw new Error("Failed to toggle watchlist");

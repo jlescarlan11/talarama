@@ -84,7 +84,7 @@ const MovieReviews = ({ reviews }: Props) => {
                 )}
               </div>
               {/* Review Content */}
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-2 flex-wrap">
                   <h3 className="font-semibold text-base-content">
                     {review.user.name || "Anonymous"}
@@ -111,7 +111,7 @@ const MovieReviews = ({ reviews }: Props) => {
                     {formatDate(review.updatedAt)}
                   </span>
                 </div>
-                <p className="leading-relaxed mb-3 text-base-content/90">
+                <p className="leading-relaxed mb-3 text-base-content/90 whitespace-pre-wrap break-words">
                   {review.review}
                 </p>
               </div>
@@ -120,12 +120,7 @@ const MovieReviews = ({ reviews }: Props) => {
         ))}
       </div>
 
-      {/* Load More Button */}
-      {reviews.length >= 10 && (
-        <div className="text-center mt-8">
-          <button className="btn btn-primary">Load More Reviews</button>
-        </div>
-      )}
+
     </div>
   );
 };
