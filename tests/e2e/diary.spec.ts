@@ -8,6 +8,9 @@ test('existing member saves, logs, edits and deletes a viewing through the brows
   await context.addCookies([{ name: 'next-auth.session-token', value: token, url: 'http://127.0.0.1:3100', httpOnly: true, sameSite: 'Lax' }]);
   const db = new PrismaClient({ datasourceUrl: process.env.TALARAMA_E2E_DATABASE_URL });
   try {
+    // Existing diary avatars request quality 100; keep that working after Next upgrades.
+    expect((await page.request.get('/_next/image?url=%2FappLogoLight.png&w=128&q=100')).status()).toBe(200);
+    expect((await page.request.get('/movies/new', { maxRedirects: 0 })).status()).toBe(200);
     await page.goto('/movies/browser-movie');
     await page.getByRole('button', { name: 'Add to Watchlist' }).click();
     await expect(page.getByRole('button', { name: 'In Watchlist' })).toBeVisible();

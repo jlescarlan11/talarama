@@ -1,6 +1,6 @@
 "use client";
 import EmptyState from "./EmptyState";
-import React, { useRef, useEffect, useState, useCallback } from "react";
+import React, { useRef, useEffect, useState, useCallback, useSyncExternalStore } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Movie, MovieCategorizesAs, Genre } from "@prisma/client";
@@ -24,14 +24,24 @@ interface CardStyle {
   zIndex: number;
 }
 
+const motionQuery = "(prefers-reduced-motion: reduce)";
+const subscribeToMotion = (notify: () => void) => {
+  const query = window.matchMedia?.(motionQuery);
+  query?.addEventListener("change", notify);
+  return () => query?.removeEventListener("change", notify);
+};
+const getMotionPreference = () => window.matchMedia?.(motionQuery).matches ?? true;
+const getServerMotionPreference = () => true;
+
 const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
   const displayMovies = movies.slice(0, 14);
   const [activeIdx, setActiveIdx] = useState(
     Math.floor(displayMovies.length / 2)
   );
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const trackRef = useRef<HTMLDivElement>(null);
-  const [isPaused, setIsPaused] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [hasFocus, setHasFocus] = useState(false);
+  const reducedMotion = useSyncExternalStore(subscribeToMotion, getMotionPreference, getServerMotionPreference);
 
   const getCardStyle = useCallback((offset: number): CardStyle => {
     if (offset === 0) return { scale: 1.1, opacity: 1, zIndex: 20 };
@@ -55,29 +65,26 @@ const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
       trackRect.left -
       (trackRect.width / 2 - cardRect.width / 2);
 
-    track.scrollTo({ left: track.scrollLeft + offset, behavior: "smooth" });
-  }, [activeIdx]);
+    track.scrollTo({ left: track.scrollLeft + offset, behavior: reducedMotion ? "auto" : "smooth" });
+  }, [activeIdx, reducedMotion]);
 
   useEffect(() => {
-    if (isPaused || displayMovies.length < 2 || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    intervalRef.current = setInterval(() => {
+    if (isHovered || hasFocus || reducedMotion || displayMovies.length < 2) return;
+    const interval = setInterval(() => {
       setActiveIdx((prev) => (prev + 1) % displayMovies.length);
     }, 2000);
 
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      clearInterval(interval);
     };
-  }, [displayMovies.length, isPaused]);
+  }, [displayMovies.length, isHovered, hasFocus, reducedMotion]);
 
   useEffect(() => {
     scrollToActiveCard();
   }, [activeIdx, scrollToActiveCard]);
 
-  useEffect(() => {
-    setActiveIdx((index) => displayMovies.length ? Math.min(index, displayMovies.length - 1) : 0);
-  }, [displayMovies.length]);
+  const lastIndex = Math.max(0, displayMovies.length - 1);
+  if (activeIdx > lastIndex) setActiveIdx(lastIndex);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowLeft") {
@@ -97,15 +104,17 @@ const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
       role="region"
       aria-label="Movie carousel"
       onKeyDown={handleKeyDown}
-      onFocus={() => setIsPaused(true)}
-      onBlur={() => setIsPaused(false)}
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
+      onFocus={() => setHasFocus(true)}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setHasFocus(false);
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       <div
         ref={trackRef}
         className="movie-carousel-track flex gap-6 overflow-x-auto scrollbar-hide px-4 py-8 snap-x snap-mandatory"
-        style={{ scrollBehavior: "smooth" }}
+        style={{ scrollBehavior: reducedMotion ? "auto" : "smooth" }}
         role="list"
       >
         {[...Array(5)].map((_, i) => {

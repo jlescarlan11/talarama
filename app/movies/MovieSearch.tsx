@@ -8,14 +8,15 @@ import { PiMagnifyingGlass } from "react-icons/pi";
 const MovieSearch = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
   const [isSearching, setIsSearching] = useState(false);
 
-  // Initialize search query from URL params
-  useEffect(() => {
-    const currentSearch = searchParams.get("search") || "";
-    setSearchQuery(currentSearch);
-  }, [searchParams]);
+  const searchParamKey = searchParams.toString();
+  const [previousSearchParams, setPreviousSearchParams] = useState(searchParamKey);
+  if (previousSearchParams !== searchParamKey) {
+    setPreviousSearchParams(searchParamKey);
+    setSearchQuery(searchParams.get("search") || "");
+  }
 
   const updateSearch = useCallback(
     (query: string) => {

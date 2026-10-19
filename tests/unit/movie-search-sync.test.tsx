@@ -1,0 +1,35 @@
+import React from 'react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { it, expect, vi, afterEach } from 'vitest';
+import DiaryMovieSearch from '@/app/diaries/_components/MovieSearch';
+import CatalogMovieSearch from '@/app/movies/MovieSearch';
+const routing = vi.hoisted(() => ({ params: new URLSearchParams('search=First&genre=all'), push: vi.fn() }));
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: routing.push }), useSearchParams: () => routing.params }));
+afterEach(() => { vi.useRealTimers(); vi.clearAllMocks(); });
+const films = ['First', 'Second'].map((title, index) => ({ id: `film-${index}`, title, releasedYear: 2000, duration: 90, description: null, posterUrl: null, directorFirstName: null, directorLastName: null, createdAt: new Date('2020-01-01') }));
+it('keeps diary search selection and filtering synchronized with the parent movie', () => {
+  const select = vi.fn();
+  const view = render(<DiaryMovieSearch movies={films} selectedMovie={films[0]} onMovieSelect={select} />);
+  const input = screen.getByPlaceholderText('Search for a movie...');
+  expect(input).toHaveValue('First');
+  fireEvent.change(input, { target: { value: 'Second' } });
+  fireEvent.click(screen.getByText('Second', { exact: true }));
+  expect(select).toHaveBeenCalledWith(films[1]);
+  view.rerender(<DiaryMovieSearch movies={films} selectedMovie={films[1]} onMovieSelect={select} />);
+  expect(input).toHaveValue('Second');
+  view.rerender(<DiaryMovieSearch movies={films} selectedMovie={films[0]} onMovieSelect={select} />);
+  expect(input).toHaveValue('First');
+});
+it('synchronizes catalog search with navigation and preserves filters when typing', () => {
+  vi.useFakeTimers();
+  routing.params = new URLSearchParams('search=First&genre=all');
+  const view = render(<CatalogMovieSearch />);
+  const input = screen.getByRole('searchbox', { name: 'Search movies' });
+  expect(input).toHaveValue('First');
+  routing.params = new URLSearchParams('search=Second&genre=all');
+  view.rerender(<CatalogMovieSearch />);
+  expect(input).toHaveValue('Second');
+  fireEvent.change(input, { target: { value: 'Typed' } });
+  act(() => vi.advanceTimersByTime(500));
+  expect(routing.push).toHaveBeenCalledWith('/movies?search=Typed&genre=all', { scroll: false });
+});

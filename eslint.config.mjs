@@ -1,17 +1,15 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTypescript from "eslint-config-next/typescript";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
-
-const eslintConfig = [
+const config = [
   { ignores: [".next/**", ".superpowers/**", "node_modules/**", "playwright-report/**", "test-results/**", "next-env.d.ts"] },
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  ...nextVitals,
+  ...nextTypescript,
+  {
+    files: ["app/diaries/_components/DiaryForm.tsx", "app/diaries/_hooks/useDiaryForm.ts"],
+    // React Compiler is not enabled. RHF's non-memoizable watch API is intentional;
+    // keep the existing form contract rather than adopting Compiler in a dependency fix.
+    rules: { "react-hooks/incompatible-library": "off" },
+  },
 ];
-
-export default eslintConfig;
+export default config;

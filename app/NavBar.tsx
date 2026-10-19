@@ -26,10 +26,12 @@ const NavBar: React.FC = () => {
 
   const menuRef = useRef<HTMLDialogElement>(null);
 
-  // Close mobile menu on route change
-  useEffect(() => {
+  // Adjust route-associated state before committing a stale open dialog.
+  const [previousPath, setPreviousPath] = useState(currentPath);
+  if (previousPath !== currentPath) {
+    setPreviousPath(currentPath);
     setIsMenuOpen(false);
-  }, [currentPath]);
+  }
 
   useEffect(() => {
     const desktop = window.matchMedia("(min-width: 640px)");

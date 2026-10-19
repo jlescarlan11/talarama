@@ -19,33 +19,20 @@ const MovieSearch: React.FC<MovieSearchProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState(selectedMovie?.title || "");
   const [isOpen, setIsOpen] = useState(false);
-  const [filteredMovies, setFilteredMovies] = useState<Movie[]>([]);
+  const [previousSelection, setPreviousSelection] = useState(selectedMovie);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (selectedMovie) {
-      setSearchTerm(selectedMovie.title);
-    }
-  }, [selectedMovie]);
+  if (previousSelection !== selectedMovie) {
+    setPreviousSelection(selectedMovie);
+    if (selectedMovie) setSearchTerm(selectedMovie.title);
+  }
 
-  useEffect(() => {
-    if (searchTerm.trim() === "") {
-      setFilteredMovies([]);
-      return;
-    }
-
-    const filtered = movies.filter(
-      (movie) =>
-        movie.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (movie.directorFirstName &&
-          movie.directorLastName &&
-          `${movie.directorFirstName} ${movie.directorLastName}`
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()))
-    );
-    setFilteredMovies(filtered);
-  }, [searchTerm, movies]);
+  const filteredMovies = searchTerm.trim() === "" ? [] : movies.filter(
+    (movie) => movie.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (movie.directorFirstName && movie.directorLastName &&
+        `${movie.directorFirstName} ${movie.directorLastName}`.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

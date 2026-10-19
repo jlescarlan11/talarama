@@ -11,3 +11,9 @@ for (const width of [360, 768, 1440]) {
     await page.screenshot({ path: `.superpowers/anonymous-${width}.png`, fullPage: true });
   });
 }
+
+test('anonymous visitors are redirected before the protected movie form renders', async ({ request }) => {
+  const response = await request.get('/movies/new', { maxRedirects: 0 });
+  expect([302, 307]).toContain(response.status());
+  expect(response.headers().location).toContain('/api/auth/signin?');
+});

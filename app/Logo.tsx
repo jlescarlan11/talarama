@@ -4,15 +4,15 @@ import Image from "next/image";
 import AppLogoLight from "../public/appLogoLight.png";
 import AppLogoDark from "../public/appLogoDark.png";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
+
+const subscribeToHydration = () => () => {};
+const clientSnapshot = () => true;
+const serverSnapshot = () => false;
 
 const Logo = () => {
   const { resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useSyncExternalStore(subscribeToHydration, clientSnapshot, serverSnapshot);
 
   // During SSR and initial client render, use a script to detect system theme
   if (!mounted) {
