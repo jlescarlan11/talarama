@@ -25,14 +25,15 @@ const provider = { details: async (id: number) => fixture(id) };
 const pgBinary = (name: string) => process.env.PG_BIN ? join(process.env.PG_BIN, name) : process.platform === 'win32' ? `C:/Program Files/PostgreSQL/17/bin/${name}.exe` : name;
 const pgEnvironment = (target: URL) => ({ ...process.env, PGHOST: target.hostname, PGPORT: target.port, PGDATABASE: target.pathname.slice(1), PGUSER: decodeURIComponent(target.username), PGPASSWORD: decodeURIComponent(target.password) });
 let legacySnapshot: unknown;
+let legacyDump: string;
 async function snapshot(client: PrismaClient) {
-  return { movies: await client.movie.findMany({ where: { id: { in: ['legacy', 'unmatched'] } }, orderBy: { id: 'asc' } }), users: await client.user.findMany(), accounts: await client.account.findMany(), diary: await client.diaryEntry.findMany(), likes: await client.likedBy.findMany(), watchlist: await client.watchedList.findMany(), categories: await client.movieCategorizesAs.findMany() };
+  return { movies: await client.movie.findMany({ where: { id: { in: ['legacy', 'unmatched'] } }, orderBy: { id: 'asc' } }), users: await client.user.findMany(), accounts: await client.account.findMany(), diary: await client.diaryEntry.findMany(), likes: await client.likedBy.findMany(), watchlist: await client.watchlistEntry.findMany(), categories: await client.movieCategorizesAs.findMany() };
 }
 beforeAll(async () => {
   await admin.$executeRawUnsafe(`CREATE SCHEMA "${schema}"`);
   await admin.$executeRawUnsafe(`CREATE SCHEMA "${restoredSchema}"`);
   // Replay real historical SQL first; seed representative old records BEFORE the new migration.
-  for (const directory of readdirSync('prisma/migrations').filter(x => /^\d/.test(x) && !x.includes('phase1')).sort()) {
+  for (const directory of readdirSync('prisma/migrations').filter(x => /^\d/.test(x) && !x.includes('phase1') && !x.includes('phase3')).sort()) {
     // PostgreSQL simple protocol supports multi-statement historical scripts through pg tooling.
     const sql = readFileSync(`prisma/migrations/${directory}/migration.sql`, 'utf8');
     await runSql(sql, url);
@@ -42,13 +43,16 @@ beforeAll(async () => {
     INSERT INTO "Movie" (id,title,"releasedYear",duration) VALUES ('legacy','Same title',2020,100),('unmatched','Unmatched',1999,90);
     INSERT INTO "Genre" (id,"genreName") VALUES ('legacy-drama','Drama');
     INSERT INTO "MovieCategorizesAs" ("movieId","genreId") VALUES ('legacy','legacy-drama');
-    INSERT INTO "DiaryEntry" (id,rating,review,"watchedDate","updatedAt","userId","movieId") VALUES ('review',4,'Keep review','2020-01-01',now(),'owner','legacy');
+    INSERT INTO "DiaryEntry" (id,rating,review,"watchedDate","updatedAt","userId","movieId") VALUES ('review',4,'Keep review','2020-02-29T23:30:00Z',now(),'owner','legacy');
     INSERT INTO "LikedBy" ("userId","movieId") VALUES ('owner','legacy');
     INSERT INTO "WatchedList" ("userId","movieId") VALUES ('owner','legacy');`, url);
   // Snapshot via SQL so the old schema is read without selecting new Prisma fields.
   legacySnapshot = await db.$queryRawUnsafe(`SELECT id,title,"releasedYear",duration FROM "Movie" ORDER BY id`);
+  legacyDump = execFileSync(pgBinary('pg_dump'), ['--schema', schema, '--no-owner', '--no-acl'], { env: pgEnvironment(url), encoding:'utf8',stdio:'pipe' });
   const migration = readdirSync('prisma/migrations').find(x => x.includes('phase1'))!;
   await runSql(readFileSync(`prisma/migrations/${migration}/migration.sql`, 'utf8'), url);
+  const diaryMigration = readdirSync('prisma/migrations').find(x => x.includes('phase3'))!;
+  await runSql(readFileSync(`prisma/migrations/${diaryMigration}/migration.sql`, 'utf8'), url);
 }, 60000);
 
 async function runSql(sql: string, target: URL) {
@@ -67,9 +71,18 @@ afterAll(async () => {
 it('preserves legacy IDs, values, accounts and relationships through SQL migration and logical restoration', async () => {
   expect(await db.$queryRawUnsafe(`SELECT id,title,"releasedYear",duration FROM "Movie" ORDER BY id`)).toEqual(legacySnapshot);
   const before = await snapshot(db);
-  expect(before.diary[0]).toMatchObject({ id: 'review', movieId: 'legacy', userId: 'owner', rating: 4, review: 'Keep review' });
+  expect(before.diary[0]).toMatchObject({ id: 'review', movieId: 'legacy', userId: 'owner', rating: 4, review: 'Keep review', visibility:'PRIVATE', clientRequestId:null, isRewatch:false, containsSpoilers:false });
+  expect(before.diary[0].watchedDate.toISOString()).toBe('2020-02-29T23:30:00.000Z');
   expect(before.accounts[0]).toMatchObject({ id: 'google-link', providerAccountId: 'unchanged' });
   expect(before.likes[0].movieId).toBe('legacy'); expect(before.watchlist[0].movieId).toBe('legacy');
+  // Restore the pre-upgrade backup first, then apply the same additive migrations.
+  await admin.$executeRawUnsafe(`DROP SCHEMA "${restoredSchema}" CASCADE`);
+  await runSql(legacyDump.replaceAll(schema,restoredSchema),restoreUrl);
+  for(const phase of ['phase1','phase3']) {
+   const directory=readdirSync('prisma/migrations').find(name=>name.includes(phase))!;
+   await runSql(readFileSync(`prisma/migrations/${directory}/migration.sql`,'utf8'),restoreUrl);
+  }
+  expect(await snapshot(restored)).toEqual(before);
   // Real pg_dump/psql logical backup/restore into an independent guarded schema.
   const dump = execFileSync(pgBinary('pg_dump'), ['--schema', schema, '--no-owner', '--no-acl'], { env: pgEnvironment(url), encoding: 'utf8', stdio: 'pipe' });
   await admin.$executeRawUnsafe(`DROP SCHEMA "${restoredSchema}" CASCADE`);
@@ -94,7 +107,7 @@ it('converges retry/concurrent library intent without affecting other members or
       await setLibraryEntry('owner', movie.id, kind, true, { db });
     }));
     await setLibraryEntry('other-member', imported.id, kind, true, { db });
-    const count = (where: { movieId: string; userId: string }) => kind === 'favorite' ? db.likedBy.count({ where }) : db.watchedList.count({ where });
+    const count = (where: { movieId: string; userId: string }) => kind === 'favorite' ? db.likedBy.count({ where }) : db.watchlistEntry.count({ where });
     expect(await count({ movieId: imported.id, userId: 'owner' })).toBe(1);
     await Promise.all(Array.from({ length: 8 }, () => setLibraryEntry('owner', imported.id, kind, false, { db })));
     expect(await count({ movieId: imported.id, userId: 'owner' })).toBe(0);

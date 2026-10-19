@@ -43,11 +43,6 @@ const Favorites = async () => {
           genre: true,
         },
       },
-      _count: {
-        select: {
-          diaryEntries: true,
-        },
-      },
     },
     orderBy: {
       title: "asc",
@@ -62,7 +57,7 @@ const Favorites = async () => {
       genre,
     })),
     _count: {
-      diaryEntries: movie._count?.diaryEntries || 0,
+      diaryEntries: 0,
     },
   }));
 

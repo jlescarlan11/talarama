@@ -5,7 +5,7 @@ import MovieArtwork from './MovieArtwork';
 import RetryDetails from './RetryDetails';
 
 interface Props { movie: CatalogMovie | LocalCatalogMovie; localId: string | null; signedIn: boolean; favorite: boolean; watchlist: boolean; rating: { average: number | null; count: number }; providerUnavailable?: boolean }
-export default function MovieDetail({ movie, localId, signedIn, favorite, watchlist, rating, providerUnavailable }: Props) {
+export default function MovieDetail({ movie, localId, signedIn, favorite, watchlist, providerUnavailable }: Props) {
   return <article className="max-w-6xl mx-auto space-y-8">
     <Link href="/movies" className="link inline-block">← Discover movies</Link>
     {providerUnavailable && <div role="status" className="p-4 rounded-lg border border-base-300 bg-base-200 space-y-3"><p>Live movie information is unavailable. Showing the saved local snapshot. Your library actions still work.</p><RetryDetails /></div>}
@@ -18,7 +18,7 @@ export default function MovieDetail({ movie, localId, signedIn, favorite, watchl
           <div className="flex flex-wrap gap-2">{movie.genres.length ? movie.genres.map((genre, index) => <span key={`${genre.name}-${index}`} className="badge badge-outline h-auto py-1">{genre.name}</span>) : <p className="text-sm text-base-content/70">Genres unavailable</p>}</div>
           <div className="grid sm:grid-cols-2 gap-4 py-4 border-y border-base-300">
             <div><p className="font-semibold">{movie.tmdbScore === null ? 'TMDB: not rated' : `TMDB ${movie.tmdbScore.toFixed(1)}/10`}</p><p className="text-sm text-base-content/70">{movie.tmdbVoteCount === null ? 'Saved provider score · vote count unavailable' : `${movie.tmdbVoteCount} TMDB vote${movie.tmdbVoteCount === 1 ? '' : 's'}`}</p></div>
-            <div><p className="font-semibold">{rating.average === null ? 'Talarama: no ratings yet' : `Talarama ${rating.average.toFixed(1)}/5`}</p><p className="text-sm text-base-content/70">{rating.count} rating{rating.count === 1 ? '' : 's'}{rating.count > 0 && rating.count < 5 ? ' · early ratings' : ''}</p><p className="text-xs text-base-content/60">Based on diary ratings</p></div>
+            <p className="text-sm text-base-content/70">Your diary ratings stay in your personal library.</p>
           </div>
           <LibraryActions key={localId ?? movie.tmdbId} localId={localId} tmdbId={movie.tmdbId} title={movie.title} posterUrl={movie.posterUrl} signedIn={signedIn} favorite={favorite} watchlist={watchlist} />
         </div>

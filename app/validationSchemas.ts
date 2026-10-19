@@ -2,27 +2,7 @@ import z from "zod";
 
 const currentYear = new Date().getFullYear();
 
-// Phase 0 retains required integer ratings and the existing database shape.
-// Calendar-date timezone semantics and optional ratings belong to phase 3.
-const watchedDateSchema = z.string().min(1, "Watched date is required")
-  .refine((value) => {
-    const date = new Date(value);
-    return /^\d{4}-\d{2}-\d{2}$/.test(value) &&
-      !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
-  }, "Invalid date format")
-  .refine((value) => {
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
-    return new Date(value) <= today;
-  }, "Watched date cannot be in the future");
-
-export const diaryEntrySchema = z.object({
-  movieId: z.string().min(1, "Movie ID is required"),
-  rating: z.number({ required_error: "Rating is required", invalid_type_error: "Rating must be a number" })
-    .int().min(1, "Rating must be at least 1").max(5, "Rating cannot be more than 5"),
-  review: z.string().trim().max(2000, "Review cannot exceed 2000 characters").optional().default(""),
-  watchedDate: watchedDateSchema,
-});
+export { diaryEntrySchema, diaryEntrySchema as diaryFormSchema } from './lib/diary/contracts';
 
 export const movieSchema = z.object({
   title: z.string().min(1, "Title is required").max(255, "Title is too long"),
@@ -77,4 +57,4 @@ export const registerSchema = z.object({
   confirmPassword: z.string(),
 });
 
-export const diaryFormSchema = diaryEntrySchema;
+

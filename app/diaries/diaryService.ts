@@ -1,41 +1,13 @@
-import axios, { AxiosError } from "axios";
-import type { DiaryCreatePayload } from "../types/diary";
-
-class DiaryService {
-  async createEntry(payload: DiaryCreatePayload) {
-    const response = await axios.post("/api/diaries", payload);
-    return response.data;
-  }
-
-  async updateEntry(id: string, payload: DiaryCreatePayload) {
-    const response = await axios.patch(`/api/diaries/${id}`, payload);
-    return response.data;
-  }
-
-  getErrorMessage(error: unknown): string {
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<{ error?: string }>;
-      const status = axiosError.response?.status;
-      const errorMessage = axiosError.response?.data?.error;
-
-      const errorMessages: Record<number, string> = {
-        400: "Validation failed. Please check your input.",
-        401: "You must be logged in to create diary entries.",
-        404: "Movie or user not found.",
-        409: "You have already logged this movie for this date.",
-        429: "Too many requests. Please try again later.",
-        500: "Server error. Please try again later.",
-      };
-
-      return (
-        errorMessages[status ?? 0] ??
-        errorMessage ??
-        "An unexpected error occurred"
-      );
-    }
-
-    return "Network error - please check your connection";
-  }
+import type { DiaryInput } from '@/app/lib/diary/contracts';
+async function save(url: string, method: string, payload: DiaryInput) {
+    const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    const body = await response.json();
+    if (!response.ok)
+        throw new Error(typeof body.error === 'string' ? body.error : 'Could not save. Please retry.');
+    return body;
 }
-
-export const diaryService = new DiaryService();
+export const diaryService = {
+    createEntry: (payload: DiaryInput) => save('/api/diaries', 'POST', payload),
+    updateEntry: (id: string, payload: DiaryInput) => save(`/api/diaries/${encodeURIComponent(id)}`, 'PATCH', payload),
+    getErrorMessage: (error: unknown) => error instanceof Error ? error.message : 'Network error. Your draft is still here. Please retry.',
+};

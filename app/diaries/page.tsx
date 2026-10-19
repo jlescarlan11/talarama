@@ -1,119 +1,33 @@
-import { getServerSession } from "next-auth";
-import Image from "next/image";
-import EmptyState from "../components/EmptyState";
-import authOptions from "../auth/authOptions";
-import TabsContainer from "./TabsContainer";
-import { PiHeartFill, PiBookOpenText } from "react-icons/pi";
-import React from "react";
-import prisma from "@/prisma/client";
-import Link from "next/link";
-
-const DiaryPage = async () => {
-  const session = await getServerSession(authOptions);
-
-  if (!session) return <EmptyState title="Sign in to your diary" description="Keep track of the films you watch, your reviews, and your watchlist." href="/api/auth/signin?callbackUrl=%2Fdiaries" action="Sign in with Google" />;
-
-  const diaryEntries = await prisma.diaryEntry.findMany({
-    where: {
-      userId: session.user.id,
-    },
-    include: {
-      movie: {
-        include: {
-          genres: {
-            include: {
-              genre: true,
-            },
-          },
-        },
-      },
-    },
-  });
-
-  const totalMovies = diaryEntries.length;
-
-  const genreCounts = diaryEntries.reduce((acc, entry) => {
-    entry.movie.genres.forEach(({ genre }) => {
-      acc[genre.genreName] = (acc[genre.genreName] || 0) + 1;
-    });
-    return acc;
-  }, {} as Record<string, number>);
-
-  const favoriteGenre =
-    Object.entries(genreCounts).sort(([, a], [, b]) => b - a)[0]?.[0] || "None";
-
-  const stats = [
-    {
-      label: "diary entries",
-      value: totalMovies,
-      icon: <PiBookOpenText className="text-2xl text-accent" />,
-    },
-    {
-      label: "top genre",
-      value: favoriteGenre.toLowerCase(),
-      icon: <PiHeartFill className="text-sm text-accent" />,
-    },
-  ];
-
-  return (
-    <div className="bg-base-100 text-base-content">
-      <div className="mb-6">
-        <div className="text-sm breadcrumbs">
-          <ul>
-            <li>
-              <Link href="/" className="hover:underline">
-                Home
-              </Link>
-            </li>
-            <li>Diary</li>
-          </ul>
-        </div>
-      </div>
-      <div className="rounded-2xl shadow-lg p-8 mb-8 bg-base-200 flex flex-col md:flex-row items-center gap-8">
-        <div className="flex flex-col items-center  gap-4 md:flex-row md:gap-8 w-full">
-          <Image
-            src={session.user.image!}
-            width={100}
-            height={100}
-            alt="User profile"
-            className="rounded-full border-3 border-primary shadow-lg"
-            quality={100}
-            placeholder="empty"
-            priority
-          />
-          <div className="flex flex-col items-center md:items-start gap-1">
-            <p className="text-2xl font-bold text-primary">
-              {session.user.username!}
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-row sm:gap-12 w-full justify-center items-center">
-          {stats.map((stat, idx) => (
-            <React.Fragment key={idx}>
-              {idx > 0 && <div className="h-10 w-px bg-base-content/30 mx-6" />}
-              <div className="flex flex-col items-center sm:min-w-[120px]">
-                <div className="flex items-center gap-3 mb-1">
-                  {React.cloneElement(stat.icon, {
-                    className: "text-lg sm:text-4xl text-accent",
-                  })}
-                  <span className="text-lg sm:text-4xl font-extrabold text-primary">
-                    {stat.value}
-                  </span>
-                </div>
-                <span className="text-lg text-base-content/70 font-medium text-center">
-                  {stat.label}
-                </span>
-              </div>
-            </React.Fragment>
-          ))}
-        </div>
-      </div>
-      <div className="border-b border-base-content/10 mb-4"></div>
-      <div>
-        <TabsContainer />
-      </div>
-    </div>
-  );
-};
-
-export default DiaryPage;
+import { getServerSession } from 'next-auth';
+import Link from 'next/link';
+import authOptions from '../auth/authOptions';
+import EmptyState from '../components/EmptyState';
+import Favorites from './Favorites';
+import Watchlist from './Watchlist';
+import ClientTabs from './ClientTabs';
+import DiaryHistory from './DiaryHistory';
+import { listDiaryEntries,parseDiaryFilters } from '@/app/services/diaryEntryService';
+export default async function DiaryPage({searchParams}:{searchParams?:Promise<Record<string,string|string[]|undefined>>}={}) {
+ const session=await getServerSession(authOptions);
+ if(!session?.user?.id)return <EmptyState title="Sign in to your diary" description="Keep track of the films you watch, your reviews, and your watchlist." href="/api/auth/signin?callbackUrl=%2Fdiaries" action="Sign in with Google"/>;
+ const raw=await searchParams??{};const params=new URLSearchParams();for(const [key,value] of Object.entries(raw)){if(typeof value==='string')params.set(key,value);}
+ let filters;try{filters=parseDiaryFilters(params);}catch{return <section className="space-y-4"><h1 className="text-3xl font-bold">Invalid diary filters</h1><Link className="btn" href="/diaries">Clear filters</Link></section>;}
+ let result;
+ try {result=await listDiaryEntries(session.user.id,filters);}catch(error){if(error instanceof Error && error.message==='Invalid diary cursor')return <section className="space-y-4"><h1 className="text-3xl font-bold">Invalid diary page</h1><Link className="btn" href="/diaries">Return to diary</Link></section>;throw error;}
+ const overall=Object.keys(filters).some(key=>filters[key as keyof typeof filters]!==undefined)?await listDiaryEntries(session.user.id):result;
+ const next=new URLSearchParams(params);if(result.nextCursor)next.set('cursor',result.nextCursor);next.set('tab','diaries');
+ return <section className="max-w-6xl mx-auto space-y-6 pb-8">
+  <header className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-primary font-medium">Personal library</p><h1 className="text-3xl font-bold">My Diary</h1><p>{overall.statistics.logs} viewing logs · {overall.statistics.movies} distinct movies</p></div><Link className="btn btn-primary" href="/diaries/new">Log a viewing</Link></header>
+  <ClientTabs initialTab={params.get('tab')??'diaries'} favoritesContent={<Favorites/>} watchlistContent={<Watchlist/>} diariesContent={<div className="space-y-6">
+   <form action="/diaries" className="grid gap-3 sm:grid-cols-4"><input type="hidden" name="tab" value="diaries"/>
+    <label className="space-y-1"><span className="block text-sm">Search diary</span><input name="q" defaultValue={filters.q} maxLength={200} className="input w-full" placeholder="Movie title"/></label>
+    <label className="space-y-1"><span className="block text-sm">Watched year</span><input name="year" defaultValue={filters.year} type="number" min="1" max="9998" className="input w-full" placeholder="All years"/></label>
+    <label className="space-y-1"><span className="block text-sm">Rating filter</span><select name="rating" defaultValue={filters.rating??''} className="select w-full"><option value="">All ratings</option><option value="unrated">Not rated</option>{[1,2,3,4,5].map(n=><option key={n} value={n}>{n}/5</option>)}</select></label>
+    <div className="flex gap-2 items-end"><button className="btn btn-primary" type="submit">Filter</button><Link className="btn btn-ghost" href="/diaries">Clear</Link></div>
+   </form>
+   <p className="text-sm text-base-content/70">{result.statistics.logs} matching logs · {result.statistics.movies} distinct movies. Your private diary is only visible to you.</p>
+   <DiaryHistory entries={result.entries}/>
+   <nav aria-label="Diary pagination" className="flex flex-wrap gap-3">{filters.cursor&&<Link className="btn btn-outline" href={'/diaries?'+new URLSearchParams([...params].filter(([key])=>key!=='cursor'))}>First page</Link>}{result.nextCursor&&<Link className="btn btn-outline" href={'/diaries?'+next}>Next page</Link>}</nav>
+  </div>}/>
+ </section>;
+}

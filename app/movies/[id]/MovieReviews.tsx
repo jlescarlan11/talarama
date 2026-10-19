@@ -95,7 +95,7 @@ const MovieReviews = ({ reviews }: Props) => {
                         <svg
                           key={star}
                           className={`w-4 h-4 ${
-                            star <= review.rating
+                            review.rating !== null && star <= review.rating
                               ? "text-warning"
                               : "text-base-content/30"
                           }`}

@@ -24,7 +24,7 @@ export interface MovieCounts {
 
 export interface Review {
   id: string;
-  rating: number;
+  rating: number | null;
   review: string;
   createdAt: Date;
   updatedAt: Date;

@@ -13,6 +13,7 @@
     "test:e2e": "playwright test",
     "test:migrations": "node --env-file-if-exists=.env scripts/verify-migrations.mjs",
     "check:env": "node scripts/check-env.mjs",
+    "diary:dates": "node --env-file-if-exists=.env --conditions=react-server --import tsx scripts/diary-dates.ts",
     "catalog:match": "node --env-file-if-exists=.env --conditions=react-server --import tsx scripts/catalog-match.ts",
     "catalog:apply": "node --env-file-if-exists=.env --conditions=react-server --import tsx scripts/catalog-apply.ts"
   },

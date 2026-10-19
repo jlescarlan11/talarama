@@ -1,67 +1,12 @@
-import prisma from "@/prisma/client";
-import DiaryForm from "../_components/DiaryForm";
-import Link from "next/link";
-
-interface Props {
-  searchParams: Promise<{
-    movieId?: string;
-    title?: string;
-    posterUrl?: string;
-  }>;
+import { getServerSession } from 'next-auth';
+import { redirect } from 'next/navigation';
+import authOptions from '@/app/auth/authOptions';
+import prisma from '@/prisma/client';
+import DiaryForm from '../_components/DiaryForm';
+export default async function NewDiaryPage({searchParams}:{searchParams:Promise<{movieId?:string}>}) {
+ const {movieId}=await searchParams;
+ const session=await getServerSession(authOptions);
+ if(!session?.user?.id)redirect(`/api/auth/signin?callbackUrl=${encodeURIComponent('/diaries/new'+(movieId?'?'+new URLSearchParams({movieId}):''))}`);
+ const movies=await prisma.movie.findMany({orderBy:{title:'asc'}});
+ return <DiaryForm movies={movies} initialMovie={movies.find(movie=>movie.id===movieId)??null}/>;
 }
-
-const DiaryPage = async ({ searchParams }: Props) => {
-  const { movieId, title, posterUrl } = await searchParams;
-
-  const movies = await prisma.movie.findMany({
-    orderBy: {
-      title: "asc",
-    },
-  });
-
-  // If movieId is provided, find the movie in the database
-  let initialMovie = null;
-  if (movieId) {
-    initialMovie = movies.find((movie) => movie.id === movieId);
-  }
-
-  // If movie not found in database but we have title and posterUrl from URL
-  if (!initialMovie && title) {
-    initialMovie = {
-      id: movieId || "",
-      title,
-      posterUrl: posterUrl || null,
-      description: null,
-      releasedYear: 0,
-      duration: 0,
-      directorFirstName: null,
-      directorLastName: null,
-      createdAt: new Date(),
-    };
-  }
-
-  return (
-    <>
-      <div className="mb-6">
-        <div className="text-sm breadcrumbs">
-          <ul>
-            <li>
-              <Link href="/" className="hover:underline">
-                Home
-              </Link>
-            </li>
-            <li>
-              <Link href="/diaries" className="hover:underline">
-                Diary
-              </Link>
-            </li>
-            <li>New Entry</li>
-          </ul>
-        </div>
-      </div>
-      <DiaryForm movies={movies} initialMovie={initialMovie} />
-    </>
-  );
-};
-
-export default DiaryPage;

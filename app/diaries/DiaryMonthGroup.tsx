@@ -48,14 +48,14 @@ const DiaryMonthGroup: React.FC<DiaryMonthGroupProps> = ({ entries }) => {
         {entries.map((entry) => (
           <div
             key={entry.id}
-            className="grid grid-cols-12 gap-2 sm:gap-4 items-center py-2 sm:py-4 border-b border-white/10 last:border-b-0"
+            className="grid grid-cols-12 gap-2 sm:gap-4 items-center py-2 sm:py-4 border-b border-base-300 last:border-b-0"
           >
             {/* Day of the Month */}
             <div className="col-span-3 sm:col-span-2 flex flex-col items-center">
               <span className="text-2xl sm:text-3xl font-bold text-accent drop-shadow-lg">
-                {new Date(entry.watchedDate).getDate()}
+                {new Date(entry.watchedDate).getUTCDate()}
               </span>
-              <span className="text-[10px] sm:text-xs text-white/50 mt-0.5 sm:mt-1">Day</span>
+              <span className="text-[10px] sm:text-xs text-base-content/60 mt-0.5 sm:mt-1">Day</span>
             </div>
             {/* Entry content spans remaining columns */}
             <div className="col-span-9 sm:col-span-10">

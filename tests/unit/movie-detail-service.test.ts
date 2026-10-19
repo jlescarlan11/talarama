@@ -2,7 +2,7 @@ import { beforeEach, expect, it, vi } from 'vitest';
 vi.mock('server-only', () => ({}));
 const deps = vi.hoisted(() => ({ find: vi.fn(), detail: vi.fn(), reviews: vi.fn(), aggregate: vi.fn(), like: vi.fn(), watch: vi.fn() }));
 vi.mock('@/app/lib/tmdb/server', () => ({ tmdb: { details: deps.detail } }));
-vi.mock('@/prisma/client', () => ({ default: { movie: { findUnique: deps.find }, diaryEntry: { findMany: deps.reviews, aggregate: deps.aggregate }, likedBy: { findUnique: deps.like }, watchedList: { findUnique: deps.watch } } }));
+vi.mock('@/prisma/client', () => ({ default: { movie: { findUnique: deps.find }, diaryEntry: { findMany: deps.reviews, aggregate: deps.aggregate }, likedBy: { findUnique: deps.like }, watchlistEntry: { findUnique: deps.watch } } }));
 import { getMovieDetail } from '@/app/services/movieDetailService';
 import { TmdbError } from '@/app/lib/tmdb/client';
 beforeEach(() => { vi.clearAllMocks(); deps.reviews.mockResolvedValue([]); deps.aggregate.mockResolvedValue({ _avg: { rating: null }, _count: { rating: 0 } }); deps.like.mockResolvedValue(null); deps.watch.mockResolvedValue(null); });

@@ -36,10 +36,11 @@ const NetflixHero = ({
     .filter(Boolean)
     .join(" ");
 
+  const ratedReviews = movie.reviews.filter(review => review.rating !== null);
   const averageRating =
-    movie.reviews.length > 0
-      ? movie.reviews.reduce((sum, review) => sum + review.rating, 0) /
-        movie.reviews.length
+    ratedReviews.length > 0
+      ? ratedReviews.reduce((sum, review) => sum + (review.rating ?? 0), 0) /
+        ratedReviews.length
       : 0;
 
   return (

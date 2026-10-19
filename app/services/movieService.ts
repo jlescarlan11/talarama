@@ -140,16 +140,6 @@ export class MovieService {
               genre: true,
             },
           },
-          diaryEntries: {
-            select: {
-              rating: true,
-            },
-          },
-          _count: {
-            select: {
-              diaryEntries: true,
-            },
-          },
         },
       });
 
@@ -161,7 +151,7 @@ export class MovieService {
           genre,
         })),
         _count: {
-          diaryEntries: movie._count?.diaryEntries || 0,
+          diaryEntries: 0,
         },
       }));
     } catch (error) {
@@ -186,11 +176,6 @@ export class MovieService {
               genre: true,
             },
           },
-          _count: {
-            select: {
-              diaryEntries: true,
-            },
-          },
         },
       });
 
@@ -202,7 +187,7 @@ export class MovieService {
           genre,
         })),
         _count: {
-          diaryEntries: movie._count?.diaryEntries || 0,
+          diaryEntries: 0,
         },
       }));
     } catch (error) {

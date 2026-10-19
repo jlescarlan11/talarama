@@ -1,6 +1,7 @@
 // components/DiaryEntryViewModal.tsx
 "use client";
 import React from "react";
+import DiaryDialog from "./DiaryDialog";
 import Image from "next/image";
 import StarRating from "./StarRating";
 import { DiaryEntryWithMovie } from "./types/diary";
@@ -16,6 +17,7 @@ const DiaryEntryViewModal: React.FC<DiaryEntryViewModalProps> = ({
 }) => {
   const formatFullDate = (date: Date): string => {
     return new Intl.DateTimeFormat("en-US", {
+      timeZone: "UTC",
       weekday: "long",
       year: "numeric",
       month: "long",
@@ -24,15 +26,15 @@ const DiaryEntryViewModal: React.FC<DiaryEntryViewModalProps> = ({
   };
 
   return (
-    <div className="modal modal-open" role="dialog">
-      <div className="modal-box max-w-2xl">
+    <DiaryDialog title="Diary entry details" onClose={onClose}>
+      <div>
         <div className="flex justify-between items-start mb-6">
           <h3 className="text-2xl font-bold text-base-content">
             Diary Entry Details
           </h3>
         </div>
 
-        <div className="flex gap-6">
+        <div className="flex flex-col sm:flex-row gap-6">
           {/* Movie Poster */}
           <div className="flex-shrink-0">
             {entry.movie.posterUrl ? (
@@ -72,7 +74,7 @@ const DiaryEntryViewModal: React.FC<DiaryEntryViewModalProps> = ({
               <div className="flex items-center gap-4 mb-2">
                 <StarRating rating={entry.rating} size="md" />
                 <span className="text-sm text-base-content/70">
-                  {entry.rating}/5
+                  {entry.rating === null ? "Not rated" : `${entry.rating}/5`}
                 </span>
               </div>
               <p className="text-sm text-base-content/70">
@@ -117,8 +119,7 @@ const DiaryEntryViewModal: React.FC<DiaryEntryViewModalProps> = ({
           </button>
         </div>
       </div>
-      <div className="modal-backdrop" onClick={onClose}></div>
-    </div>
+      </DiaryDialog>
   );
 };
 

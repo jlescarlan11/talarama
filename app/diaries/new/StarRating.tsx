@@ -4,8 +4,8 @@ import React from "react";
 import { FaStar } from "react-icons/fa";
 
 interface StarRatingProps {
-  rating: number;
-  onRatingChange: (rating: number) => void;
+  rating: number | null;
+  onRatingChange: (rating: number | null) => void;
   error?: string;
 }
 
@@ -17,10 +17,10 @@ const StarRating: React.FC<StarRatingProps> = ({
   const [hoverRating, setHoverRating] = React.useState(0);
 
   return (
-    <div className="space-y-2">
-      <label className="label">
+    <fieldset className="space-y-2">
+      <legend className="label">
         <span className="label-text font-semibold">Rating</span>
-      </label>
+      </legend>
       <div className="flex gap-1 items-center">
         {[1, 2, 3, 4, 5].map((star) => (
           <button
@@ -29,7 +29,7 @@ const StarRating: React.FC<StarRatingProps> = ({
             aria-label={`Rate ${star} out of 5`}
             aria-pressed={star === rating}
             className={`min-h-11 min-w-11 inline-flex items-center justify-center transition-colors hover:scale-110 transform ${
-              star <= (hoverRating || rating)
+              star <= (hoverRating || rating || 0)
                 ? "text-yellow-400"
                 : "text-gray-300"
             }`}
@@ -41,8 +41,9 @@ const StarRating: React.FC<StarRatingProps> = ({
           </button>
         ))}
       </div>
+      <button type="button" className="btn btn-sm btn-outline" aria-pressed={rating === null} onClick={() => onRatingChange(null)}>No rating</button>
       {error && <div className="text-error text-sm">{error}</div>}
-    </div>
+    </fieldset>
   );
 };
 

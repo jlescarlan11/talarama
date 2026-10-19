@@ -1,3 +1,4 @@
+import Link from "next/link";
 // components/GroupedDiaryEntries.tsx (Server Component)
 import React from "react";
 import DiaryMonthGroup from "./DiaryMonthGroup";
@@ -21,6 +22,7 @@ const GroupedDiaryEntries: React.FC<GroupedDiaryEntriesProps> = ({
     return entries.reduce((groups: GroupedEntries, entry) => {
       const date = new Date(entry.watchedDate);
       const monthYear = new Intl.DateTimeFormat("en-US", {
+        timeZone: "UTC",
         month: "long",
         year: "numeric",
       }).format(date);
@@ -67,7 +69,7 @@ const GroupedDiaryEntries: React.FC<GroupedDiaryEntriesProps> = ({
           <p className="text-sm sm:text-base text-base-content/70 mb-4 px-4">
             Start your movie journey by watching and rating your first film!
           </p>
-          <button className="btn btn-primary">Add Your First Entry</button>
+          <Link className="btn btn-primary" href="/diaries/new">Log a viewing</Link>
         </div>
       </div>
     );
@@ -85,7 +87,7 @@ const GroupedDiaryEntries: React.FC<GroupedDiaryEntriesProps> = ({
             <div className="bg-accent/20 rounded-full p-1.5 sm:p-2">
               <PiCalendarBlank className="text-accent text-xl sm:text-2xl" />
             </div>
-            <h2 className="font-bold text-base sm:text-lg text-white">{monthYear}</h2>
+            <h2 className="font-bold text-base sm:text-lg text-base-content">{monthYear}</h2>
           </div>
           <DiaryMonthGroup
             monthYear={monthYear}

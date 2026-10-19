@@ -3,7 +3,7 @@
 import React from "react";
 
 interface StarRatingProps {
-  rating: number;
+  rating: number | null;
   maxRating?: number;
   size?: "xs" | "sm" | "md" | "lg";
   interactive?: boolean;
@@ -52,6 +52,8 @@ const StarRating: React.FC<StarRatingProps> = ({
       onRatingChange(starRating);
     }
   };
+
+  if (rating === null) return <span className="text-sm text-base-content/70">Not rated</span>;
 
   return (
     <div className={`flex items-center ${getContainerClass()}`}>

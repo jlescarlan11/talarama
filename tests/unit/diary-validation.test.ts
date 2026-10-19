@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { diaryEntrySchema, diaryFormSchema } from '@/app/validationSchemas';
-const input = { movieId: 'legacy-movie', rating: 3, watchedDate: '2020-02-29' };
+const input = { movieId: 'legacy-movie', rating: 3, watchedDate: '2020-02-29',review:'',isRewatch:false,containsSpoilers:false,visibility:'PRIVATE',clientRequestId:'7e12c860-c056-4eb6-a2c0-64d765c83c29' };
 describe('shared diary validation', () => {
   it.each(['', 'Short', '  A review  '])('accepts optional text consistently: %s', (review) => {
     for (const schema of [diaryEntrySchema, diaryFormSchema]) {
@@ -9,14 +9,14 @@ describe('shared diary validation', () => {
       if (result.success) expect(result.data.review).toBe(review.trim());
     }
   });
-  it('normalizes omitted review to empty text', () => {
+  it('accepts empty review text', () => {
     expect(diaryEntrySchema.parse(input).review).toBe('');
     expect(diaryFormSchema.parse(input).review).toBe('');
   });
-  it.each(['nonsense', '2023-02-29', '2020-13-01', '2999-01-01', ''])('reports invalid dates without throwing: %s', (watchedDate) => {
+  it.each(['nonsense', '2023-02-29', '2020-13-01', ''])('reports invalid dates without throwing: %s', (watchedDate) => {
     expect(diaryEntrySchema.safeParse({ ...input, review: '', watchedDate }).success).toBe(false);
   });
-  it.each([0, 6, 2.5, null])('rejects rating %s', (rating) => {
+  it.each([0, 6, 2.5])('rejects rating %s', (rating) => {
     expect(diaryEntrySchema.safeParse({ ...input, review: '', rating }).success).toBe(false);
   });
   it('rejects overlong reviews', () => {

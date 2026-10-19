@@ -61,15 +61,16 @@ const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({
       {/* Movie Details */}
       <div className="flex-grow min-w-0">
         <div className="flex items-center gap-1 sm:gap-2 mb-0.5 sm:mb-1">
-          <h3 className="font-semibold text-base sm:text-lg text-white leading-tight truncate">
+          <h3 className="font-semibold text-base sm:text-lg text-base-content leading-tight truncate">
             {diaryEntry.movie.title}
           </h3>
         </div>
         <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
           <StarRating rating={diaryEntry.rating} size="sm" />
         </div>
+        <p className="text-xs text-base-content/70">{diaryEntry.visibility === "PRIVATE" ? "Private" : "Public intent (unpublished)"}{diaryEntry.isRewatch ? " · Rewatch" : ""}{diaryEntry.containsSpoilers ? " · Spoilers" : ""}</p>
         {diaryEntry.review && (
-          <p className="text-xs sm:text-sm text-white/70 leading-relaxed truncate">
+          <p className="text-xs sm:text-sm text-base-content/70 leading-relaxed truncate">
             {truncateReview(diaryEntry.review)}
           </p>
         )}

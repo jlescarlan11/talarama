@@ -13,13 +13,14 @@ model User {
   name          String?
   username      String?       @unique
   email         String        @unique
+  timeZone      String?
   emailVerified DateTime?
   image         String?
   accounts      Account[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   diaryEntries  DiaryEntry[]
-  watchedMovies WatchedList[]
+  watchedMovies WatchlistEntry[]
   likedMovies   LikedBy[]
 }
 
@@ -60,7 +61,7 @@ model Movie {
 
   genres       MovieCategorizesAs[]
   diaryEntries DiaryEntry[]
-  watchedBy    WatchedList[]
+  watchedBy    WatchlistEntry[]
   likedBy      LikedBy[]
 
 }
@@ -80,7 +81,7 @@ model Genre {
   movies    MovieCategorizesAs[]
 }
 
-model WatchedList {
+model WatchlistEntry {
   user      User     @relation(fields: [userId], references: [id])
   movie     Movie    @relation(fields: [movieId], references: [id])
   createdAt DateTime @default(now())
@@ -89,6 +90,7 @@ model WatchedList {
   movieId String
 
   @@id([movieId, userId])
+  @@map("WatchedList")
 }
 
 model LikedBy {
@@ -113,8 +115,12 @@ model MovieCategorizesAs {
 
 model DiaryEntry {
   id          String   @id @default(uuid())
-  rating      Int
-  review      String
+  rating      Int?
+  review      String @default("")
+  visibility  DiaryVisibility @default(PRIVATE)
+  isRewatch Boolean @default(false)
+  containsSpoilers Boolean @default(false)
+  clientRequestId String?
   watchedDate DateTime
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -122,4 +128,12 @@ model DiaryEntry {
   movie       Movie    @relation(fields: [movieId], references: [id])
   userId      String
   movieId     String
+
+  @@unique([userId, clientRequestId])
+  @@index([userId, watchedDate, id])
+}
+
+enum DiaryVisibility {
+ PRIVATE
+ PUBLIC
 }

@@ -20,13 +20,13 @@ it('renders honest missing metadata and separate provider/local score scales', (
   expect(screen.getByText('Runtime unknown')).toBeVisible();
   expect(screen.getByText('No synopsis available.')).toBeVisible();
   expect(screen.getByText('TMDB: not rated')).toBeVisible();
-  expect(screen.getByText('Talarama: no ratings yet')).toBeVisible();
+  expect(screen.getByText('Your diary ratings stay in your personal library.')).toBeVisible();
   expect(screen.getByRole('link', { name: 'Sign in to save or log' })).toBeVisible();
   expect(screen.getByRole('link', { name: 'Sign in to save or log' })).toHaveAttribute('href', '/api/auth/signin?callbackUrl=%2Fmovies%2Ftmdb%2F42');
   view.rerender(<MovieDetail movie={{ ...movie, tmdbScore: 8, tmdbVoteCount: 1 }} localId="local" signedIn={false} favorite={false} watchlist={false} rating={{ average: 4, count: 1 }} />);
   expect(screen.getByText('TMDB 8.0/10')).toBeVisible();
-  expect(screen.getByText('Talarama 4.0/5')).toBeVisible();
-  expect(screen.getByText('1 rating · early ratings')).toBeVisible();
+  expect(screen.queryByText('Talarama 4.0/5')).not.toBeInTheDocument();
+  expect(screen.queryByText('1 rating · early ratings')).not.toBeInTheDocument();
 });
 it('imports before saving and retries the same add intent after a lost response', async () => {
   const calls: [string, string | undefined][] = [];

@@ -1,137 +1,51 @@
-// app/api/diary/[id]/route.ts
-
-import { getServerSession } from "next-auth";
-import { NextRequest, NextResponse } from "next/server";
-import authOptions from "@/app/auth/authOptions";
-import { diaryEntrySchema } from "@/app/validationSchemas";
-import prisma from "@/prisma/client";
-
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
+import { getServerSession } from 'next-auth';
+import authOptions from '@/app/auth/authOptions';
+import prisma from '@/prisma/client';
+import { diaryEntrySchema } from '@/app/lib/diary/contracts';
+import { json, diaryError, readDiaryBody } from '@/app/lib/diary/http';
+import { updateDiaryEntry, deleteDiaryEntry, serializeEntry } from '@/app/services/diaryEntryService';
+type Context = {
+    params: Promise<{
+        id: string;
+    }>;
+};
+export async function GET(_request: Request, { params }: Context) {
     const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user?.id)
+        return json({ error: 'Unauthorized' }, 401);
+    try {
+        const { id } = await params;
+        const entry = await prisma.diaryEntry.findFirst({ where: { id, userId: session.user.id }, include: { movie: true } });
+        return entry ? json(serializeEntry(entry)) : json({ error: 'Diary entry not found' }, 404);
     }
-
-    const { id } = await params;
-
-    // Validate diary entry exists and belongs to user
-    const existingEntry = await prisma.diaryEntry.findFirst({
-      where: {
-        id,
-        userId: session.user.id,
-      },
-    });
-
-    if (!existingEntry) {
-      return NextResponse.json(
-        { error: "Diary entry not found or access denied" },
-        { status: 404 }
-      );
+    catch (error) {
+        return diaryError(error);
     }
-
-    let body: unknown;
-    try { body = await request.json(); }
-    catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }); }
-    const validation = diaryEntrySchema.safeParse(body);
-
-    if (!validation.success) {
-      return NextResponse.json(
-        {
-          error: "Validation failed",
-          details: validation.error.format(),
-        },
-        { status: 400 }
-      );
-    }
-
-    const { movieId, rating, review, watchedDate } = validation.data;
-
-    // Verify movie exists if movieId is being updated
-    if (movieId !== existingEntry.movieId) {
-      const movieExists = await prisma.movie.findUnique({
-        where: { id: movieId },
-      });
-
-      if (!movieExists) {
-        return NextResponse.json({ error: "Movie not found" }, { status: 400 });
-      }
-    }
-
-    const updatedEntry = await prisma.diaryEntry.update({
-      where: { id },
-      data: {
-        movieId,
-        rating,
-        review,
-        watchedDate: new Date(watchedDate),
-        updatedAt: new Date(),
-      },
-      include: {
-        movie: {
-          include: {
-            genres: {
-              include: {
-                genre: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    return NextResponse.json(updatedEntry, { status: 200 });
-  } catch {
-    console.error("Diary update failed");
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
-  }
 }
-
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
+export async function PATCH(request: Request, { params }: Context) {
     const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user?.id)
+        return json({ error: 'Unauthorized' }, 401);
+    try {
+        const { id } = await params;
+        const existing = await prisma.diaryEntry.findFirst({ where: { id, userId: session.user.id }, select: { id: true } });
+        if (!existing)
+            return json({ error: 'Diary entry not found' }, 404);
+        return json(await updateDiaryEntry(session.user.id, id, diaryEntrySchema.parse(await readDiaryBody(request))));
     }
-
-    const { id } = await params;
-
-    // Verify diary entry exists and belongs to user
-    const diaryEntry = await prisma.diaryEntry.findFirst({
-      where: {
-        id,
-        userId: session.user.id,
-      },
-    });
-
-    if (!diaryEntry) {
-      return NextResponse.json(
-        { error: "Diary entry not found or access denied" },
-        { status: 404 }
-      );
+    catch (error) {
+        return diaryError(error);
     }
-
-    await prisma.diaryEntry.delete({
-      where: { id: diaryEntry.id },
-    });
-
-    return NextResponse.json({ success: true }, { status: 200 });
-  } catch {
-    console.error("Diary deletion failed");
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
-  }
+}
+export async function DELETE(_request: Request, { params }: Context) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id)
+        return json({ error: 'Unauthorized' }, 401);
+    try {
+        await deleteDiaryEntry(session.user.id, (await params).id);
+        return json({ success: true });
+    }
+    catch (error) {
+        return diaryError(error);
+    }
 }

@@ -8,7 +8,7 @@ export async function setLibraryEntry(userId: string, movieId: string, kind: 'fa
     if (present) await db.likedBy.createMany({ data: [data], skipDuplicates: true });
     else await db.likedBy.deleteMany({ where: data });
   } else {
-    if (present) await db.watchedList.createMany({ data: [data], skipDuplicates: true });
-    else await db.watchedList.deleteMany({ where: data });
+    if (present) await db.watchlistEntry.createMany({ data: [data], skipDuplicates: true });
+    else await db.watchlistEntry.deleteMany({ where: data });
   }
 }

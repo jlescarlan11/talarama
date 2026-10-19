@@ -32,11 +32,9 @@ export async function getMovieDetail(identity: { localId: string } | { tmdbId: n
   }
   if (!movie) return null;
   const localId = local?.id ?? null;
-  const [reviews, aggregate, like, watch] = localId ? await Promise.all([
-    prisma.diaryEntry.findMany({ where: { movieId: localId }, include: { user: { select: { id: true, name: true, image: true } } }, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], take: 10 }),
-    prisma.diaryEntry.aggregate({ where: { movieId: localId }, _avg: { rating: true }, _count: { rating: true } }),
-    userId ? prisma.likedBy.findUnique({ where: { movieId_userId: { movieId: localId, userId } } }) : null,
-    userId ? prisma.watchedList.findUnique({ where: { movieId_userId: { movieId: localId, userId } } }) : null,
-  ]) : [[], null, null, null];
-  return { movie, localId, providerUnavailable, reviews, favorite: !!like, watchlist: !!watch, rating: { average: aggregate?._avg.rating ?? null, count: aggregate?._count.rating ?? 0 } };
+  const [like, watch] = localId && userId ? await Promise.all([
+    prisma.likedBy.findUnique({ where: { movieId_userId: { movieId: localId, userId } } }),
+    prisma.watchlistEntry.findUnique({ where: { movieId_userId: { movieId: localId, userId } } }),
+  ]) : [null, null];
+  return { movie, localId, providerUnavailable, favorite: !!like, watchlist: !!watch, rating: { average: null, count: 0 } };
 }

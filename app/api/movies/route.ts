@@ -11,13 +11,6 @@ export async function GET() {
             genre: true,
           },
         },
-        _count: {
-          select: {
-            watchedBy: true,
-            likedBy: true,
-            diaryEntries: true,
-          },
-        },
       },
       take: 20, // Limit to 20 movies per request
     });

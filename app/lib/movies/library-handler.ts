@@ -17,7 +17,7 @@ export async function libraryHandler(context: MovieContext, kind: 'favorite' | '
     let value = present;
     if (present === undefined) {
       const where = { movieId_userId: { movieId, userId } };
-      value = !!(kind === 'favorite' ? await prisma.likedBy.findUnique({ where }) : await prisma.watchedList.findUnique({ where }));
+      value = !!(kind === 'favorite' ? await prisma.likedBy.findUnique({ where }) : await prisma.watchlistEntry.findUnique({ where }));
     } else await setLibraryEntry(userId, movieId, kind, present);
     return json(kind === 'favorite' ? { liked: value } : { inWatchlist: value });
   } catch { return json({ error: 'Could not update your library. Please try again.' }, 503); }

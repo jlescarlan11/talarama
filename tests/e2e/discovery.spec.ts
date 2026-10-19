@@ -68,7 +68,7 @@ test('authenticated external saves import once and idempotent retries preserve l
     const movie = await db.movie.findUniqueOrThrow({ where: { tmdbId: 70001 } });
     expect(await db.movie.count({ where: { tmdbId: 70001 } })).toBe(1);
     for (let i = 0; i < 2; i++) expect((await page.request.post(`/api/movies/${movie.id}/watchlist`)).status()).toBe(200);
-    expect(await db.watchedList.count({ where: { movieId: movie.id } })).toBe(1);
+    expect(await db.watchlistEntry.count({ where: { movieId: movie.id } })).toBe(1);
     await page.goto('/diaries');
     await page.getByRole('tab', { name: 'Watchlist', exact: true }).click();
     await expect(page.getByRole('link', { name: /Fixture Moon/ })).toHaveAttribute('href', '/movies/tmdb/70001');

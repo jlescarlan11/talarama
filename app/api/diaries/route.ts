@@ -1,36 +1,30 @@
-import { diaryEntrySchema } from "@/app/validationSchemas";
-import prisma from "@/prisma/client";
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import authOptions from "@/app/auth/authOptions";
-
-export async function POST(request: NextRequest) {
-  const json = (body: unknown, status: number) => NextResponse.json(body, { status, headers: { "Cache-Control": "no-store" } });
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) return json({ error: "Unauthorized" }, 401);
-
-  let body: unknown;
-  try { body = await request.json(); }
-  catch { return json({ error: "Invalid JSON" }, 400); }
-
-  const validation = diaryEntrySchema.safeParse(body);
-  if (!validation.success) return json({ error: "Validation failed", details: validation.error.format() }, 400);
-
-  try {
-    const data = validation.data;
-    const movie = await prisma.movie.findUnique({ where: { id: data.movieId }, select: { id: true } });
-    if (!movie) return json({ error: "Movie not found" }, 404);
-    const user = await prisma.user.findUnique({ where: { id: session.user.id }, select: { id: true } });
-    if (!user) return json({ error: "User not found" }, 404);
-
-    const entry = await prisma.diaryEntry.create({ data: {
-      movieId: data.movieId, userId: session.user.id, rating: data.rating,
-      review: data.review, watchedDate: new Date(data.watchedDate),
-    } });
-    return json(entry, 201);
-  } catch {
-    // Raw Prisma errors can contain query arguments and private review text.
-    console.error("Diary creation failed");
-    return json({ error: "Internal Server Error" }, 500);
-  }
+import { getServerSession } from 'next-auth';
+import authOptions from '@/app/auth/authOptions';
+import { diaryEntrySchema } from '@/app/lib/diary/contracts';
+import { json, diaryError, readDiaryBody } from '@/app/lib/diary/http';
+import { createDiaryEntry, listDiaryEntries, parseDiaryFilters, serializeEntry } from '@/app/services/diaryEntryService';
+export async function POST(request: Request) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id)
+        return json({ error: 'Unauthorized' }, 401);
+    try {
+        const input = diaryEntrySchema.parse(await readDiaryBody(request));
+        const { entry, replayed } = await createDiaryEntry(session.user.id, input);
+        return json(entry, replayed ? 200 : 201);
+    }
+    catch (error) {
+        return diaryError(error);
+    }
+}
+export async function GET(request: Request) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id)
+        return json({ error: 'Unauthorized' }, 401);
+    try {
+        const result = await listDiaryEntries(session.user.id, parseDiaryFilters(new URL(request.url).searchParams));
+        return json({ ...result, entries: result.entries.map(serializeEntry) });
+    }
+    catch (error) {
+        return diaryError(error);
+    }
 }
