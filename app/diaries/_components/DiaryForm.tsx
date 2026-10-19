@@ -6,13 +6,13 @@ import { useDiaryForm } from '../_hooks/useDiaryForm';
 import StarRating from '../new/StarRating';
 import type { Movie,DiaryEntryWithMovie } from '../types/diary';
 export default function DiaryForm(props:{movies:Movie[];diary?:DiaryEntryWithMovie;initialMovie?:Movie|null}) {
- const {form,selectedMovie,isSubmitting,timeZone,watchedFields,handleRatingChange,handleSubmit}=useDiaryForm(props);
+ const {form,selectedMovie,isSubmitting,timeZone,isEditMode,watchedFields,handleRatingChange,handleSubmit}=useDiaryForm(props);
  const {register,formState:{errors}}=form;
  const router=useRouter();const [query,setQuery]=useState('');const errorRef=useRef<HTMLParagraphElement>(null);
  useEffect(()=>{if(errors.root)errorRef.current?.focus();},[errors.root]);
  const movies=props.movies.filter(m=>m.id===watchedFields.movieId||m.title.toLowerCase().includes(query.toLowerCase()));
  return <section className="max-w-[48rem] mx-auto py-6 space-y-6">
-  <h1 className="text-3xl font-bold">{props.diary?'Edit your film diary':'Log a viewing'}</h1>
+  <h1 className="text-3xl font-bold">{isEditMode?'Edit your film diary':'Log a viewing'}</h1>
   <form className="space-y-6 rounded-xl border border-base-300 p-4 sm:p-6 bg-base-200" onSubmit={form.handleSubmit(handleSubmit)} aria-busy={isSubmitting}>
    <fieldset disabled={isSubmitting} className="space-y-5 min-w-0">
     <legend className="sr-only">Diary details</legend>
@@ -29,10 +29,10 @@ export default function DiaryForm(props:{movies:Movie[];diary?:DiaryEntryWithMov
     <label className="flex gap-3 items-center"><input type="checkbox" {...register('containsSpoilers')} className="checkbox"/>Contains spoilers</label>
     <div className="space-y-2"><label className="block font-semibold" htmlFor="diary-visibility">Visibility</label><select id="diary-visibility" {...register('visibility')} className="select w-full" aria-describedby="visibility-help"><option value="PRIVATE">Private</option><option value="PUBLIC">Public intent</option></select>
      <p id="visibility-help" className="text-sm text-base-content/70">Private is just for you. Public intent is saved, but nothing is published until profile publication and community controls launch. Your profile must also be published then.</p></div>
-    <p className="rounded-lg border border-base-300 p-3 text-sm">Saving a viewing removes this movie from your watchlist. Favorites stay separate. Deleting a viewing does not put it back on your watchlist.</p>
+    <p className="rounded-lg border border-base-300 p-3 text-sm">{isEditMode ? 'Editing keeps your watchlist unless you change the movie. Changing it removes the newly selected movie from your watchlist.' : 'Saving a viewing removes this movie from your watchlist.'} Favorites stay separate. Deleting a viewing does not put it back on your watchlist.</p>
    </fieldset>
    {errors.root&&<p ref={errorRef} tabIndex={-1} role="alert" className="text-error break-words">{errors.root.message}</p>}
-   <div className="flex flex-wrap justify-end gap-3"><button type="button" className="btn btn-ghost" disabled={isSubmitting} onClick={()=>router.back()}>Cancel</button><button className="btn btn-primary" type="submit" disabled={isSubmitting}>{isSubmitting?'Saving...':props.diary?'Update Entry':'Save Entry'}</button></div>
+   <div className="flex flex-wrap justify-end gap-3"><button type="button" className="btn btn-ghost" disabled={isSubmitting} onClick={()=>router.back()}>Cancel</button><button className="btn btn-primary" type="submit" disabled={isSubmitting}>{isSubmitting?'Saving...':isEditMode?'Update Entry':'Save Entry'}</button></div>
   </form>
  </section>;
 }

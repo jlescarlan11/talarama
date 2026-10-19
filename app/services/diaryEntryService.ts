@@ -55,10 +55,13 @@ export async function updateDiaryEntry(userId: string, id: string, input: DiaryI
             throw new DiaryError('Diary entry not found', 404);
         const { clientRequestId: _requestId, ...data } = await dataFor(userId, input, tx);
         void _requestId;
-        const updated = await tx.diaryEntry.updateMany({ where: { id, userId }, data });
+        // A review/rating edit is not authorization to reinterpret an old timestamp.
+        if (input.watchedDate === calendarDate(existing.watchedDate)) data.watchedDate = existing.watchedDate;
+        const updated = await tx.diaryEntry.updateMany({ where: { id, userId, movieId: existing.movieId, watchedDate: existing.watchedDate }, data });
         if (!updated.count)
-            throw new DiaryError('Diary entry not found', 404);
-        await removeLoggedMovie(tx, userId, data.movieId);
+            throw new DiaryError('This viewing changed while saving. Please retry.', 409);
+        // Review/date edits and PATCH retries must preserve a later watchlist intent.
+        if (existing.movieId !== data.movieId) await removeLoggedMovie(tx, userId, data.movieId);
         const entry = await tx.diaryEntry.findFirst({ where: { id, userId } });
         if (!entry)
             throw new DiaryError('Diary entry not found', 404);

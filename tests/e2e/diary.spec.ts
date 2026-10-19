@@ -58,7 +58,8 @@ test('unrated rewatches preserve dates, retries, privacy and filters across layo
    await expect(page.getByRole('button',{name:'No rating'})).toHaveAttribute('aria-pressed','true');
    await page.getByLabel('Watched Date').fill('2020-02-29');
    await page.getByLabel('Rewatch',{exact:true}).check();await page.getByLabel('Contains spoilers').check();
-   await page.getByLabel('Review (optional)').fill(`Private draft ${width}`);
+   let expectedReview=`Private draft ${width}`;
+   await page.getByLabel('Review (optional)').fill(expectedReview);
    // Server commits, transport loses reply: retry must reuse original UUID.
    let lost=true;const bodies:Record<string,unknown>[]=[];
    await page.route('**/api/diaries',async route=>{if(route.request().method()!=='POST')return route.continue();bodies.push(route.request().postDataJSON());if(lost){lost=false;await route.fetch();return route.abort('failed');}return route.continue();});
@@ -67,14 +68,16 @@ test('unrated rewatches preserve dates, retries, privacy and filters across layo
    await expect(page.getByLabel('Review (optional)')).toHaveValue(`Private draft ${width}`);
    await page.evaluate(()=>window.scrollTo(0,0));await page.screenshot({path:`.superpowers/phase3-form-${width}.png`,fullPage:true,caret:'initial'});
    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+   if(width===1440){expectedReview+=' edited after lost response';await page.getByLabel('Review (optional)').fill(expectedReview);}
    await page.getByRole('button',{name:'Save Entry',exact:true}).click();
+   if(width===1440){await expect(page.locator('main').getByRole('alert')).toContainText('latest changes');await expect(page.getByLabel('Review (optional)')).toHaveValue(expectedReview);await page.getByRole('button',{name:'Update Entry',exact:true}).click();}
    await expect(page).toHaveURL(/\/diaries$/);
    await page.unroute('**/api/diaries');
    expect(bodies).toHaveLength(2);expect(bodies[0].clientRequestId).toBe(bodies[1].clientRequestId);
    const entry=await db.diaryEntry.findUniqueOrThrow({where:{userId_clientRequestId:{userId:'browser-owner',clientRequestId:bodies[0].clientRequestId as string}}});
-   expect(entry).toMatchObject({rating:null,isRewatch:true,containsSpoilers:true,visibility:'PRIVATE'});expect(entry.watchedDate.toISOString()).toBe('2020-02-29T00:00:00.000Z');
+   expect(entry).toMatchObject({rating:null,isRewatch:true,containsSpoilers:true,visibility:'PRIVATE',review:expectedReview});expect(entry.watchedDate.toISOString()).toBe('2020-02-29T00:00:00.000Z');
    await page.getByLabel('Search diary').fill('Phase Zero');await page.getByLabel('Watched year').fill('2020');await page.getByLabel('Rating filter').selectOption('unrated');await page.getByRole('button',{name:'Filter',exact:true}).click();
-   await expect(page.getByText('February 2020',{exact:true})).toBeVisible();await expect(page.getByText(`Private draft ${width}`,{exact:true})).toBeVisible();await expect(page.locator('span').filter({hasText:/^Not rated$/}).first()).toBeVisible();
+   await expect(page.getByRole('heading',{name:'February 2020',exact:true})).toBeVisible();await expect(page.getByRole('tabpanel',{name:'My Diary'}).getByText(expectedReview,{exact:true})).toBeVisible();await expect(page.getByRole('tabpanel',{name:'My Diary'}).locator('span').filter({hasText:/^Not rated$/}).first()).toBeVisible();
    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
    await page.screenshot({path:`.superpowers/phase3-diary-${width}.png`,fullPage:true,caret:'initial'});
   }

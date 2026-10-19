@@ -90,8 +90,8 @@ test('removed/invalid external IDs and failed provider retain useful detail stat
   await expect(page.getByRole('heading', { name: 'Movie information is unavailable' })).toBeVisible();
   await page.goto('/movies/tmdb/70004');
   await expect(page.getByRole('heading', { name: 'Preserved Snapshot' })).toBeVisible();
-  await expect(page.getByText(/Showing the saved local snapshot/)).toBeVisible();
-  await expect(page.getByText('Legacy Director')).toBeVisible();
+  await expect(page.getByRole('status').filter({hasText:'Showing the saved local snapshot'})).toBeVisible();
+  await expect(page.getByRole('article').getByText('Legacy Director')).toBeVisible();
   await page.goto('/movies/browser-movie');
   await expect(page.getByRole('heading', { name: 'Phase Zero Film' })).toBeVisible();
   for (const id of ['0', 'not-a-number', '70005']) {

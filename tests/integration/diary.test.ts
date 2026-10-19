@@ -197,3 +197,48 @@ it('accepts a completely unrated empty log and scopes retry identity to each own
  expect(other.id).not.toBe(owner.id);expect(other).toMatchObject({rating:null,review:'',visibility:'PRIVATE'});
  auth.userId='phase0-owner';
 });
+
+it('preserves a legacy original timestamp on review-only edits and normalizes only an explicitly changed date',async()=>{
+ auth.userId='phase0-owner';
+ await db.diaryEntry.create({data:{id:'legacy-edit-date',userId:'phase0-owner',movieId:'legacy-movie',rating:4,review:'Original',watchedDate:new Date('2020-02-29T23:30:00Z')}});
+ const payload={movieId:'legacy-movie',rating:3,review:'Changed only review/rating',watchedDate:'2020-02-29'};
+ expect((await patch(request(payload,'PATCH'),params('legacy-edit-date'))).status).toBe(200);
+ expect((await db.diaryEntry.findUniqueOrThrow({where:{id:'legacy-edit-date'}})).watchedDate.toISOString()).toBe('2020-02-29T23:30:00.000Z');
+ expect((await patch(request({...payload,watchedDate:'2020-03-01'},'PATCH'),params('legacy-edit-date'))).status).toBe(200);
+ expect((await db.diaryEntry.findUniqueOrThrow({where:{id:'legacy-edit-date'}})).watchedDate.toISOString()).toBe('2020-03-01T00:00:00.000Z');
+});
+it('preserves a re-added watchlist entry through ordinary edits and their retries',async()=>{
+ auth.userId='phase0-owner';
+ const body={movieId:'legacy-movie',rating:null,review:'Before edit',watchedDate:'2020-02-29'};
+ const created=await post(request(body));const entry=await created.json();
+ const edit={...body,review:'Edited'};
+ expect((await patch(request(edit,'PATCH'),params(entry.id))).status).toBe(200);
+ await db.watchlistEntry.createMany({data:[{userId:'phase0-owner',movieId:'legacy-movie'}],skipDuplicates:true});
+ expect((await patch(request(edit,'PATCH'),params(entry.id))).status).toBe(200);
+ expect(await db.watchlistEntry.count({where:{userId:'phase0-owner',movieId:'legacy-movie'}})).toBe(1);
+ await db.movie.create({data:{id:'changed-log-movie',title:'Changed movie'}});
+ await db.watchlistEntry.create({data:{userId:'phase0-owner',movieId:'changed-log-movie'}});
+ expect((await patch(request({...edit,movieId:'changed-log-movie'},'PATCH'),params(entry.id))).status).toBe(200);
+ expect(await db.watchlistEntry.count({where:{userId:'phase0-owner',movieId:'changed-log-movie'}})).toBe(0);
+ expect(await db.watchlistEntry.count({where:{userId:'phase0-owner',movieId:'legacy-movie'}})).toBe(1);
+});
+
+it('applies movie-change watchlist cleanup once when identical edits overlap',async()=>{
+ auth.userId='phase0-owner';
+ await db.movie.create({data:{id:'concurrent-watch-target',title:'Concurrent target'}});
+ await db.diaryEntry.create({data:{id:'concurrent-switch',userId:'phase0-owner',movieId:'legacy-movie',rating:null,review:'',watchedDate:new Date('2020-02-29')}});
+ await db.watchlistEntry.create({data:{userId:'phase0-owner',movieId:'concurrent-watch-target'}});
+ await db.$executeRawUnsafe(`CREATE TABLE "${schema}".cleanup_calls (id SERIAL PRIMARY KEY)`);
+ await db.$executeRawUnsafe(`CREATE FUNCTION "${schema}".overlap_edit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN PERFORM pg_sleep(0.2); RETURN NEW; END $$`);
+ await db.$executeRawUnsafe(`CREATE TRIGGER overlap_edit BEFORE UPDATE ON "${schema}"."DiaryEntry" FOR EACH ROW WHEN (OLD.id = 'concurrent-switch') EXECUTE FUNCTION "${schema}".overlap_edit()`);
+ // A fresh watchlist intent appears immediately after the first removal, before waiting retries finish.
+ await db.$executeRawUnsafe(`CREATE FUNCTION "${schema}".readd_watchlist() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN INSERT INTO "${schema}".cleanup_calls DEFAULT VALUES; INSERT INTO "${schema}"."WatchedList" ("movieId","userId") VALUES (OLD."movieId",OLD."userId"); RETURN OLD; END $$`);
+ await db.$executeRawUnsafe(`CREATE TRIGGER readd_watchlist AFTER DELETE ON "${schema}"."WatchedList" FOR EACH ROW WHEN (OLD."movieId" = 'concurrent-watch-target') EXECUTE FUNCTION "${schema}".readd_watchlist()`);
+ try{
+  const edit={movieId:'concurrent-watch-target',rating:null,review:'Switched',watchedDate:'2020-02-29'};
+  const responses=await Promise.all(Array.from({length:4},()=>patch(request(edit,'PATCH'),params('concurrent-switch'))));
+  expect(responses.some(r=>r.status===200)).toBe(true);expect(responses.every(r=>[200,409].includes(r.status))).toBe(true);
+  const calls=await db.$queryRawUnsafe<{id:number}[]>(`SELECT id FROM "${schema}".cleanup_calls`);expect(calls).toHaveLength(1);
+  expect(await db.watchlistEntry.count({where:{userId:'phase0-owner',movieId:'concurrent-watch-target'}})).toBe(1);
+ }finally{await db.$executeRawUnsafe(`DROP TRIGGER overlap_edit ON "${schema}"."DiaryEntry"`);await db.$executeRawUnsafe(`DROP TRIGGER readd_watchlist ON "${schema}"."WatchedList"`);}
+});
