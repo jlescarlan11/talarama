@@ -15,7 +15,7 @@ export const viewport = {
 
 export const metadata = {
   title: "Talarama",
-  description: "Your personal movie diary",
+  description: "Discover films, keep a private viewing diary and choose which reviews to share with the community.",
   keywords: ["movies", "diary", "personal", "watchlist", "reviews"],
   authors: [{ name: "Talarama Team" }],
   robots: "index, follow",
@@ -28,7 +28,7 @@ export const metadata = {
     siteName: "Talarama",
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: "Talarama - Your Personal Movie Diary",
     description: "Track, review, and discover movies with your personal movie diary",
   },

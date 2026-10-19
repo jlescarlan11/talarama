@@ -1,4 +1,5 @@
 import React from "react";
+import Link from 'next/link';
 
 const Footer = () => {
   return (
@@ -14,6 +15,7 @@ const Footer = () => {
             <p className="text-sm sm:text-base text-base-content/75">
               Built by Bisuela, Caringal, Dela Cruz, and Escarlan
             </p>
+            <Link href="/about" className="link inline-block mt-2">About &amp; credits</Link>
           </div>
         </div>
       </div>
