@@ -1,70 +1,22 @@
-// app/movies/page.tsx
-import Link from "next/link";
-import { Suspense } from "react";
-import { MovieService } from "../services/movieService";
-import MovieFiltersComponent from "./MovieFilters";
-import MovieGrid from "./MovieGrid";
-import MovieSearch from "./MovieSearch";
-import { MovieFiltersSkeleton, MovieListSkeleton } from "./MovieSkeleton";
+import { Suspense } from 'react';
+import Discovery from './Discovery';
+import { catalogQueryString, parseCatalogQuery } from '@/app/lib/movies/catalog-query';
+import { tmdb } from '@/app/lib/tmdb/server';
+import type { CatalogInitial } from '@/app/hooks/useCatalogSearch';
 
-type Props = {
-  searchParams: Promise<{ [key: string]: string | undefined }>;
-};
-
-export default async function MoviePage({ searchParams }: Props) {
-  const { sort, genre, search } = await searchParams;
-
-  const movies = await MovieService.getMovies({ sort, genre, search });
-
-  return (
-    <div className="container max-w-7xl mx-auto pb-12">
-      {/* Header with breadcrumb navigation */}
-      <div className="mb-4">
-        <div className="mb-6">
-          <div className="text-sm breadcrumbs">
-            <ul>
-              <li>
-                <Link href="/" className="hover:underline">
-                  Home
-                </Link>
-              </li>
-              <li>Movies</li>
-            </ul>
-          </div>
-        </div>
-
-        <h1 className="text-3xl font-bold mb-2">Discover Movies</h1>
-        <p className="text-base-content/70 max-w-2xl">
-          Explore our entire movie collection with advanced search and filtering
-          options.
-        </p>
-      </div>
-
-      {/* Main Content */}
-      <div className="space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <Suspense fallback={<MovieFiltersSkeleton />}>
-            <MovieFiltersComponent />
-          </Suspense>
-          <Suspense
-            fallback={
-              <div className="w-full sm:w-64 h-10 bg-base-200 rounded-lg" />
-            }
-          >
-            <MovieSearch />
-          </Suspense>
-        </div>
-
-        <Suspense fallback={<MovieListSkeleton />}>
-          <MovieGrid movies={movies} />
-        </Suspense>
-      </div>
-
-      <footer className="footer footer-center p-4 mt-12 text-base-content border-t border-base-300">
-        <div>
-          <p className="text-sm">Browse and discover your favorite movies</p>
-        </div>
-      </footer>
-    </div>
-  );
+export default async function MoviePage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+ const raw = await searchParams;
+ const params = new URLSearchParams();
+ for (const [key, value] of Object.entries(raw)) if (typeof value === 'string') params.set(key, value);
+ let initial: CatalogInitial = null;
+ try {
+   const query = parseCatalogQuery(params);
+   const key = catalogQueryString(query);
+   try {
+     const { mode, query: title, page, year, genre } = query;
+     const data = mode === 'search' ? title ? await tmdb.search({ query: title, page, year }) : { page, totalPages: 0, totalResults: 0, results: [] } : await tmdb.discover({ page, year, genre });
+     initial = { key, data, error: null };
+   } catch { initial = { key, data: null, error: 'Movie provider is unavailable. Please try again.' }; }
+ } catch { /* Client displays invalid URL controls without a provider call. */ }
+ return <section className="max-w-7xl mx-auto pb-12"><header className="py-8 md:py-12 space-y-3"><p className="text-primary text-sm font-semibold uppercase tracking-widest">Your next great watch</p><h1 className="text-4xl md:text-5xl font-bold">Discover movies</h1><p className="max-w-xl text-base-content/70">Explore popular films or find a title you love. Save your picks and make them part of your story.</p></header><Suspense fallback={<p role="status">Loading discovery…</p>}><Discovery initial={initial} /></Suspense></section>;
 }

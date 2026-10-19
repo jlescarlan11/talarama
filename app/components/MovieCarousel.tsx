@@ -1,6 +1,7 @@
 "use client";
 import EmptyState from "./EmptyState";
 import React, { useRef, useEffect, useState, useCallback, useSyncExternalStore } from "react";
+import { movieHref } from "@/app/lib/movies/links";
 import Image from "next/image";
 import Link from "next/link";
 import { Movie, MovieCategorizesAs, Genre } from "@prisma/client";
@@ -126,7 +127,7 @@ const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
 
           return (
             <Link
-              href={`/movies/${movie.id}`}
+              href={movieHref(movie)}
               key={movie.id + "-" + offset}
               className="flex-none w-56 h-80"
               role="listitem"

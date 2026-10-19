@@ -1,6 +1,6 @@
 "use client";
 
-import { Link } from "@/app/components";
+
 import { useRouter, useSearchParams } from "next/navigation";
 import { Genre } from "@prisma/client";
 
@@ -80,9 +80,7 @@ const MovieActions = ({ genres = [] }: MovieActionsProps) => {
         ))}
       </select>
 
-      <button className="btn btn-primary">
-        <Link href="/movies/new">New Movie</Link>
-      </button>
+
     </div>
   );
 };
