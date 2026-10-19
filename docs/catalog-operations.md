@@ -1,6 +1,6 @@
 # Catalog integration and reviewed migration
 
-Phase 1 provides server services and operational tools. Discovery screens, TMDB detail routes and authenticated import-first save actions are phase 2. Current local movie URLs continue to work. No search/detail read imports records.
+Phase 1 provides server services and operational tools. Phase 2 adds discovery screens, distinct TMDB detail routes and authenticated import-first save actions. Current local movie URLs continue to work. No search/detail read imports records.
 
 ## Configuration and ownership
 
@@ -10,7 +10,9 @@ Set `TMDB_READ_TOKEN` to a TMDB API Read Access Token in the ignored local `.env
 
 Server application code uses `app/lib/tmdb/server.ts`: Next's shared result cache wraps validated normalized results for search 300 s, discovery 3600 s, details 86400 s. Raw fetches use `no-store`, so a malformed HTTP 200 cannot poison retries. The bounded 200-entry process cache coalesces pending calls and evicts failures. Next may serve a previous valid value while refreshing; it never changes personal data. `unstable_cache` is retained because this existing application does not enable Cache Components. Operational CLIs use only the process cache and require no Next request context.
 
-`MovieService.searchCatalog`, `discoverCatalog` and `getCatalogDetail` read provider metadata. `getLocalSnapshot` reads preserved local metadata even if TMDB is unavailable. `importMovie` and `refreshMovie` are **internal server primitives**, not authenticated endpoints: phase 2 action handlers must authenticate before invoking import. No public import route exists in phase 1. Provider input is fetched again from the trusted boundary, never accepted from browser-supplied title/genre/artwork fields. Imports converge by unique TMDB identity with bounded serializable transaction retries; metadata refresh fetches successfully before writing anything.
+`MovieService.searchCatalog`, `discoverCatalog` and `getCatalogDetail` read provider metadata. `getLocalSnapshot` reads preserved local metadata even if TMDB is unavailable. `importMovie` and `refreshMovie` are **internal server primitives**. Phase 2's `POST /api/movies/import` authenticates before invoking import and accepts only a validated TMDB ID. Provider input is fetched again from the trusted boundary, never accepted from browser-supplied title/genre/artwork fields. Imports converge by unique TMDB identity with bounded serializable transaction retries; metadata refresh fetches successfully before writing anything.
+
+The public `/api/catalog` read handler validates mode/page/year/genre inputs and returns safe retryable provider errors. It never imports. Search supports title/year; popular discovery supports genre/year. Favorite and watchlist POST requests now add idempotently; DELETE removes idempotently. Callers must use explicit intent rather than retrying a toggle. Personal state is never shared-cached. A saved local movie remains actionable without live provider credentials. Manual POST `/api/movies` and PATCH/DELETE `/api/movies/[id]` return 401 when anonymous and 403 when signed in. Former create/edit pages guide members to discovery.
 
 ## Additive migration and recovery
 

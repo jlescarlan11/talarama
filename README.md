@@ -20,8 +20,16 @@ For Google OAuth, create a development web client with origin `http://localhost:
 - `npm test` — focused logic, component, hook and route regression tests.
 - `npm run test:integration` — real database route journeys on a separate disposable database (see docs/migrations.md).
 - `npm run test:migrations` — replay all historical migrations in an isolated test schema and assert no schema drift.
-- `npm run test:e2e` — anonymous/responsive journeys and a synthetic-session save/log/edit/delete flow. Run `npx playwright install chromium` once first. Requires `TEST_DATABASE_URL`; each run creates and removes its own schema.
+- `npm run test:e2e` — anonymous/responsive discovery, synthetic-session import/save/log/edit/delete, provider failure and stale-search journeys. Run `npx playwright install chromium` once first. Requires `TEST_DATABASE_URL`; each run creates and removes its own schema. A test-only Node preload intercepts TMDB transport with synthetic data; it is never imported by application code and does not prove live TMDB or Google OAuth.
 - `npm run check:env` — report missing configuration names without displaying values.
 - `npm run build` — production compilation. Requires development database configuration for database-backed page rendering.
 
-Read [phase-0 verification](docs/phase-0-verification.md) and [phase-1 verification](docs/phase-1-verification.md) for measured checks and limitations. [Catalog operations](docs/catalog-operations.md) covers provider configuration, additive migration, dry-run matching, explicit reviewed apply and recovery. Phase 1 supplies catalog services and tooling; the discovery interface and import-first user actions remain phase 2 in the [approved roadmap](docs/superpowers/plans/2026-10-19-talarama-upgrade-roadmap.md).
+Read [phase-0 verification](docs/phase-0-verification.md), [phase-1 verification](docs/phase-1-verification.md) and [phase-2 verification](docs/phase-2-verification.md) for measured checks and limitations. [Catalog operations](docs/catalog-operations.md) covers provider configuration, additive migration, dry-run matching, explicit reviewed apply and recovery.
+
+## Discovery and saving
+
+`/movies` browses popular movies with genre/year filters; Search by title supports title and optional year. Mode, query, filters, popular sort and page are shareable URL state. Search updates after 300 ms; obsolete requests cannot replace current results. Provider metadata is read-only until a signed-in member explicitly saves or logs.
+
+External and mapped cards use `/movies/tmdb/[tmdbId]`. Existing `/movies/[id]` links and unmatched local titles remain readable. If the provider fails, saved detail snapshots and local library actions remain available. Missing artwork/year/runtime/credits have fallbacks; TMDB's ten-point score is separate from current Talarama diary ratings on five points. The later community/privacy model is not part of phase 2.
+
+Favorite/watchlist POST means **add**, DELETE means **remove**. Both are idempotent. External actions first call authenticated `POST /api/movies/import` with only `{ "tmdbId": 123 }`, then use the returned local movie ID. All personal action responses are `no-store`. Manual catalog creation/edit/deletion is retired for ordinary members; metadata operations use the trusted server provider workflow. No new schema migration is required for phase 2.

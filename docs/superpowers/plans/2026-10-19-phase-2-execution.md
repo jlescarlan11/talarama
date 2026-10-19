@@ -34,9 +34,9 @@
 
 **Interfaces:** `movieHref({id?,localId?,tmdbId?}): string`; `parseCatalogQuery(URLSearchParams)` validates only supported mode-specific inputs. `GET /api/catalog` returns normalized CatalogPage or safe 400/503, never writes.
 
-- [ ] Write failing tests for local/mapped/external links, strict numeric bounds, separate modes, pagination and safe provider errors; run targeted Vitest and observe failure.
-- [ ] Implement pure identity/query helpers and catalog handler reusing `tmdb` from server.ts. Popular is the sole supported sort; reject unsupported combinations rather than silently misrepresent filters.
-- [ ] Run targeted tests and full unit suite; expected all pass. Commit local task.
+- [x] Write failing tests for local/mapped/external links, strict numeric bounds, separate modes, pagination and safe provider errors; run targeted Vitest and observe failure.
+- [x] Implement pure identity/query helpers and catalog handler reusing `tmdb` from server.ts. Popular is the sole supported sort; reject unsupported combinations rather than silently misrepresent filters.
+- [x] Run targeted tests and full unit suite; expected all pass. Commit local task.
 
 ### Task 2: Authenticated import and idempotent library actions
 
@@ -44,9 +44,9 @@
 
 **Interfaces:** POST import accepts strict `{tmdbId}` after session authentication. POST like/watchlist means add, DELETE means remove. `setLibraryEntry(userId,movieId,kind,present,{db?})` uses unique identity/createMany skipDuplicates or deleteMany. Authentication precedes parse/import; missing IDs yield 404. Responses are no-store.
 
-- [ ] Write failing handler tests for anonymous, invalid input, untrusted payload, provider errors, retired manual writes; integration tests prove repeated/concurrent add/remove and preserved relationships.
-- [ ] Implement authenticated handlers, shared safe errors and idempotent service. Retire manual POST/PATCH/DELETE with 401/403 and replace new/edit screens with discovery guidance.
-- [ ] Run unit and database tests; expected all pass. Commit local task.
+- [x] Write failing handler tests for anonymous, invalid input, untrusted payload, provider errors, retired manual writes; integration tests prove repeated/concurrent add/remove and preserved relationships.
+- [x] Implement authenticated handlers, shared safe errors and idempotent service. Retire manual POST/PATCH/DELETE with 401/403 and replace new/edit screens with discovery guidance.
+- [x] Run unit and database tests; expected all pass. Commit local task.
 
 ### Task 3: Discovery UI and navigation
 
@@ -54,9 +54,9 @@
 
 **Interfaces:** server page validates URL and supplies initial results/error without importing. Client URL controls update mode/query/year/genre/page/sort; fetch hook keys results to current URL and aborts/ignores obsolete work. Input debounces URL updates 300 ms; filters reset page. Browser back restores controls/results.
 
-- [ ] Write failing UI tests for search debounce, out-of-order resolution, back navigation, separate filters, retry and pagination.
-- [ ] Build labeled responsive controls, permanent card labels, missing poster/year, loading/empty/error and retry states. Popular home discovery CTA uses existing local library fallback when provider is unavailable.
-- [ ] Run unit and fixture browser tests; expected all pass. Commit local task.
+- [x] Write failing UI tests for search debounce, out-of-order resolution, back navigation, separate filters, retry and pagination.
+- [x] Build labeled responsive controls, permanent card labels, missing poster/year, loading/empty/error and retry states. Popular home discovery CTA uses existing local library fallback when provider is unavailable.
+- [x] Run unit and fixture browser tests; expected all pass. Commit local task.
 
 ### Task 4: Shared movie details and save flow
 
@@ -64,19 +64,19 @@
 
 **Interfaces:** details distinguish local identity/provider identity, read cached trusted metadata, use local snapshot on provider failure, and independently load uncached member state/local ratings. Actions import only after signed-in explicit intent, use returned local ID, then POST/DELETE library intent. Failed saves retain retryable intent; controls remain disabled while pending.
 
-- [ ] Write failing tests for metadata fallbacks, invalid IDs, safe provider errors, signed-out actions, separate 10-point TMDB and 5-point local scores, import-first action retry.
-- [ ] Implement shared detail rendering with poster/backdrop, description, release/runtime, genres, cast/director and score labels. Local legacy directors/genres remain readable. Retain existing reviews without inventing phase 4 privacy/publication semantics; label local ratings as current Talarama ratings, not new community aggregation.
-- [ ] Remove manual edit/delete links from active details; update remaining library consumers for add/remove HTTP semantics.
-- [ ] Run tests and browser journeys at 360/768/1440, keyboard/reduced motion and provider failure/empty/missing metadata. Commit local task.
+- [x] Write failing tests for metadata fallbacks, invalid IDs, safe provider errors, signed-out actions, separate 10-point TMDB and 5-point local scores, import-first action retry.
+- [x] Implement shared detail rendering with poster/backdrop, description, release/runtime, genres, cast/director and score labels. Local legacy directors/genres remain readable. Retain existing reviews without inventing phase 4 privacy/publication semantics; label local ratings as current Talarama ratings, not new community aggregation.
+- [x] Remove manual edit/delete links from active details; update remaining library consumers for add/remove HTTP semantics.
+- [x] Run tests and browser journeys at 360/768/1440, keyboard/reduced motion and provider failure/empty/missing metadata. Commit local task.
 
 ### Task 5: Verification and independent review
 
 **Files:** `docs/phase-2-verification.md`, catalog operations/README updates and plan progress.
 
-- [ ] Run Prisma generation, lint, types, complete units/integration/migration/browser suites, build and full/runtime audits. No migration added; verify prior schema/history and phase 1 preservation.
-- [ ] Inspect credential presence without values; record real-token and Google OAuth limitations.
-- [ ] Dispatch one fresh read-only whole-phase review under executing-plans; reproduce and fix important findings with failing tests, rerun affected/full checks.
-- [ ] Review requirements against evidence, document results/blockers and local commits; keep checkout intact and all work local.
+- [x] Run Prisma generation, lint, types, complete units/integration/migration/browser suites, build and full/runtime audits. No migration added; verify prior schema/history and phase 1 preservation.
+- [x] Inspect credential presence without values; record real-token and Google OAuth limitations.
+- [x] Dispatch one fresh read-only whole-phase review under executing-plans; reproduce and fix important findings with failing tests, rerun affected/full checks.
+- [x] Review requirements against evidence, document results/blockers and local commits; keep checkout intact and all work local.
 
 ## Execution decisions
 
