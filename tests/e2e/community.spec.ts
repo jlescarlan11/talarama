@@ -11,16 +11,17 @@ test('publication, safe reviews, spoilers and visited-page master switch across 
   await signIn(context,'community-owner');await page.goto('/settings/profile');
   await expect(page.getByRole('heading',{name:'Profile settings'})).toBeVisible();
   expect((await page.request.get('/api/members/community_member')).status()).toBe(404);
-  await page.getByLabel('Bio').fill('A community movie journal');await page.getByLabel('Publish profile').check();
+  await page.getByLabel('Display name').fill('Published movie member');await page.getByLabel('Bio').fill('A community movie journal');await page.getByLabel('Publish profile').check();
   await page.getByRole('button',{name:'Save profile'}).click();await expect(page.getByRole('status').filter({hasText:'Profile saved'})).toBeVisible();
-  expect((await page.request.get('/api/auth/session')).status()).toBe(200);
+  const refreshedSession=await page.request.get('/api/auth/session');expect(refreshedSession.status()).toBe(200);expect((await refreshedSession.json()).user).toMatchObject({id:'community-owner',name:'Published movie member',username:'community_member'});
   for(const width of [360,768,1440]){
    await reader.setViewportSize({width,height:1000});await reader.emulateMedia({colorScheme:width===768?'dark':'light',reducedMotion:'reduce'});
+   await page.setViewportSize({width,height:1000});await page.emulateMedia({colorScheme:width===768?'dark':'light',reducedMotion:'reduce'});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.evaluate(()=>{if(document.activeElement instanceof HTMLElement)document.activeElement.blur();window.scrollTo(0,0);});await page.screenshot({path:`.superpowers/phase4-settings-${width}.png`,fullPage:true,caret:'initial'});
    await reader.goto('http://127.0.0.1:3100/members/community_member');
-   await expect(reader.getByRole('heading',{name:'Community member',exact:true})).toBeVisible();
+   await expect(reader.getByRole('heading',{name:'Published movie member',exact:true})).toBeVisible();
    await expect(reader.getByText('2 public logs · 1 distinct public movie')).toBeVisible();
    await expect(reader.getByText('A spoiler about the ending',{exact:true})).toBeHidden();
-   await reader.getByText('Reveal spoiler').first().click();await expect(reader.getByText('A spoiler about the ending',{exact:true})).toBeVisible();
+   await reader.getByText('Reveal spoiler').first().focus();await reader.keyboard.press('Enter');await expect(reader.getByText('A spoiler about the ending',{exact:true})).toBeVisible();
    expect(await reader.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
    await reader.screenshot({path:`.superpowers/phase4-profile-${width}.png`,fullPage:true,caret:'initial'});
   }
@@ -50,7 +51,13 @@ test('member reporting and administrator audited hide/unhide/resolve preserve ow
  try{
   await db.user.createMany({data:[{id:'moderated-owner',email:'moderated@example.invalid',username:'moderated_owner',profilePublished:true},{id:'reporter',email:'reporter@example.invalid',username:'reporter'},{id:'moderator',email:'moderator@example.invalid',username:'moderator',role:'ADMIN'}]});
   await db.diaryEntry.create({data:{id:'moderated-entry',userId:'moderated-owner',movieId:'browser-movie',rating:3,review:'Reported browser review',visibility:'PUBLIC',watchedDate:new Date('2000-01-01')}});
-  await signIn(context,'reporter');await page.goto('/reviews/moderated-entry');await page.getByText('Report review',{exact:true}).click();await page.getByLabel('Report reason').fill('Spam report');await page.getByRole('button',{name:'Submit report'}).click();await expect(page.getByRole('status').filter({hasText:'Report received'})).toBeVisible();
+  await signIn(context,'reporter');await page.goto('/reviews/moderated-entry');await page.getByText('Report review',{exact:true}).click();await page.getByLabel('Report reason').fill('Spam report');
+  await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await expect(page.getByRole('article')).toBeVisible();await page.getByText('Report review',{exact:true}).click();await expect(page.getByLabel('Report reason')).toHaveValue('Spam report');
+  await page.route('**/api/reviews/moderated-entry/reports',route=>route.fulfill({status:429,headers:{'Retry-After':'1'},json:{error:'Too many reports. Your draft is retained.',retryAfter:1}}));
+  await page.getByRole('button',{name:'Submit report'}).click();await expect(page.getByRole('status').filter({hasText:'Too many reports'})).toBeVisible();
+  await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await expect(page.getByRole('article')).toBeVisible();await page.getByText('Report review',{exact:true}).click();await expect(page.getByLabel('Report reason')).toHaveValue('Spam report');
+  await page.unroute('**/api/reviews/moderated-entry/reports');
+  await page.getByRole('button',{name:'Submit report'}).click();await expect(page.getByRole('status').filter({hasText:'Report received'})).toBeVisible();
   const report=await db.entryReport.findFirstOrThrow({where:{entryId:'moderated-entry'}});
   expect((await page.request.patch(`/api/admin/reports/${report.id}`,{data:{action:'hide'}})).status()).toBe(403);
   expect((await page.request.patch('/api/profile',{data:{role:'ADMIN'}})).status()).toBe(400);

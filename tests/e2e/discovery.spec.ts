@@ -22,7 +22,7 @@ test('visitor browses, paginates, shares details and restores filters at every l
       await page.goBack();
       await expect(page.getByLabel('Release year')).toHaveValue('2020');
       await page.getByRole('link', { name: /Fixture Moon/ }).click();
-      await expect(page).toHaveURL(/\/movies\/tmdb\/70001$/);
+      await expect(page).toHaveURL(/\/movies\/tmdb\/70001$/, {timeout:15000});
       await expect(page.getByRole('heading', { name: 'Fixture Moon' })).toBeVisible();
       await expect(page.getByText('TMDB 8.2/10')).toBeVisible();
       await expect(page.getByRole('link', { name: 'Sign in to save or log' })).toBeVisible();

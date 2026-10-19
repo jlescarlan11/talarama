@@ -38,8 +38,8 @@ beforeAll(async () => {
     const sql = readFileSync(`prisma/migrations/${directory}/migration.sql`, 'utf8');
     await runSql(sql, url);
   }
-  await runSql(`INSERT INTO "User" (id,email,"updatedAt") VALUES ('owner','catalog@example.invalid',now());
-    INSERT INTO "Account" (id,"userId",type,provider,"providerAccountId") VALUES ('google-link','owner','oauth','google','unchanged');
+  await runSql(`INSERT INTO "User" (id,email,username,"updatedAt") VALUES ('owner','catalog@example.invalid','Legacy.Owner',now());
+    INSERT INTO "Account" (id,"userId",type,provider,"providerAccountId",access_token,refresh_token) VALUES ('google-link','owner','oauth','google','unchanged','synthetic-access-preserved','synthetic-refresh-preserved');
     INSERT INTO "Movie" (id,title,"releasedYear",duration) VALUES ('legacy','Same title',2020,100),('unmatched','Unmatched',1999,90);
     INSERT INTO "Genre" (id,"genreName") VALUES ('legacy-drama','Drama');
     INSERT INTO "MovieCategorizesAs" ("movieId","genreId") VALUES ('legacy','legacy-drama');
@@ -73,6 +73,8 @@ afterAll(async () => {
 it('preserves legacy IDs, values, accounts and relationships through SQL migration and logical restoration', async () => {
   expect(await db.$queryRawUnsafe(`SELECT id,title,"releasedYear",duration FROM "Movie" ORDER BY id`)).toEqual(legacySnapshot);
   const before = await snapshot(db);
+  expect(before.users[0]).toMatchObject({id:'owner',username:'Legacy.Owner',profilePublished:false,showFavorites:false,bio:'',role:'MEMBER'});
+  expect(before.accounts[0]).toMatchObject({access_token:'synthetic-access-preserved',refresh_token:'synthetic-refresh-preserved'});
   expect(before.diary[0]).toMatchObject({ id: 'review', movieId: 'legacy', userId: 'owner', rating: 4, review: 'Keep review', visibility:'PRIVATE', clientRequestId:null, isRewatch:false, containsSpoilers:false });
   expect(before.diary[0].watchedDate.toISOString()).toBe('2020-02-29T23:30:00.000Z');
   expect(before.accounts[0]).toMatchObject({ id: 'google-link', providerAccountId: 'unchanged' });

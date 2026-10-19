@@ -20,9 +20,18 @@ export async function reportEntry(reporterId:string,entryId:string,reason:unknow
  try{return await db.entryReport.upsert({where:key,create:{...data,reporterId,entryId},update:{},select:{id:true}});}
  catch(error){if(error instanceof Prisma.PrismaClientKnownRequestError && error.code==='P2002'){const replay=await db.entryReport.findUnique({where:key,select:{id:true}});if(replay)return replay;}throw error;}
 }
-export async function listReports(adminId:string,{db=prisma}:{db?:PrismaClient}={}){
+export async function listReports(adminId:string,{db=prisma,cursor}:{db?:PrismaClient;cursor?:string}={}){
  await requireAdmin(adminId,db);
- return {reports:await db.entryReport.findMany({select:{id:true,reason:true,createdAt:true,resolvedAt:true,entry:{select:{id:true,review:true,moderationState:true,movie:{select:{title:true}},user:{select:{username:true}}}}},orderBy:[{createdAt:'desc'},{id:'desc'}],take:100})};
+ let where:Prisma.EntryReportWhereInput={};
+ if(cursor){try{
+  if(cursor.length>1000)throw Error();
+  const row=JSON.parse(Buffer.from(cursor,'base64url').toString());
+  if(typeof row.id!=='string'||!row.id||row.id.length>200||typeof row.date!=='string'||!Number.isFinite(new Date(row.date).getTime()))throw Error();
+  const createdAt=new Date(row.date);where={OR:[{createdAt:{lt:createdAt}},{createdAt,id:{lt:row.id}}]};
+ }catch{throw new CommunityError('Invalid cursor',400);}}
+ const rows=await db.entryReport.findMany({where,select:{id:true,reason:true,createdAt:true,resolvedAt:true,entry:{select:{id:true,review:true,moderationState:true,movie:{select:{title:true}},user:{select:{username:true}}}}},orderBy:[{createdAt:'desc'},{id:'desc'}],take:101});
+ const reports=rows.slice(0,100);const last=reports.at(-1);
+ return {reports,nextCursor:rows.length>100&&last?Buffer.from(JSON.stringify({id:last.id,date:last.createdAt.toISOString()})).toString('base64url'):null};
 }
 export async function moderateReport(adminId:string,reportId:string,input:unknown,{db=prisma}:{db?:PrismaClient}={}){
  const {action}=moderationSchema.parse(input);

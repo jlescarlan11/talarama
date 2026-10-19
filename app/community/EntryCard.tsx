@@ -11,8 +11,11 @@ function Avatar({image,name}:{image:string|null;name:string}){
  return safe&&!failed?<Image src={image!} width={40} height={40} alt="" className="rounded-full w-10 h-10 object-cover" onError={()=>setFailed(true)}/>:<span aria-hidden="true" className="rounded-full bg-base-300 grid place-items-center w-10 h-10 shrink-0 font-bold">{name.slice(0,1).toUpperCase()}</span>;
 }
 export {Avatar};
-export default function EntryCard({entry,full=false}:{entry:PublicEntry;full?:boolean}){
- const {status}=useSession();const [reason,setReason]=useState('');const [message,setMessage]=useState('');const [pending,setPending]=useState(false);
+export default function EntryCard({entry,full=false,reportDrafts,onReportDraftChange}:{entry:PublicEntry;full?:boolean;reportDrafts:Record<string,string>;onReportDraftChange:(key:string,value:string)=>void}){
+ const {status,data:session}=useSession();const [message,setMessage]=useState('');const [pending,setPending]=useState(false);
+ const draftKey=`${session?.user?.id??'anonymous'}:${entry.id}`;
+ const reason=reportDrafts[draftKey]??'';
+ const setReason=(value:string)=>onReportDraftChange(draftKey,value);
  const name=entry.user.name||entry.user.username||'Member';
  const text=full?entry.review:entry.review.length>350?entry.review.slice(0,350)+'…':entry.review;
  async function report(event:React.FormEvent){event.preventDefault();setPending(true);setMessage('');try{const response=await fetch(`/api/reviews/${encodeURIComponent(entry.id)}/reports`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason})});const data=await response.json();if(!response.ok)throw Error(data.error);setMessage('Report received. Thank you.');}catch(error){setMessage(error instanceof Error?error.message:'Could not send report.');}finally{setPending(false);}}

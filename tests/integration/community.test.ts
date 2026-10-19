@@ -160,3 +160,13 @@ it('runs guarded operator preview/reviewed apply/admin bootstrap with exclusive 
  expect(await db.moderationAudit.count({where:{action:'grant-admin:cli-user'}})).toBe(1);
  expect(()=>run('set-admin',['cli-user','--grant-admin'],{...env,DATABASE_URL:raw.replace('_test','_production')})).toThrow();
 },30000);
+it('keeps reports older than the first hundred reachable through stable admin pages',async()=>{
+ const {listReports}=await import('@/app/services/moderationService');
+ await db.diaryEntry.createMany({data:Array.from({length:105},(_,i)=>({id:`queue-entry-${i}`,userId:'alice',movieId:'film',review:'queue fixture',watchedDate:new Date('2000-01-01')}))});
+ await db.entryReport.createMany({data:Array.from({length:105},(_,i)=>({id:`queue-${String(i).padStart(3,'0')}`,entryId:`queue-entry-${i}`,reporterId:'bob',reason:'fixture queue',createdAt:new Date('2000-01-01')}))});
+ const first=await listReports('admin',{db});expect(first.reports).toHaveLength(100);
+ expect(first).toHaveProperty('nextCursor',expect.any(String));
+ const second=await listReports('admin',{db,cursor:(first as typeof first & {nextCursor:string}).nextCursor});
+ expect(second.reports.some(r=>r.id==='queue-000')).toBe(true);
+ expect(new Set([...first.reports,...second.reports].map(r=>r.id)).size).toBe(106);
+});
