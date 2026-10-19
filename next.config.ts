@@ -14,6 +14,9 @@ const nextConfig: NextConfig = {
   },
   // Add experimental features that might help with server-side rendering
   experimental: {
+    // Disposable browser runs and constrained local verification need no persistent compiler cache.
+    turbopackFileSystemCacheForDev: process.env.TALARAMA_DISABLE_COMPILER_CACHE !== '1',
+    turbopackFileSystemCacheForBuild: process.env.TALARAMA_DISABLE_COMPILER_CACHE !== '1',
     serverActions: {
       bodySizeLimit: '2mb'
     }

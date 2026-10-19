@@ -1,9 +1,11 @@
 import type { DiaryInput } from '@/app/lib/diary/contracts';
+import {announcePublicationChange} from '@/app/lib/community/refresh';
 async function save(url: string, method: string, payload: DiaryInput) {
     const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     const body = await response.json();
     if (!response.ok)
         throw new Error(typeof body.error === 'string' ? body.error : 'Could not save. Please retry.');
+    announcePublicationChange();
     return body;
 }
 export const diaryService = {

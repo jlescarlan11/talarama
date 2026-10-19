@@ -7,7 +7,6 @@ import {
   PiNotebook,
   PiList,
   PiX,
-  PiPlus,
 } from "react-icons/pi";
 import Logo from "./Logo";
 import React, { useState, useEffect, useRef } from "react";
@@ -155,6 +154,7 @@ const AuthStatus: React.FC<AuthStatusProps> = ({ currentPath, onNavigate }) => {
     return (
       <div className="nav-links flex items-center gap-2">
         <Link href="/movies" className="btn btn-ghost">Discover</Link>
+        <Link href="/community" prefetch={false} className="btn btn-ghost">Community</Link>
         <button
           onClick={() => signIn("google")}
           className="btn btn-primary h-11 px-6 text-base font-medium"
@@ -170,33 +170,28 @@ const AuthStatus: React.FC<AuthStatusProps> = ({ currentPath, onNavigate }) => {
       <div>
         <NavLinks currentPath={currentPath} onNavigate={onNavigate} />
       </div>
-      <div className="dropdown dropdown-end">
-        <button
-          tabIndex={0}
-          role="button"
+      <details className="dropdown dropdown-end">
+        <summary
           className="btn btn-primary h-11 w-11 p-2"
           aria-label="Settings menu"
-          aria-expanded="false"
-          aria-haspopup="true"
         >
           <PiGearBold className="text-xl" aria-hidden="true" />
-        </button>
+        </summary>
         <ul
           tabIndex={0}
           className="menu menu-sm dropdown-content p-2 w-48 bg-base-100 shadow-lg rounded-lg"
-          role="menu"
         >
-          <li role="none">
+          <li><Link href="/settings/profile" prefetch={false}>Profile settings</Link></li>
+          <li>
             <button
               className="btn btn-ghost justify-start h-10 text-base"
               onClick={() => signOut({ callbackUrl: "/" })}
-              role="menuitem"
             >
               Log Out
             </button>
           </li>
         </ul>
-      </div>
+      </details>
     </div>
   );
 };
@@ -213,6 +208,7 @@ const MobileAuthStatus: React.FC<AuthStatusProps> = ({
     return (
       <div className="flex flex-col gap-4">
         <Link href="/movies" onClick={onNavigate} className="btn btn-ghost justify-start">Discover</Link>
+        <Link href="/community" prefetch={false} onClick={onNavigate} className="btn btn-ghost justify-start">Community</Link>
         <button
           onClick={() => signIn("google")}
           className="btn btn-primary h-11 w-full text-base font-medium"
@@ -226,6 +222,7 @@ const MobileAuthStatus: React.FC<AuthStatusProps> = ({
   return (
     <div className="flex flex-col gap-4">
       <MobileNavLinks currentPath={currentPath} onNavigate={onNavigate} />
+      <Link href="/settings/profile" prefetch={false} onClick={onNavigate} className="btn btn-ghost justify-start">Profile settings</Link>
       <button
         className="btn btn-ghost justify-start h-11 w-full text-base"
         onClick={() => signOut({ callbackUrl: "/" })}
@@ -244,9 +241,9 @@ interface NavLinksProps {
 const NavLinks: React.FC<NavLinksProps> = ({ currentPath, onNavigate }) => {
   const links: NavLink[] = [
     {
-      icon: <PiPlus aria-hidden="true" />,
-      label: "New Diary",
-      href: "/diaries/new",
+      icon: <PiNotebook aria-hidden="true" />,
+      label: "Community",
+      href: "/community",
     },
     {
       icon: <PiNotebook aria-hidden="true" />,
@@ -266,6 +263,7 @@ const NavLinks: React.FC<NavLinksProps> = ({ currentPath, onNavigate }) => {
         <React.Fragment key={link.href}>
           <Link
             href={link.href}
+            prefetch={false}
             className={`btn btn-primary h-11 px-6 text-base font-medium ${
               currentPath === link.href ? "btn-active" : ""
             }`}
@@ -285,6 +283,7 @@ const MobileNavLinks: React.FC<NavLinksProps> = ({
   onNavigate,
 }) => {
   const links: NavLink[] = [
+    {icon:<PiNotebook aria-hidden="true"/>,label:'Community',href:'/community'},
     {
       icon: <PiNotebook aria-hidden="true" />,
       label: "My Diary",

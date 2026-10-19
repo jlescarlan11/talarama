@@ -28,7 +28,7 @@ export default function DiaryForm(props:{movies:Movie[];diary?:DiaryEntryWithMov
     <label className="flex gap-3 items-center"><input type="checkbox" {...register('isRewatch')} className="checkbox"/>Rewatch</label>
     <label className="flex gap-3 items-center"><input type="checkbox" {...register('containsSpoilers')} className="checkbox"/>Contains spoilers</label>
     <div className="space-y-2"><label className="block font-semibold" htmlFor="diary-visibility">Visibility</label><select id="diary-visibility" {...register('visibility')} className="select w-full" aria-describedby="visibility-help"><option value="PRIVATE">Private</option><option value="PUBLIC">Public intent</option></select>
-     <p id="visibility-help" className="text-sm text-base-content/70">Private is just for you. Public intent is saved, but nothing is published until profile publication and community controls launch. Your profile must also be published then.</p></div>
+     <p id="visibility-help" className="text-sm text-base-content/70">Private is just for you. Public entries appear in the community only while your profile is published and the entry is visible. <Link className="link" href="/settings/profile">Manage profile publication</Link>.</p></div>
     <p className="rounded-lg border border-base-300 p-3 text-sm">{isEditMode ? 'Editing keeps your watchlist unless you change the movie. Changing it removes the newly selected movie from your watchlist.' : 'Saving a viewing removes this movie from your watchlist.'} Favorites stay separate. Deleting a viewing does not put it back on your watchlist.</p>
    </fieldset>
    {errors.root&&<p ref={errorRef} tabIndex={-1} role="alert" className="text-error break-words">{errors.root.message}</p>}

@@ -68,7 +68,7 @@ const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({
         <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
           <StarRating rating={diaryEntry.rating} size="sm" />
         </div>
-        <p className="text-xs text-base-content/70">{diaryEntry.visibility === "PRIVATE" ? "Private" : "Public intent (unpublished)"}{diaryEntry.isRewatch ? " · Rewatch" : ""}{diaryEntry.containsSpoilers ? " · Spoilers" : ""}</p>
+        <p className="text-xs text-base-content/70">{diaryEntry.visibility === "PRIVATE" ? "Private" : "Public when profile is published"}{diaryEntry.isRewatch ? " · Rewatch" : ""}{diaryEntry.containsSpoilers ? " · Spoilers" : ""}{diaryEntry.moderationState==='HIDDEN'?' · Hidden by moderation':''}</p>
         {diaryEntry.review && (
           <p className="text-xs sm:text-sm text-base-content/70 leading-relaxed truncate">
             {truncateReview(diaryEntry.review)}
