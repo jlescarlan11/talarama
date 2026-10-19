@@ -34,10 +34,10 @@
 
 **Interfaces:** Existing `npm run lint`, `typecheck`, `test`, `test:integration`, `test:migrations`, `test:e2e`, `build`; `TEST_DATABASE_URL` names a separate disposable `_test` database. Browser preload remains test-server-only.
 
-- [ ] Define read-only Actions permissions, pinned action revisions, Node 22/npm 11, PostgreSQL 17 service with health check, matching client binaries, synthetic environment and bounded job runtime. Create current-schema build DB separately from generated test schemas; install Chromium and create ignored screenshot directory on fresh clones.
-- [ ] Run `npm ci`, `npx prisma generate`, lint/types/unit, PostgreSQL integration and migrations locally, with logs in ignored `.superpowers/phase5-*`. Expected: commands pass, 27 migrations/no drift; historical fixtures compare IDs, accounts, relationships and exact `2020-02-29T23:30:00.000Z` through pre/post backup restores.
-- [ ] Inspect workflow paths/commands and parse YAML locally. Expected: all steps use declared tools/env; no real secrets, deploy or publication steps. Record Windows/Linux and unrun hosted execution limitations.
-- [ ] Commit local CI/config deliverable after checks.
+- [x] Define read-only Actions permissions, pinned action revisions, Node 22/npm 11, PostgreSQL 17 service with health check, matching client binaries, synthetic environment and bounded job runtime. Create current-schema build DB separately from generated test schemas; install Chromium and create ignored screenshot directory on fresh clones.
+- [x] Run `npm ci`, `npx prisma generate`, lint/types/unit, PostgreSQL integration and migrations locally, with logs in ignored `.superpowers/phase5-*`. Expected: commands pass, 27 migrations/no drift; historical fixtures compare IDs, accounts, relationships and exact `2020-02-29T23:30:00.000Z` through pre/post backup restores.
+- [x] Inspect workflow paths/commands and parse YAML locally. Expected: all steps use declared tools/env; no real secrets, deploy or publication steps. Record Windows/Linux and unrun hosted execution limitations.
+- [x] Commit local CI/config deliverable after checks.
 
 ### Task 2: Attribution and presentation verification
 
@@ -45,11 +45,11 @@
 
 **Interfaces:** Footer links to `/about`; credits identify provider and upstream rights. Public metadata remains generic/noindex for members/reviews, without invented production origin. Test fixture identities use `.invalid` addresses and test-only database setup.
 
-- [ ] Browse official current TMDB FAQ, API terms and approved logo guidance. Record retrieval date, exact source links and access limitations. Preserve service/fallback semantics; surface any retention obligation needing an operational release gate.
-- [ ] Write/render attribution test expecting credits link, logo and required notice; run it RED before implementation. Implement minimal About/Credits and footer attribution with an official unmodified asset; retain contributor credits. Run targeted tests GREEN.
-- [ ] Add browser journeys for a brand-new empty member/community, widths 360/768/1440 in light/dark, no horizontal overflow, keyboard skip/focus, reduced motion and slow/failing retry. Preserve existing dialog/spoiler/diary regressions. A demonstrated product defect gets its own failing assertion before fix.
-- [ ] Capture local portfolio screenshots from disposable synthetic data only, with visible fixture labeling injected by the capture test, never production sample reviews. Inspect output pixels; record scope and contrast measurements without claiming complete WCAG conformance.
-- [ ] Run complete browser suite, stop owned server, then generation/build. Expected: all journeys/build pass; no production auth bypass or fixture preload in application imports. Commit local presentation deliverable.
+- [x] Browse official current TMDB FAQ, API terms and approved logo guidance. Record retrieval date, exact source links and access limitations. Preserve service/fallback semantics; surface any retention obligation needing an operational release gate.
+- [x] Write/render attribution test expecting credits link, logo and required notice; run it RED before implementation. Implement minimal About/Credits and footer attribution with an official unmodified asset; retain contributor credits. Run targeted tests GREEN.
+- [x] Add browser journeys for a brand-new empty member/community, widths 360/768/1440 in light/dark, no horizontal overflow, keyboard skip/focus, reduced motion and slow/failing retry. Preserve existing dialog/spoiler/diary regressions. A demonstrated product defect gets its own failing assertion before fix.
+- [x] Capture local portfolio screenshots from disposable synthetic data only, with visible fixture labeling injected by the capture test, never production sample reviews. Inspect output pixels; record scope and contrast measurements without claiming complete WCAG conformance.
+- [x] Run complete browser suite, stop owned server, then generation/build. Expected: all journeys/build pass; no production auth bypass or fixture preload in application imports. Commit local presentation deliverable.
 
 ### Task 3: Developer and operator documentation
 
@@ -57,11 +57,11 @@
 
 **Interfaces:** Docs consume actual scripts/env/schema contracts and measured Task 1/2 results. License proposal is inactive until owner/rightsholder review. Deployment runbook is future, separately authorized work.
 
-- [ ] Replace stale pre-community README statements; document purpose, honest screenshots, setup, fresh empty DB vs populated migration, environment table, checks, architecture and operation links.
-- [ ] Explain local/external movie identity, source/member/provider data ownership, saved-zone/calendar and exact legacy timestamp semantics, idempotency/uncertain-response recovery, public eligibility, quotas/moderation and generic noindex ruling.
-- [ ] Document proposed production request/body/time limits, pool budgets/direct migration connection, origin/callback separation, secret handling, private-data-safe logs, backups/restore and rollback cutover. Include practical acceptance checklist and explicit unavailable real credentials, authorized staging-copy, legal/retention, hosted CI and launch gates.
-- [ ] Reuse the actual guarded historical fixture rehearsal; record pre/post restored identity/relationship equality and exact legacy timestamp, no guessed mappings/conversions. No actual production rehearsal claimed.
-- [ ] Check all relative document links and command names, compare example env names with runtime use, inspect tracked files for fixture/secret boundaries. Expected: links/scripts valid, no active license/new data exports. Commit local documentation deliverable.
+- [x] Replace stale pre-community README statements; document purpose, honest screenshots, setup, fresh empty DB vs populated migration, environment table, checks, architecture and operation links.
+- [x] Explain local/external movie identity, source/member/provider data ownership, saved-zone/calendar and exact legacy timestamp semantics, idempotency/uncertain-response recovery, public eligibility, quotas/moderation and generic noindex ruling.
+- [x] Document proposed production request/body/time limits, pool budgets/direct migration connection, origin/callback separation, secret handling, private-data-safe logs, backups/restore and rollback cutover. Include practical acceptance checklist and explicit unavailable real credentials, authorized staging-copy, legal/retention, hosted CI and launch gates.
+- [x] Reuse the actual guarded historical fixture rehearsal; record pre/post restored identity/relationship equality and exact legacy timestamp, no guessed mappings/conversions. No actual production rehearsal claimed.
+- [x] Check all relative document links and command names, compare example env names with runtime use, inspect tracked files for fixture/secret boundaries. Expected: links/scripts valid, no active license/new data exports. Commit local documentation deliverable.
 
 ### Task 4: Independent review and final verification
 
@@ -86,3 +86,8 @@
 - Preflight: clean at `625938f`, authorized existing branch; approximately 9.5 GB free. No other checkout touched.
 - Ruling: owner explicitly authorized autonomous planning/implementation, so no repeated spec/plan approval pause. Cost if changed: local reversible edits only.
 - Ruling: retain execution evidence and ignored scratch under the owner's preservation instruction; no skill-directed worktree/scratch deletion. Cost: local disk usage.
+- Task1: local commit `7127c96` adds pinned read-only CI/config and fresh-clone output directories. Clean `npm ci`632 packages/zero audit findings; Prisma6.19.3 generation, lint/types, unit90/90, PostgreSQL34/34 and migration replay27/no drift passed. YAML parsed with Python/PyYAML. CI service/client major17, Node22.14.0/npm11.6.1; runner packages/minor patches are intentionally upstream-maintained, not claimed bit-for-bit reproducible.
+- Task1 diagnostic: initial PostgreSQL checks failed because retained cluster was stopped; existing loopback cluster completed startup recovery without reset. Only the successful reruns above are acceptance evidence.
+- Task2: attribution regression RED on missing About module, GREEN2/2 after implementation. One premature test attempt during `npm ci` lacked Vitest and is not counted as behavioral RED. Official logo downloaded unchanged; SHA256 matches asset URL digest. FAQ/terms/logo guidance retrieved through official primary-source browsing, including read-only browser for restricted direct pages.
+- Task2 diagnostic: new credits focus assertion initially saw outline:none due its focus-ring utility; removed the redundant utility to use global3px outline. Capture-only DOM banner caused a hydration mismatch; CSS pseudo-element now avoids React-tree mutation. Targeted browser3/3 passed after both changes, no hydration mismatch in that rerun. Screenshots inspected across360/768/1440 and both themes; full inherited journeys are running before final acceptance.
+- Ruling: persistent TMDB snapshots require a reviewed retention/termination mechanism before public release; do not delete provider/member rows or invent rights approval to close that gate locally. Cost: deployment remains blocked until mechanism and account-specific terms review are accepted.

@@ -8,7 +8,7 @@ Phase 0 replayed all 24 migrations in disposable PostgreSQL and compared the res
 
 ## New empty development database
 
-Create a dedicated empty database. Configure DATABASE_URL and DIRECT_URL to it in `.env`, then run `npx prisma db push` (without `--accept-data-loss`). This initializes the **current schema**, not the destructive historical chain. This is a development bootstrap only; it does not establish migration history for production. Start with no catalog, or add a development-only movie using the existing signed-in form. Do not copy production records/tokens into fixtures.
+Create a dedicated empty database. Configure DATABASE_URL and DIRECT_URL to it in `.env`, then run `npx prisma db push` (without `--accept-data-loss`). This initializes the **current schema**, not the destructive historical chain. This is a development bootstrap only; it does not establish migration history for production. Start with no catalog; explicit authenticated provider save/log actions import trusted movie metadata. Manual catalog write forms are retired. Do not copy production records/tokens into fixtures.
 
 ## Disposable integration database
 
@@ -28,8 +28,16 @@ Phase 0 deliberately does not invent an automatic reconciliation against an unkn
 
 ## Phase 3 additive diary migration
 
-The current chain contains26 migrations. The phase3 migration makes rating nullable, adds PRIVATE-default visibility, flags/retry identity and nullable saved timezone, and maps Prisma WatchlistEntry to physical WatchedList. No log dates, old ratings/text, IDs or relationships are converted/deleted. [Diary operations](diary-operations.md) documents preview-first date handling, explicit reviewed manifests, uncertain-commit recovery and backup/restore evidence. The original phase1 development baseline/history remains intact; phase3 was deployed locally after a new backup, without reset. Production/staging application remains a separate reviewed operation.
+At phase3 the chain contained26 migrations. The phase3 migration makes rating nullable, adds PRIVATE-default visibility, flags/retry identity and nullable saved timezone, and maps Prisma WatchlistEntry to physical WatchedList. No log dates, old ratings/text, IDs or relationships are converted/deleted. [Diary operations](diary-operations.md) documents preview-first date handling, explicit reviewed manifests, uncertain-commit recovery and backup/restore evidence. The original phase1 development baseline/history remains intact; phase3 was deployed locally after a new backup, without reset. Production/staging application remains a separate reviewed operation.
 
 ## Phase 4 additive community migration
 
 The current chain contains 27 migrations. Phase4 adds unpublished/private-favorites defaults, bio, member/admin role, visible moderation state, reports/audits and PostgreSQL mutation buckets. It does not normalize usernames, publish profiles, convert dates or modify IDs/account links/content relationships. [Community operations](community-operations.md) documents read-only username previews, explicit reviewed apply, durable audits and operator administrator bootstrap. Populated historical fixtures preserve a mixed-case invalid legacy handle, synthetic account token values and exact non-midnight log timestamp through actual SQL and pre/post backup restoration. Local development was backed up to `.superpowers/phase4-pre-migration-dev.sql` before additive deploy; all eight existing content tables were empty and unchanged. No username mapping was applied. Unknown production preservation still requires its own staging copy and reviewed evidence.
+
+## Phase 5 local rehearsal and external gate
+
+No new schema migration is added. On2026-10-19 the complete integration suite passed34/34 and replay of all27 migrations reported no drift. The existing historical harness again seeded old records before phases1/3/4 SQL, then compared migration and actual pre-upgrade/post-upgrade `pg_dump` restorations in guarded disposable schemas. It retained two local movie IDs (`legacy`,`unmatched`), user `owner` with exact `Legacy.Owner` handle, account `google-link` with unchanged Google sub/synthetic token values, diary `review` with original4/5 rating/text and exact `2020-02-29T23:30:00.000Z`, plus favorite/watchlist/category associations. All snapshot arrays compared equal after restoration; IDs were not remapped. The genre/category foreign key remained valid.
+
+The retained local PostgreSQL17.4 cluster was initially stopped; it completed automatic recovery when started on its existing loopback55439 configuration. Initial connection-failure runs were not counted as passes. No cluster, backups or populated schemas were reset. No phase5 migration, catalog/username mapping or date conversion was applied to development. Browser and build fixtures use separate generated disposable schemas. Historical migration files/checksums remain unchanged.
+
+This rehearsal does not use actual production data. The [deployment runbook](deployment.md#actual-staging-migration-and-recovery-gate) requires a separately authorized staging copy, reviewed schema/history/SQL and exact pre/post IDs/accounts/relationships/timestamps/backup-restoration evidence before production acceptance. Empty development and synthetic fixtures cannot close that gate.

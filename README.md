@@ -1,43 +1,82 @@
 # Talarama
 
-A movie review and diary application built with Next.js, React, NextAuth, Prisma and PostgreSQL.
+Discover movies, keep a private viewing diary and deliberately share reviews with a community. Google sign-in, favorites, watchlists, rewatches and personal ratings sit alongside TMDB discovery. There is no full-movie streaming.
 
-## Development
+**Status:** phases1–4 are implemented locally; phase5 adds local release readiness and portfolio evidence. No public deployment, hosted CI success or live-provider acceptance is claimed. A source license is still pending owner review; this is not yet an MIT/open-source release. See [release gates](docs/deployment.md#release-gates-still-requiring-acceptance).
 
-Use Node 22 LTS (22.14 or newer) and npm 11. Install with `npm ci`, then run `npx prisma generate`.
-Copy `.env.example` to `.env` and replace placeholders with **development** credentials. Real environment files are ignored. `DATABASE_URL` and `DIRECT_URL` must point at the same database; the latter bypasses any pooler. Prisma CLI reads `.env`; Next.js also reads `.env.local` but the Prisma CLI does not automatically use it.
+## Portfolio preview
 
-For a brand-new empty development database, see [database setup and migration findings](docs/migrations.md) before running any migration command. Existing populated databases need a reviewed schema/history comparison and backup; do not reset them or replay historical migrations.
+The images below show disposable **synthetic fixtures**, including invented movie/member/review data and missing-artwork fallbacks. They are not live TMDB results, real members or production activity. The capture-only banner is not part of the product. [Capture details and more views](docs/screenshots/README.md).
 
-Run `npm run dev` and open http://localhost:3000. Existing local content works without a TMDB token. Provider search/details/import require server-only `TMDB_READ_TOKEN`.
+![Mobile synthetic discovery](docs/screenshots/discovery-360.png)
 
-For Google OAuth, create a development web client with origin `http://localhost:3000` and redirect URI `http://localhost:3000/api/auth/callback/google`. Set both Google variables and a random `NEXTAUTH_SECRET` (for example generated with `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`). Do not commit or share the output. Sign in with an existing linked Google account and confirm its existing diary remains; sign out and sign in again. Automated tests use synthetic sessions and do not prove real OAuth works.
+![Synthetic community at desktop size](docs/screenshots/community-1440.png)
 
-## Checks
+## What works locally
 
-- `npm run lint` — direct ESLint.
-- `npm run typecheck` — TypeScript without emitting application code.
-- `npm test` — focused logic, component, hook and route regression tests.
-- `npm run test:integration` — real database route journeys on a separate disposable database (see docs/migrations.md).
-- `npm run test:migrations` — replay all historical migrations in an isolated test schema and assert no schema drift.
-- `npm run test:e2e` — anonymous/responsive discovery, synthetic-session import/save/log/edit/delete, provider failure and stale-search journeys. Run `npx playwright install chromium` once first. Requires `TEST_DATABASE_URL`; each run creates and removes its own schema. A test-only Node preload intercepts TMDB transport with synthetic data; it is never imported by application code and does not prove live TMDB or Google OAuth.
-- `npm run check:env` — report missing configuration names without displaying values.
-- `npm run build` — production compilation. Requires development database configuration for database-backed page rendering.
+- Discover popular films by genre/year or search by title/year; share filters and distinct local/TMDB movie links. Reads do not import records. Explicit signed-in save/log actions import trusted metadata once.
+- Keep favorites, watchlist and viewing history separate. Logs can be unrated, have no text and include rewatches/spoilers. Saving atomically removes that movie from your watchlist; deleting a log does not add it back.
+- Entries and profiles begin private/unpublished. Public content requires a published profile, PUBLIC entry and VISIBLE moderation state. Favorites require a separate opt-in. Private dates, emails, account tokens and watchlists stay out of public responses.
+- Browse chronological community activity, protected spoilers and shareable text reviews. Talarama `/5` counts one newest eligible rated viewing/member/movie; TMDB `/10` is separate. Reporting, audited moderation and shared PostgreSQL mutation quotas are implemented.
 
-Read [phase-0 verification](docs/phase-0-verification.md), [phase-1 verification](docs/phase-1-verification.md) [phase-2 verification](docs/phase-2-verification.md) and [phase-3 verification](docs/phase-3-verification.md) for measured checks and limitations. [Catalog operations](docs/catalog-operations.md) covers provider configuration, additive migration, dry-run matching, explicit reviewed apply and recovery.
+## Local setup
 
-## Discovery and saving
+Use Node22 (22.14 or newer, below23), npm11 and PostgreSQL17. CI pins Node22.14.0/npm11.6.1; installed package versions/overrides are in [dependencies](docs/dependencies.md). Prisma CLI/client are both6.19.3.
 
-`/movies` browses popular movies with genre/year filters; Search by title supports title and optional year. Mode, query, filters, popular sort and page are shareable URL state. Search updates after 300 ms; obsolete requests cannot replace current results. Provider metadata is read-only until a signed-in member explicitly saves or logs.
+1. Install dependencies with `npm ci` and generate the client with `npx prisma generate`.
+2. Copy `.env.example` to ignored `.env`; replace placeholders with development settings. Never commit or share secrets. Prisma reads `.env`; Next additionally reads `.env.local`, so avoid conflicting overrides.
+3. Create a dedicated **empty** development database and a separate disposable database ending `_test`. Set the URLs below. On the empty development DB only, run `npx prisma db push` without any data-loss flag to initialize the current schema. This bootstrap does not create migration history; see [migrations](docs/migrations.md). Existing/populated databases require backup/schema/history review first. Never use reset.
+4. Configure genuine development OAuth/provider credentials for live discovery/sign-in, or use the isolated fixture tests below without them. `npm run check:env` lists missing names only; it does not verify connectivity/authentication.
+5. Run `npm run dev`, then open [localhost:3000](http://localhost:3000). Without a TMDB token, saved local movies remain available and discovery shows an unavailable/retry state. A fresh install has no fake member reviews or automatic seed data.
 
-External and mapped cards use `/movies/tmdb/[tmdbId]`. Existing `/movies/[id]` links and unmatched local titles remain readable. If the provider fails, saved detail snapshots and local library actions remain available. Missing artwork/year/runtime/credits have fallbacks; TMDB scores use ten points; personal diary ratings use integer1–5 or no rating. Public diary reviews/counts/ratings are withheld until the phase4 publication model launches.
+For Google, create a development web client with origin `http://localhost:3000` and redirect `http://localhost:3000/api/auth/callback/google`. Set a unique random `NEXTAUTH_SECRET` (generate locally with `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`; never share output). Verify real sign-in, sign-out, sign-in again and preservation of an existing linked account's diary. Synthetic JWT tests do not establish OAuth acceptance. Read [TMDB authentication](https://developer.themoviedb.org/docs/authentication-application) to obtain a server-only API Read Access Token.
 
-Favorite/watchlist POST means **add**, DELETE means **remove**. Both are idempotent. External actions first call authenticated `POST /api/movies/import` with only `{ "tmdbId": 123 }`, then use the returned local movie ID. All personal action responses are `no-store`. Manual catalog creation/edit/deletion is retired for ordinary members; metadata operations use the trusted server provider workflow. No new schema migration is required for phase 2.
+## Environment
 
-## Personal diary
+| Name | Purpose |
+| --- | --- |
+| `DATABASE_URL` | Development Prisma connection; optional provider-compatible pooling. |
+| `DIRECT_URL` | Direct non-pool connection to the same database/schema for schema operations. |
+| `NEXTAUTH_URL` | Exact development origin; production/preview use separately reviewed HTTPS origins/callbacks. |
+| `NEXTAUTH_SECRET` | Strong private environment-specific session secret. |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Genuine development OAuth web client; absent credentials mean live sign-in is unverified. |
+| `TMDB_READ_TOKEN` | Server-only bearer read token; never `NEXT_PUBLIC_`. Empty means live discovery is unavailable. |
+| `TEST_DATABASE_URL` | Separate disposable PostgreSQL database ending `_test`; tests refuse to fall back to the development URL. |
+| `PG_BIN` | Optional PostgreSQL17 binary directory for `pg_dump`/`psql`; Windows default is `C:/Program Files/PostgreSQL/17/bin`, other platforms use PATH. |
+| `TALARAMA_DISABLE_COMPILER_CACHE` | Optional `1` for constrained disks; disables Next persistent compiler disk cache only. Browser config enables it. |
 
-`/diaries` keeps viewing history, favorites and watchlist separate. Logs may be unrated and have no review; multiple viewings of the same movie/date are supported. Search history by movie title, year or rating; month groups and stable pagination retain the selected calendar date. Viewing logs and distinct movie counts are shown separately.
+## Verification
 
-The shared log form initializes your saved timezone from the browser (UTC fallback), validates actual/non-future calendar dates, and keeps drafts/request identity through failed saves. Saving removes that movie from your watchlist atomically; deleting a log does not restore it. Favorites remain independent. Entries default Private. Public intent is stored but publishes nothing until profile publication and community controls launch in phase4.
+```text
+npm ci
+npx prisma generate
+npm run lint
+npm run typecheck
+npm test
+npm run test:integration
+npm run test:migrations
+npx playwright install chromium
+npm run test:e2e
+npx prisma generate
+npm run build
+npm audit
+npm audit --omit=dev
+```
 
-Phase3 adds a migration without converting legacy timestamps. Read [diary operations](docs/diary-operations.md) before previewing or explicitly reviewing date normalization. `npm run diary:dates -- preview .superpowers/new-preview.json` writes a fresh report without database changes and accepts only loopback development/test databases. Do not apply unreviewed ambiguous conversions or reset populated data.
+Integration/browser/migration commands require the disposable `_test` DB and matching PostgreSQL client tools. They create guarded generated schemas and remove only those schemas. Integration/browser setup creates ignored `.superpowers/` for local output. Historical tests replay actual old SQL before seeding legacy records, apply additive upgrades, compare IDs/accounts/relationships/exact timestamps and rehearse genuine pre/post `pg_dump` restoration. They do not reset member data.
+
+Playwright starts/owns a loopback server on3100, uses synthetic persisted-session JWTs and preloads `tests/e2e/tmdb-fixture.cjs` only in that test process. It still exercises real provider validation/cache/import. Do not expose that server or carry its preload/secret into development or production. Wait for it to exit before generating Prisma/building on Windows; never force-delete a locked engine.
+
+`npm run build` compiles the production application; DB-backed home fallback needs a configured reachable database. Use a separately initialized empty/disposable build DB in CI, not production. `.github/workflows/ci.yml` defines this sequence on Ubuntu with PostgreSQL17 and synthetic credentials, with no deployment/artifact-upload step. Only local equivalent results are recorded in [phase5 verification](docs/phase-5-verification.md); hosted execution has not been triggered. PostgreSQL17 image/client minor patches and runner packages follow their configured upstream repositories, so the workflow is repeatable rather than a bit-for-bit container snapshot.
+
+## Engineering and operations
+
+[Architecture](docs/architecture.md) explains local/external identity, cache boundaries, retry safety and public eligibility. [Diary operations](docs/diary-operations.md) covers saved-zone validation, UTC calendar dates, exact legacy timestamp preservation and uncertain-create recovery. [Catalog operations](docs/catalog-operations.md) covers preview-only matching, explicit reviewed apply and durable audit recovery. [Community operations](docs/community-operations.md) covers publication, handles, moderation and quotas.
+
+Follow [migration safety](docs/migrations.md) before schema changes and [deployment/restore runbook](docs/deployment.md) before any future authorized hosting work. Fixture/empty-development preservation does not prove actual production preservation. Existing account links, local IDs and legacy values are retained; no ambiguous mapping/conversion is automatic. Member/review metadata deliberately remains generic/noindex.
+
+[Contributing](CONTRIBUTING.md) describes local changes and checks. [Phase1](docs/phase-1-verification.md), [phase2](docs/phase-2-verification.md), [phase3](docs/phase-3-verification.md), [phase4](docs/phase-4-verification.md) and [phase5](docs/phase-5-verification.md) record measured evidence and known limits, including Next navigation response-stream cancellation. Passing journeys do not mean console-error-free operation.
+
+## Credits and rights
+
+Originally built by Bisuela, Caringal, Dela Cruz, and Escarlan as a CMSC127 project. The app's About & credits page attributes TMDB. [Provider attribution/terms and retention gates](docs/tmdb-attribution.md) are separate from [the inactive MIT proposal](docs/licensing-proposal.md). No source-code license grants movie artwork/data, trademarks or member-content rights. Real OAuth/TMDB, hosted CI, authorized staging migration/restore, hosting controls, rights/retention and public launch remain external acceptance gates.
