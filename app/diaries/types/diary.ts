@@ -3,8 +3,8 @@ export interface Movie {
   id: string;
   title: string;
   description: string | null;
-  releasedYear: number;
-  duration: number;
+  releasedYear: number | null;
+  duration: number | null;
   posterUrl: string | null;
   directorFirstName: string | null;
   directorLastName: string | null;

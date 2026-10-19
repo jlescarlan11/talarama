@@ -58,7 +58,7 @@ const MovieHero = ({ movie }: Props) => {
                 <span className="text-lg">{movie.releasedYear}</span>
                 <span className="text-lg">•</span>
                 <span className="text-lg">
-                  {Math.floor(movie.duration / 60)}h {movie.duration % 60}m
+                  {movie.duration === null ? 'Runtime unknown' : `${Math.floor(movie.duration / 60)}h ${movie.duration % 60}m`}
                 </span>
                 {director && (
                   <>

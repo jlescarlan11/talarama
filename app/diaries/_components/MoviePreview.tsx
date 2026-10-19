@@ -10,7 +10,8 @@ interface MoviePreviewProps {
 }
 
 const MoviePreview: React.FC<MoviePreviewProps> = ({ selectedMovie }) => {
-  const formatDuration = (minutes: number): string => {
+  const formatDuration = (minutes: number | null): string => {
+    if (minutes === null) return 'Runtime unknown';
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
     return hours > 0 ? `${hours}h ${remainingMinutes}m` : `${minutes}m`;

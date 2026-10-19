@@ -21,3 +21,5 @@ New state-synchronization lint errors were resolved with render-time state adjus
 These are actual installed replacements, recorded in package-lock.json. Before the follow-up, npm audit reported 8 high findings from two underlying issues. After the replacements, **both full and runtime audits report zero vulnerabilities**. Clean-install and complete verification results are recorded in [the phase-0 report](phase-0-verification.md).
 
 Previously removed packages remain removed after import checks: the unused Auth.js v5 Prisma adapter, Supabase client, Radix colors/themes, bcrypt/types, classnames and delay. Real Google OAuth still requires a new development client; no credentials are embedded in these changes.
+
+Phase 1 adds `server-only` 0.0.1 as Next's compile-time server boundary marker and `tsx` 4.23.15 as a development-only TypeScript CLI loader. The existing compiler, database, auth and UI stack remains unchanged. The clean lockfile install and full/runtime audits are recorded in the phase-1 verification report. No force or legacy-peer-deps flags are used; the same upstream ESLint peer-metadata warnings remain.

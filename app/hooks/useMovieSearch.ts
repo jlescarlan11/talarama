@@ -5,8 +5,8 @@ interface Movie {
   id: string;
   title: string;
   description?: string;
-  releasedYear: number;
-  duration: number;
+  releasedYear: number | null;
+  duration: number | null;
   posterUrl?: string;
   directorFirstName?: string;
   directorLastName?: string;
@@ -27,7 +27,7 @@ export const useMovieSearch = (movies: Movie[]) => {
           `${movie.directorFirstName} ${movie.directorLastName}`
             .toLowerCase()
             .includes(searchTerm.toLowerCase()) ||
-          movie.releasedYear.toString().includes(searchTerm)
+          (movie.releasedYear?.toString().includes(searchTerm) ?? false)
       )
       .slice(0, 10); // Limit to 10 suggestions
   }, [movies, searchTerm]);

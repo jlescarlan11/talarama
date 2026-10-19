@@ -7,6 +7,7 @@ const movies = Array.from({ length: 6 }, (_, index) => ({
   id: `movie-${index}`, title: `Movie ${index}`, releasedYear: 2000,
   duration: 90, description: null, posterUrl: null, directorFirstName: null,
   directorLastName: null, createdAt: new Date('2020-01-01'), genres: [],
+  tmdbId: null, metadataRefreshedAt: null, backdropUrl: null, credits: null, tmdbScore: null,
 }));
 let motion: MediaQueryList;
 let listeners: Set<(event: MediaQueryListEvent) => void>;

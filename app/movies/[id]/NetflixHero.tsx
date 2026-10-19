@@ -108,7 +108,7 @@ const NetflixHero = ({
               )}
               <span className="text-base-content/50">{movie.releasedYear}</span>
               <span className="text-base-content/50">
-                {Math.floor(movie.duration / 60)}h {movie.duration % 60}m
+                {movie.duration === null ? 'Runtime unknown' : `${Math.floor(movie.duration / 60)}h ${movie.duration % 60}m`}
               </span>
               {director && (
                 <span className="text-base-content/50">Dir. {director}</span>

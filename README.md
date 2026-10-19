@@ -9,7 +9,7 @@ Copy `.env.example` to `.env` and replace placeholders with **development** cred
 
 For a brand-new empty development database, see [database setup and migration findings](docs/migrations.md) before running any migration command. Existing populated databases need a reviewed schema/history comparison and backup; do not reset them or replay historical migrations.
 
-Run `npm run dev` and open http://localhost:3000. No TMDB token is required in phase 0.
+Run `npm run dev` and open http://localhost:3000. Existing local content works without a TMDB token. Provider search/details/import require server-only `TMDB_READ_TOKEN`.
 
 For Google OAuth, create a development web client with origin `http://localhost:3000` and redirect URI `http://localhost:3000/api/auth/callback/google`. Set both Google variables and a random `NEXTAUTH_SECRET` (for example generated with `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`). Do not commit or share the output. Sign in with an existing linked Google account and confirm its existing diary remains; sign out and sign in again. Automated tests use synthetic sessions and do not prove real OAuth works.
 
@@ -24,4 +24,4 @@ For Google OAuth, create a development web client with origin `http://localhost:
 - `npm run check:env` — report missing configuration names without displaying values.
 - `npm run build` — production compilation. Requires development database configuration for database-backed page rendering.
 
-Read [phase-0 verification](docs/phase-0-verification.md) for the actual checks run and remaining limitations. The [approved roadmap](docs/superpowers/plans/2026-10-19-talarama-upgrade-roadmap.md) describes later phases; they are not implemented here.
+Read [phase-0 verification](docs/phase-0-verification.md) and [phase-1 verification](docs/phase-1-verification.md) for measured checks and limitations. [Catalog operations](docs/catalog-operations.md) covers provider configuration, additive migration, dry-run matching, explicit reviewed apply and recovery. Phase 1 supplies catalog services and tooling; the discovery interface and import-first user actions remain phase 2 in the [approved roadmap](docs/superpowers/plans/2026-10-19-talarama-upgrade-roadmap.md).

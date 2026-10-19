@@ -12,7 +12,9 @@
     "test:integration": "node --env-file-if-exists=.env node_modules/vitest/vitest.mjs run --config vitest.integration.config.mts",
     "test:e2e": "playwright test",
     "test:migrations": "node --env-file-if-exists=.env scripts/verify-migrations.mjs",
-    "check:env": "node scripts/check-env.mjs"
+    "check:env": "node scripts/check-env.mjs",
+    "catalog:match": "node --env-file-if-exists=.env --conditions=react-server --import tsx scripts/catalog-match.ts",
+    "catalog:apply": "node --env-file-if-exists=.env --conditions=react-server --import tsx scripts/catalog-apply.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
@@ -29,6 +31,7 @@
     "react-hook-form": "^7.56.4",
     "react-icons": "^5.5.0",
     "react-loading-skeleton": "^3.5.0",
+    "server-only": "^0.0.1",
     "tailwind-merge": "^3.3.0",
     "zod": "^3.25.13"
   },
@@ -45,6 +48,7 @@
     "jsdom": "^26.1.0",
     "prisma": "6.19.3",
     "tailwindcss": "^4.1.7",
+    "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "5.0.5"
   },

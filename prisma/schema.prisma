@@ -46,19 +46,32 @@ model Movie {
   id                String   @id @default(uuid())
   title             String
   description       String?
-  releasedYear      Int
-  duration          Int
+  releasedYear      Int?
+  duration          Int?
   posterUrl         String?
   directorFirstName String?
   directorLastName  String?
   createdAt         DateTime @default(now())
+  tmdbId            Int?     @unique
+  metadataRefreshedAt DateTime?
+  backdropUrl       String?
+  credits           Json?
+  tmdbScore         Float?
 
   genres       MovieCategorizesAs[]
   diaryEntries DiaryEntry[]
   watchedBy    WatchedList[]
   likedBy      LikedBy[]
 
-  @@unique([title, releasedYear])
+}
+
+// Durable transactional mapping audit. Deliberately no cascading foreign key:
+// history remains available even if catalog administration later removes a row.
+model CatalogMappingAudit {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  reviewer  String
+  mappings  Json
 }
 
 model Genre {

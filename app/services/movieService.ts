@@ -1,6 +1,8 @@
 // services/movieService.ts
 import prisma from "@/prisma/client";
 import { Movie, MovieCategorizesAs, Genre, Prisma } from "@prisma/client";
+import { tmdb } from '@/app/lib/tmdb/server';
+import { normalizeLocalMovie } from '@/app/lib/tmdb/normalize';
 
 type MovieWithGenres = Movie & {
   genres: (MovieCategorizesAs & {
@@ -31,6 +33,14 @@ type SortOption =
   | "releasedYear-asc";
 
 export class MovieService {
+  // Provider reads are independent of local persistence and member state.
+  static searchCatalog(input: { query: string; year?: number; page?: number }) { return tmdb.search(input); }
+  static discoverCatalog(input: { year?: number; genre?: number; page?: number } = {}) { return tmdb.discover(input); }
+  static getCatalogDetail(tmdbId: number) { return tmdb.details(tmdbId); }
+  static async getLocalSnapshot(id: string) {
+    const movie = await prisma.movie.findUnique({ where: { id } });
+    return movie ? normalizeLocalMovie(movie) : null;
+  }
   static async getGenres(): Promise<Genre[]> {
     return await prisma.genre.findMany({
       orderBy: { genreName: "asc" },

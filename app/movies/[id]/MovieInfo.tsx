@@ -17,12 +17,12 @@ const MovieInfo = ({ movie }: Props) => {
   const infoItems = [
     {
       label: "Release Year",
-      value: movie.releasedYear.toString(),
+      value: movie.releasedYear?.toString() ?? 'Unknown',
       icon: "📅",
     },
     {
       label: "Runtime",
-      value: `${Math.floor(movie.duration / 60)}h ${movie.duration % 60}m`,
+      value: movie.duration === null ? 'Unknown' : `${Math.floor(movie.duration / 60)}h ${movie.duration % 60}m`,
       icon: "⏱️",
     },
     {
