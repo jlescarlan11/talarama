@@ -22,6 +22,7 @@ it('renders honest missing metadata and separate provider/local score scales', (
   expect(screen.getByText('TMDB: not rated')).toBeVisible();
   expect(screen.getByText('Talarama: no ratings yet')).toBeVisible();
   expect(screen.getByRole('link', { name: 'Sign in to save or log' })).toBeVisible();
+  expect(screen.getByRole('link', { name: 'Sign in to save or log' })).toHaveAttribute('href', '/api/auth/signin?callbackUrl=%2Fmovies%2Ftmdb%2F42');
   view.rerender(<MovieDetail movie={{ ...movie, tmdbScore: 8, tmdbVoteCount: 1 }} localId="local" signedIn={false} favorite={false} watchlist={false} rating={{ average: 4, count: 1 }} />);
   expect(screen.getByText('TMDB 8.0/10')).toBeVisible();
   expect(screen.getByText('Talarama 4.0/5')).toBeVisible();

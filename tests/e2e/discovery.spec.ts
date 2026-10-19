@@ -7,12 +7,15 @@ test('visitor browses, paginates, shares details and restores filters at every l
   try {
     const before = await db.movie.count();
     for (const width of [360, 768, 1440]) {
+      await page.emulateMedia({ colorScheme: width === 768 ? 'dark' : 'light', reducedMotion: 'reduce' });
       await page.setViewportSize({ width, height: 1000 });
       await page.goto('/movies?mode=discover&genre=18&year=2020&sort=popular&page=1');
       await expect(page.getByRole('link', { name: /Fixture Moon/ })).toBeVisible();
       await expect(page.getByLabel('Genre')).toHaveValue('18');
+      const introduction = page.getByText('Explore popular films or find a title you love. Save your picks and make them part of your story.');
+      expect(await introduction.evaluate(element => element.getBoundingClientRect().width)).toBeGreaterThan(Math.min(width - 80, 500));
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-      await page.screenshot({ path: `.superpowers/phase2-discovery-${width}.png`, fullPage: true });
+      await page.screenshot({ path: `.superpowers/phase2-discovery-${width}.png`, fullPage: true, caret: 'initial' });
       await page.getByRole('button', { name: 'Next', exact: true }).click();
       await expect(page).toHaveURL(/page=2/);
       await expect(page.getByRole('link', { name: /Fixture Second/ })).toBeVisible();
@@ -26,7 +29,7 @@ test('visitor browses, paginates, shares details and restores filters at every l
       await expect(page.getByText('Synthetic Director')).toBeVisible();
       await expect(page.getByText('Runtime unknown')).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-      await page.screenshot({ path: `.superpowers/phase2-detail-${width}.png`, fullPage: true });
+      await page.screenshot({ path: `.superpowers/phase2-detail-${width}.png`, fullPage: true, caret: 'initial' });
     }
     expect(await db.movie.count()).toBe(before); // Every browse/detail is read-only.
   } finally { await db.$disconnect(); }
@@ -111,9 +114,9 @@ test('loading and rapid URL changes cannot show obsolete search results', async 
     if (query === 'Old') await gate;
     await route.fulfill({ json: { page: 1, totalPages: 1, totalResults: 1, results: [{ localId: null, tmdbId: 70001, title: query, description: null, releasedYear: null, duration: null, posterUrl: null, backdropUrl: null, tmdbScore: null, tmdbVoteCount: 0, genres: [], cast: [], directors: [] }] } }).catch(() => {});
   });
-  await page.evaluate(() => history.pushState(null, '', '/movies?mode=search&query=Old'));
+  await page.getByRole('searchbox', { name: 'Search movies' }).fill('Old');
   await expect(page.getByRole('status', { name: 'Loading movies' })).toBeVisible();
-  await page.evaluate(() => history.pushState(null, '', '/movies?mode=search&query=Fresh'));
+  await page.getByRole('searchbox', { name: 'Search movies' }).fill('Fresh');
   await expect(page.getByRole('link', { name: /Fresh/ })).toBeVisible();
   release();
   await expect(page.getByRole('link', { name: /Old/ })).toHaveCount(0);

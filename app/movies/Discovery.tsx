@@ -1,7 +1,7 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { catalogQueryString, genres, parseCatalogQuery, type CatalogQuery } from '@/app/lib/movies/catalog-query';
 import { useCatalogSearch, type CatalogInitial } from '@/app/hooks/useCatalogSearch';
 import CatalogCard from './CatalogCard';
@@ -14,18 +14,24 @@ export default function Discovery({ initial }: { initial: CatalogInitial }) {
   return <DiscoveryResults query={query} initial={initial} />;
 }
 function DiscoveryResults({ query, initial }: { query: CatalogQuery; initial: CatalogInitial }) {
-  const router = useRouter();
   const key = catalogQueryString(query);
   const [draft, setDraft] = useState(query.query);
   const [previousKey, setPreviousKey] = useState(key);
+  const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   if (previousKey !== key) { setPreviousKey(key); setDraft(query.query); }
   const { data, error, loading, retry } = useCatalogSearch(key, initial);
   useEffect(() => {
-    if (draft === query.query) return;
-    const timer = setTimeout(() => router.push(`/movies?${catalogQueryString({ ...query, query: draft.trim(), page: 1 })}`, { scroll: false }), 300);
-    return () => clearTimeout(timer);
-  }, [draft, query, router]);
-  const navigate = (patch: Partial<CatalogQuery>) => router.push(`/movies?${catalogQueryString({ ...query, ...patch })}`, { scroll: false });
+    if (draft.trim() === query.query) return;
+    // Commit URL state synchronously; a slow server navigation must not erase newer typing.
+    // Next integrates native history with useSearchParams; the guarded hook owns reads.
+    debounce.current = setTimeout(() => window.history.pushState(null, '', `/movies?${catalogQueryString({ ...query, query: draft.trim(), page: 1 })}`), 300);
+    return () => { if (debounce.current) clearTimeout(debounce.current); };
+  }, [draft, query]);
+  const navigate = (patch: Partial<CatalogQuery>) => {
+    if (debounce.current) clearTimeout(debounce.current);
+    setDraft(query.query);
+    window.history.pushState(null, '', `/movies?${catalogQueryString({ ...query, query: draft.trim(), ...patch })}`);
+  };
   return <div className="space-y-8">
     <div className="flex flex-wrap gap-2" role="group" aria-label="Discovery mode">
       <button className={`btn ${query.mode === 'discover' ? 'btn-primary' : 'btn-ghost'}`} aria-pressed={query.mode === 'discover'} onClick={() => navigate({ mode: 'discover', query: '', page: 1 })}>Popular movies</button>

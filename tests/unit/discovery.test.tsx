@@ -1,11 +1,26 @@
 import { act, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import Discovery from '@/app/movies/Discovery';
 import { useCatalogSearch } from '@/app/hooks/useCatalogSearch';
 const route = vi.hoisted(() => ({ params: new URLSearchParams('mode=search&query=Alien'), push: vi.fn() }));
-vi.mock('next/navigation', () => ({ useSearchParams: () => route.params, useRouter: () => ({ push: route.push }) }));
+vi.mock('next/navigation', () => ({ useSearchParams: () => route.params }));
 const empty = { page: 1, totalPages: 0, totalResults: 0, results: [] };
-afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); vi.clearAllMocks(); });
+beforeEach(() => { route.params = new URLSearchParams('mode=search&query=Alien'); vi.spyOn(window.history, 'pushState').mockImplementation(route.push); });
+afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks(); vi.clearAllMocks(); });
+it('does not enqueue whitespace-only URL changes or let a pending search override a mode click', () => {
+  vi.useFakeTimers();
+  vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})));
+  route.params = new URLSearchParams('mode=search&query=Alien');
+  render(<Discovery initial={null} />);
+  const input = screen.getByRole('searchbox', { name: 'Search movies' });
+  fireEvent.change(input, { target: { value: 'Alien ' } });
+  act(() => vi.advanceTimersByTime(300));
+  expect(route.push).not.toHaveBeenCalled();
+  fireEvent.change(input, { target: { value: 'Pending' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Popular movies' }));
+  act(() => vi.advanceTimersByTime(300));
+  expect(route.push.mock.calls.map(call => call[2])).toEqual(['/movies?mode=discover&sort=popular&page=1']);
+});
 it('debounces title search for 300ms and restores inputs on URL navigation', () => {
   vi.useFakeTimers();
   vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})));
@@ -13,7 +28,7 @@ it('debounces title search for 300ms and restores inputs on URL navigation', () 
   fireEvent.change(screen.getByRole('searchbox', { name: 'Search movies' }), { target: { value: 'Aliens' } });
   act(() => vi.advanceTimersByTime(299)); expect(route.push).not.toHaveBeenCalled();
   act(() => vi.advanceTimersByTime(1));
-  expect(route.push).toHaveBeenCalledWith('/movies?mode=search&sort=popular&page=1&query=Aliens', { scroll: false });
+  expect(route.push).toHaveBeenCalledWith(null, '', '/movies?mode=search&sort=popular&page=1&query=Aliens');
   route.params = new URLSearchParams('mode=search&query=Back&year=2000');
   view.rerender(<Discovery initial={null} />);
   expect(screen.getByRole('searchbox', { name: 'Search movies' })).toHaveValue('Back');
