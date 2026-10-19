@@ -22,25 +22,25 @@
 
 **Files:** `scripts/lib/tmdb-retention-policy.ts`, `scripts/lib/tmdb-retention-fixtures.ts`, `tests/catalog/retention-policy.test.ts`.
 
-- [ ] Write policy/URL tests:150/180-day exact boundaries, invalid/future/null time, unknown/legacy provenance, termination without refresh; refuse remote/dev/public/existing schema targets and secret-bearing errors. Run RED.
-- [ ] Implement `retentionAction(lastFetchedAt, ownership, mode, now)`, fingerprinting, and factory accepting only loopback `_test` URL and creating its own random schema. No default DATABASE_URL. Verify GREEN.
+- [x] Write policy/URL tests:150/180-day exact boundaries, invalid/future/null time, unknown/legacy provenance, termination without refresh; refuse remote/dev/public/existing schema targets and secret-bearing errors. Run RED.
+- [x] Implement `retentionAction(lastFetchedAt, ownership, mode, now)`, fingerprinting, and factory accepting only loopback `_test` URL and creating its own random schema. No default DATABASE_URL. Verify GREEN.
 
 ## Task 2: Transactional refresh/retirement and recovery
 
 **Files:** fixture service above; `tests/integration/retention.test.ts`.
 
-- [ ] Write PostgreSQL tests RED for read-only preview; failed pre-expiry refresh retains snapshot; expired refresh success/failure; termination with no upstream call; unknown/mixed legacy protection; exact member/ID/link/timestamp preservation; managed genre cleanup; stale-plan whole-batch rollback; malformed/provider-ID mismatch rejection; durable idempotent lost-response replay and later fresh recovery.
-- [ ] Implement fixture-local ownership/audit, provider staging outside transaction, whole-batch optimistic fingerprint checks, atomic metadata-only changes and safe durable outcomes. Fresh trusted provider details replace only owned fields; retirement uses a neutral title/null provider fields and retains every member record.
-- [ ] Run focused integration GREEN and full integration/unit/migration/lint/types checks. Inspect count/identity comparisons.
+- [x] Write PostgreSQL tests RED for read-only preview; failed pre-expiry refresh retains snapshot; expired refresh success/failure; termination with no upstream call; unknown/mixed legacy protection; exact member/ID/link/timestamp preservation; managed genre cleanup; stale-plan whole-batch rollback; malformed/provider-ID mismatch rejection; durable idempotent lost-response replay and later fresh recovery.
+- [x] Implement fixture-local ownership/audit, provider staging outside transaction, whole-batch optimistic fingerprint checks, atomic metadata-only changes and safe durable outcomes. Fresh trusted provider details replace only owned fields; retirement uses a neutral title/null provider fields and retains every member record.
+- [x] Run focused integration GREEN and full integration/unit/migration/lint/types checks. Inspect count/identity comparisons.
 
 ## Task 3: Repeatable rehearsal, documentation and review
 
 **Files:** `scripts/tmdb-retention-rehearsal.ts`, `package.json`, `docs/tmdb-retention-local.md`, attribution/deployment verification updates.
 
-- [ ] Add `npm run retention:rehearse` using synthetic transport only, exclusive report output and disposable-scope cleanup. Report a run/replay and member-data equality without printing URLs or secrets. Existing output paths must fail before DB work.
-- [ ] Document fresh fixture provenance, expiry/retry/conflict behavior and production cache/backup/activation limits. Record noncommercial intent and pending licensing without changing root LICENSE.
-- [ ] Obtain one independent read-only review of this local change; reproduce material findings before fixes. Run appropriate final checks, commit locally, leave branch clean.
-- [ ] Keep/open localhost preview from a separate disposable schema; normal app uses no auth bypass, fake production reviews or genuine provider credentials. Stop only owned preview before generation/build; restart afterward and leave it available.
+- [x] Add `npm run retention:rehearse` using synthetic transport only, exclusive report output and disposable-scope cleanup. Report a run/replay and member-data equality without printing URLs or secrets. Existing output paths must fail before DB work.
+- [x] Document fresh fixture provenance, expiry/retry/conflict behavior and production cache/backup/activation limits. Record noncommercial intent and pending licensing without changing root LICENSE.
+- [x] Obtain one independent read-only review of this local change; reproduce material findings before fixes. Run appropriate final checks, commit locally, leave branch clean.
+- [x] Keep/open localhost preview from a separate disposable schema; normal app uses no auth bypass, fake production reviews or genuine provider credentials. Stop only owned preview before generation/build; restart afterward and leave it available.
 
 ## Review focus
 
@@ -55,3 +55,7 @@
 - Preflight clean `ca021e3`, branch unchanged, approximately9.5GB free. Existing loopback PostgreSQL running. No development data touched.
 - Current app opened and visibly inspected at127.0.0.1:3000; synthetic discovery API200 and synthetic community fixture available. Preview uses a separate generated `preview_<UUID>` schema, test-only transport and blank Google credentials. No genuine login/live-provider acceptance claimed.
 - Ruling: keep production schema/runtime untouched and put provenance/audit only inside the generated fixture schema; unknown existing metadata cannot safely be classified automatically. Cost: production activation/provenance migration and cache/backup integration remain explicit future gates.
+- Completed fixture-only implementation in d6b5a5a. One independent read-only review found two Important issues: genre inventory outside the reviewed plan and the audit-miss/preflight replay race. Both were reproduced, corrected in one fix pass and verified; no Critical or material Minor findings. Detailed evidence and all declined-area rulings are in `docs/tmdb-retention-verification.md`.
+- Final current checks:94 unit tests in28 files,49 PostgreSQL tests in4 files, typecheck and lint all passed. Existing27 migrations replayed without drift; schema/application/dependencies were unchanged by this work. Isolated deterministic replay regression fails on the reviewed baseline and passes on the restored fix. Actual CLI preservation, exclusive report path, replay and no-call termination checks pass in the integration suite.
+- Ruling: bind the entire fixture genre inventory and termination state to the reviewed plan. Cost: unrelated fixture metadata/genre changes require a new preview. Recover matching durable UUID outcomes after a concurrent commit; reject UUID reuse with another plan. Keep all production/cache/backup/licensing/live-provider gates pending.
+- Localhost discovery and synthetic catalog return HTTP200. The visible in-app preview is intentionally left running in its separate owned schema. No build or browser-journey rerun is claimed for this operator-only change; the existing phase5 build serves the preview.

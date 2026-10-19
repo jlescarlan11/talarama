@@ -12,7 +12,8 @@ type Movie = Prisma.MovieGetPayload<{ include: typeof include }>;
 type Proof = { kind: string; id: string; hash: string; state: string; fetchedAt: Date | null };
 type Action = ReturnType<typeof retentionAction>;
 type Row = { id: string; tmdbId: number | null; metadataRefreshedAt: string | null; hash: string; ownership: Ownership; action: Action };
-export type RetentionPlan = { version: 1; mode: RetentionMode; generatedAt: string; rows: Row[] };
+type GenreRow = { id: string; hash: string; registeredHash: string | null; state: string; fetchedAt: string | null; references: string[]; action: 'REVIEW' | 'KEEP' | 'KEEP_RETIRED' | 'KEEP_TERMINATED' | 'RETIRE_IF_ORPHAN' };
+export type RetentionPlan = { version: 1; mode: RetentionMode; generatedAt: string; terminated: boolean; rows: Row[]; genres: GenreRow[] };
 type Outcome = { id: string; status: string };
 export type RetentionResult = { requestId: string; mode: RetentionMode; completedAt: string; reviewedBy: string; outcomes: Outcome[]; genres: Outcome[]; externalArtifactsPending: string[] };
 type StoredRun = { planHash: string; payload: RetentionResult };
@@ -35,9 +36,20 @@ async function inventory(db: DB, mode: RetentionMode, now: Date): Promise<Retent
   modeSchema.parse(mode);
   const movies = await db.movie.findMany({ include, orderBy: { id: 'asc' }, take: 1001 });
   if (movies.length > 1000) throw new Error('Fixture inventory exceeds1000 rows; refusing partial plan');
-  const ownership = new Map((await proofs(db)).filter(row => row.kind === 'MOVIE').map(row => [row.id, row]));
+  const registered = await proofs(db);
+  const ownership = new Map(registered.filter(row => row.kind === 'MOVIE').map(row => [row.id, row]));
   const control = await db.$queryRaw<{ terminated: boolean }[]>`SELECT terminated FROM "_RetentionFixtureControl"`;
-  return { version: 1, mode, generatedAt: now.toISOString(), rows: movies.map(movie => {
+  const terminated = control[0]?.terminated ?? false;
+  const genreRecords = await db.genre.findMany({ include: { movies: { select: { movieId: true } } }, orderBy: { id: 'asc' }, take: 1001 });
+  if (genreRecords.length > 1000) throw new Error('Fixture genre inventory exceeds1000 rows; refusing partial plan');
+  const genres: GenreRow[] = genreRecords.map(genre => {
+    const proof = registered.find(item => item.kind === 'GENRE' && item.id === genre.id);
+    const references = genre.movies.map(link => link.movieId).sort();
+    const known = proof?.hash === fingerprint({ id: genre.id, name: genre.genreName });
+    const action: GenreRow['action'] = !known ? 'REVIEW' : proof.state !== 'ACTIVE' ? 'KEEP_RETIRED' : terminated ? 'KEEP_TERMINATED' : mode === 'termination' ? 'RETIRE_IF_ORPHAN' : !proof.fetchedAt || +proof.fetchedAt > +now ? 'REVIEW' : +now - +proof.fetchedAt >= EXPIRE_DAYS * DAY_MS ? 'RETIRE_IF_ORPHAN' : 'KEEP';
+    return { id: genre.id, hash: fingerprint({ id: genre.id, name: genre.genreName, references }), registeredHash: proof?.hash ?? null, state: known ? proof.state : 'UNKNOWN', fetchedAt: proof?.fetchedAt?.toISOString() ?? null, references, action };
+  });
+  return { version: 1, mode, generatedAt: now.toISOString(), terminated, genres, rows: movies.map(movie => {
     const hash = fingerprint(metadata(movie)); const proof = ownership.get(movie.id);
     const source: Ownership = proof ? proof.hash !== hash ? 'UNKNOWN' : control[0]?.terminated || proof.state === 'TERMINATED' ? 'TERMINATED' : proof.state === 'RETIRED' ? 'RETIRED' : 'PROVIDER' : movie.tmdbId === null ? 'LEGACY' : 'UNKNOWN';
     return { id: movie.id, tmdbId: movie.tmdbId, metadataRefreshedAt: movie.metadataRefreshedAt?.toISOString() ?? null, hash, ownership: source, action: retentionAction(movie.metadataRefreshedAt, source, mode, now) };
@@ -49,7 +61,7 @@ async function storedRun(db: DB, requestId: string): Promise<StoredRun | null> {
 }
 function assertCurrent(plan: RetentionPlan, current: RetentionPlan, now: Date) {
   const generated = Date.parse(plan.generatedAt);
-  if (!Number.isFinite(generated) || +now < generated || +now - generated > 300000 || plan.version !== 1 || fingerprint(plan.rows) !== fingerprint(current.rows)) throw new Error('Stale retention plan; preview and review again');
+  if (!Number.isFinite(generated) || +now < generated || +now - generated > 300000 || plan.version !== 1 || fingerprint({ rows: plan.rows, genres: plan.genres, terminated: plan.terminated }) !== fingerprint({ rows: current.rows, genres: current.genres, terminated: current.terminated })) throw new Error('Stale retention plan; preview and review again');
 }
 
 /** Creates its OWN empty fixture schema. It cannot attach to or mutate an existing schema.
@@ -102,6 +114,7 @@ export async function createRetentionFixture(raw: string, clock: () => Date = ()
       const planHash = fingerprint(plan);
       const replay = async (run: StoredRun | null) => { if (!run) return null; if (run.planHash !== planHash) throw new Error('Request ID belongs to a different reviewed plan'); return run.payload; };
       const prior = await replay(await storedRun(db, requestId)); if (prior) return prior;
+      try {
       assertCurrent(plan, await inventory(db, plan.mode, clock()), clock());
       const staged = new Map<string, { status: string; detail?: CatalogMovie }>();
       for (const row of plan.rows) {
@@ -141,7 +154,9 @@ export async function createRetentionFixture(raw: string, clock: () => Date = ()
               await saveProof(tx, 'MOVIE', row.id, fingerprint(metadata(updated)), change.status === 'RETIRED' ? plan.mode === 'termination' ? 'TERMINATED' : 'RETIRED' : 'ACTIVE', updated.metadataRefreshedAt);
             }
             const genres: Outcome[] = [];
-            for (const proof of (await proofs(tx)).filter(item => item.kind === 'GENRE' && item.state === 'ACTIVE')) {
+            for (const reviewed of plan.genres.filter(item => item.action === 'RETIRE_IF_ORPHAN')) {
+              const proof = (await proofs(tx)).find(item => item.kind === 'GENRE' && item.id === reviewed.id);
+              if (!proof || proof.state !== 'ACTIVE') { genres.push({ id: reviewed.id, status: 'REVIEW' }); continue; }
               const genre = await tx.genre.findUnique({ where: { id: proof.id } });
               if (!genre || proof.hash !== fingerprint({ id: genre.id, name: genre.genreName })) { genres.push({ id: proof.id, status: 'REVIEW' }); continue; }
               if (plan.mode !== 'termination' && (!proof.fetchedAt || +now - +proof.fetchedAt < EXPIRE_DAYS * DAY_MS)) continue;
@@ -159,6 +174,13 @@ export async function createRetentionFixture(raw: string, clock: () => Date = ()
         } catch (error) {
           if (attempt >= 4 || !(error instanceof Prisma.PrismaClientKnownRequestError) || !['P2034', 'P2002'].includes(error.code)) throw error;
         }
+      }
+      } catch (error) {
+        // Another identical request may commit after our first audit miss but before
+        // inventory/provider/conflict checks finish. Its durable outcome wins.
+        const completed = await replay(await storedRun(db, requestId));
+        if (completed) return completed;
+        throw error;
       }
     },
   };

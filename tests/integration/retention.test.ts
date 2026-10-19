@@ -132,6 +132,36 @@ it('unexpected provider/programming exceptions cannot silently retire metadata',
   await expect(scope.execute({ requestId: randomUUID(), reviewedBy: 'Fixture reviewer', plan, provider: { details: async () => { throw new Error('Synthetic programming error'); } } })).rejects.toThrow('Unexpected');
   expect(await scope.db.movie.findMany({ orderBy: { id: 'asc' } })).toEqual(before);
 });
+it('rejects newly registered orphan genres absent from a reviewed plan without any metadata/audit write', async () => {
+  await film('genre-plan-target', 180);
+  const plan = await scope.preview('termination');
+  await scope.db.genre.create({ data: { id: 'orphan-after-preview', genreName: 'New provider label outside reviewed plan' } });
+  await scope.registerProviderFixtures({ movieIds: [], genreIds: ['orphan-after-preview'] });
+  const before = await scope.db.movie.findMany({ orderBy: { id: 'asc' } }); const requestId = randomUUID();
+  await expect(scope.execute({ requestId, reviewedBy: 'Fixture reviewer', plan, provider: provider(false).client })).rejects.toThrow('Stale');
+  expect(await scope.db.movie.findMany({ orderBy: { id: 'asc' } })).toEqual(before);
+  expect(await scope.db.genre.findUniqueOrThrow({ where: { id: 'orphan-after-preview' } })).toMatchObject({ genreName: 'New provider label outside reviewed plan' });
+  expect(await scope.findRun(requestId)).toBeNull();
+});
+it('recovers an identical commit occurring between the initial audit miss and preflight inventory', async () => {
+  await film('replay-gap', 180); const plan = await scope.preview('scheduled'); const requestId = randomUUID(); const remote = provider(false);
+  const original = scope.db.$queryRaw.bind(scope.db); let intercept = true;
+  let committed: Awaited<ReturnType<typeof scope.execute>> | undefined; let committedCalls = 0;
+  const spy = vi.spyOn(scope.db, '$queryRaw');
+  spy.mockImplementation((async (...args: Parameters<typeof original>) => {
+    const result = await original(...args);
+    if (intercept && Array.isArray(args[0]) && args[0].join('').includes('SELECT plan_hash') && (result as unknown[]).length === 0) {
+      intercept = false;
+      committed = await scope.execute({ requestId, reviewedBy: 'Fixture reviewer', plan, provider: remote.client });
+      committedCalls = remote.calls();
+    }
+    return result;
+  }) as unknown as typeof scope.db.$queryRaw);
+  try {
+    const recovered = await scope.execute({ requestId, reviewedBy: 'Fixture reviewer', plan, provider: remote.client });
+    expect(recovered).toEqual(committed); expect(remote.calls()).toBe(committedCalls);
+  } finally { spy.mockRestore(); }
+});
 it('termination never contacts upstream and retires managed orphan genre labels without deleting genre IDs', async () => {
   const movie = await film('terminate-fresh', 1);
   await scope.db.genre.create({ data: { id: 'owned-fixture-genre', genreName: 'PROVIDER_OWNED_LABEL', movies: { create: { movieId: movie.id } } } });
