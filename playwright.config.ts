@@ -13,6 +13,7 @@ process.env.TALARAMA_E2E_DATABASE_URL = database.toString();
 process.env.TALARAMA_E2E_SECRET = 'phase0-synthetic-browser-session-only';
 export default defineConfig({
   testDir: './tests/e2e',
+  testIgnore:'**/wikidata.spec.ts',
   globalSetup: './tests/e2e/setup.ts',
   globalTeardown: './tests/e2e/teardown.ts',
   workers: 1,
@@ -21,6 +22,6 @@ export default defineConfig({
   webServer: {
     command: 'npm run dev -- --hostname 127.0.0.1 --port 3100',
     url: 'http://127.0.0.1:3100/diaries', reuseExistingServer: false, timeout: 120000,
-    env: { TALARAMA_DISABLE_COMPILER_CACHE: '1', TALARAMA_CACHE_SCOPE: process.env.TALARAMA_E2E_SCHEMA, DATABASE_URL: database.toString(), DIRECT_URL: database.toString(), NEXTAUTH_URL: 'http://127.0.0.1:3100', NEXTAUTH_SECRET: process.env.TALARAMA_E2E_SECRET, GOOGLE_CLIENT_ID: '', GOOGLE_CLIENT_SECRET: '', TMDB_READ_TOKEN: 'synthetic-transport-fixture', NODE_OPTIONS: `--require="${resolve('tests/e2e/tmdb-fixture.cjs').replaceAll('\\', '/')}"` },
+    env: { CATALOG_PROVIDER:'tmdb', TALARAMA_DISABLE_COMPILER_CACHE: '1', TALARAMA_CACHE_SCOPE: process.env.TALARAMA_E2E_SCHEMA, DATABASE_URL: database.toString(), DIRECT_URL: database.toString(), NEXTAUTH_URL: 'http://127.0.0.1:3100', NEXTAUTH_SECRET: process.env.TALARAMA_E2E_SECRET, GOOGLE_CLIENT_ID: '', GOOGLE_CLIENT_SECRET: '', TMDB_READ_TOKEN: 'synthetic-transport-fixture', NODE_OPTIONS: `--require="${resolve('tests/e2e/tmdb-fixture.cjs').replaceAll('\\', '/')}"` },
   },
 });

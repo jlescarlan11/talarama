@@ -1,7 +1,7 @@
 import { expect, it, vi } from 'vitest';
 vi.mock('server-only', () => ({}));
 const provider = vi.hoisted(() => ({ search: vi.fn(), discover: vi.fn() }));
-vi.mock('@/app/lib/tmdb/server', () => ({ tmdb: provider }));
+vi.mock('@/app/lib/movies/provider', () => ({ catalog: provider }));
 import { GET } from '@/app/api/catalog/route';
 import { TmdbError } from '@/app/lib/tmdb/client';
 

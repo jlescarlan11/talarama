@@ -3,10 +3,10 @@ import { Prisma, PrismaClient } from '@prisma/client';
 import prisma from '@/prisma/client';
 import { tmdb } from '@/app/lib/tmdb/server';
 import { tmdbIdSchema } from '@/app/lib/tmdb/normalize';
-import type { CatalogMovie } from '@/app/lib/tmdb/types';
+import type { CatalogMovie, WikidataMovie } from '@/app/lib/tmdb/types';
 
 type Dependencies = { db?: PrismaClient; provider?: { details(id: number): Promise<CatalogMovie> } };
-export function movieMetadata(detail: CatalogMovie) {
+export function movieMetadata(detail: CatalogMovie | WikidataMovie) {
   return { title: detail.title, description: detail.description, releasedYear: detail.releasedYear, duration: detail.duration,
     posterUrl: detail.posterUrl, backdropUrl: detail.backdropUrl, tmdbScore: detail.tmdbScore,
     credits: { cast: detail.cast, directors: detail.directors } as Prisma.InputJsonValue,

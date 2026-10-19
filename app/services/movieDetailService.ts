@@ -4,10 +4,14 @@ import { tmdb } from '@/app/lib/tmdb/server';
 import { normalizeLocalMovie } from '@/app/lib/tmdb/normalize';
 import { TmdbError } from '@/app/lib/tmdb/client';
 import type { CatalogMovie, LocalCatalogMovie } from '@/app/lib/tmdb/types';
+import { getWikidataMovieDetail } from './wikidataDetailService';
 
 /** Read-only detail orchestration. Member data never enters provider/shared caches. */
-export async function getMovieDetail(identity: { localId: string } | { tmdbId: number }, userId?: string) {
-  const local = await prisma.movie.findUnique({ where: 'localId' in identity ? { id: identity.localId } : { tmdbId: identity.tmdbId }, include: { genres: { include: { genre: true } } } });
+export async function getMovieDetail(identity: { localId: string } | { tmdbId: number } | { wikidataId:string }, userId?: string) {
+  if('wikidataId' in identity)return getWikidataMovieDetail(identity.wikidataId,userId);
+  const local = await prisma.movie.findUnique({ where: 'localId' in identity ? { id: identity.localId } : { tmdbId: identity.tmdbId }, include: { externalIdentities:true, genres: { include: { genre: true } } } });
+  const wiki=local?.externalIdentities?.find(row=>row.provider==='WIKIDATA');
+  if('localId' in identity && wiki)return getWikidataMovieDetail(wiki.externalId,userId);
   const tmdbId = 'tmdbId' in identity ? identity.tmdbId : local?.tmdbId;
   if (!local && !tmdbId) return null;
   let movie: CatalogMovie | LocalCatalogMovie | null = null;

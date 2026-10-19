@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { movieHref } from '@/app/lib/movies/links';
 
-interface Props { localId: string | null; tmdbId: number | null; title: string; posterUrl: string | null; signedIn: boolean; favorite: boolean; watchlist: boolean }
+interface Props { localId: string | null; tmdbId: number | null; wikidataId?:string; title: string; posterUrl: string | null; signedIn: boolean; favorite: boolean; watchlist: boolean }
 export default function LibraryActions(props: Props) {
   const router = useRouter();
   const [localId, setLocalId] = useState(props.localId);
@@ -13,12 +13,12 @@ export default function LibraryActions(props: Props) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   if (!props.signedIn) {
-    const callbackUrl = movieHref({ localId: props.localId, tmdbId: props.tmdbId });
+    const callbackUrl = movieHref(props);
     return <div className="space-y-3"><p className="text-base-content/70">Sign in to keep favorites, build a watchlist and log your viewings.</p><Link className="btn btn-primary" href={`/api/auth/signin?${new URLSearchParams({ callbackUrl })}`}>Sign in to save or log</Link></div>;
   }
   const resolveMovie = async () => {
     if (localId) return localId;
-    const response = await fetch('/api/movies/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tmdbId: props.tmdbId }) });
+    const response = await fetch('/api/movies/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(props.wikidataId?{wikidataId:props.wikidataId}:{tmdbId:props.tmdbId}) });
     if (!response.ok) throw new Error(response.status === 401 ? 'Your session expired. Sign in and try again.' : 'Could not save this movie. Please try again.');
     const { movieId } = await response.json();
     if (typeof movieId !== 'string') throw new Error('Could not save this movie. Please try again.');

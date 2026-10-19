@@ -13,6 +13,9 @@ export default function About() {
     </header>
     <section className="space-y-4" aria-labelledby="movie-data-credits">
       <h2 id="movie-data-credits" className="text-2xl font-bold">Movie data & credits</h2>
+      <p>Movie discovery uses <a className="link" href="https://www.wikidata.org">Wikidata</a>. Its structured movie metadata is released under CC0. Wikidata does not provide TMDB popularity rankings or scores.</p>
+      <p>Images have separate rights. Wikidata entries currently use the local artwork fallback; a metadata license does not automatically license linked images.</p>
+      <p>Existing TMDB-linked movies and their saved data remain supported by the legacy integration, credited below.</p>
       <a href="https://www.themoviedb.org" className="inline-block rounded-lg bg-[#0d253f] p-4" aria-label="TMDB">
         <Image src="/tmdb-blue-short.svg" width={84} height={11} alt="TMDB" unoptimized />
       </a>

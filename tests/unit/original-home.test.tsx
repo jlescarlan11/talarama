@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { beforeEach, expect, it, vi } from 'vitest';
 import Home from '@/app/page';
 const source = vi.hoisted(() => ({ discover: vi.fn(), local: vi.fn(), session: vi.fn() }));
-vi.mock('@/app/lib/tmdb/server', () => ({ tmdb: { discover: source.discover } }));
+vi.mock('@/app/lib/movies/provider', () => ({ catalog: { discover: source.discover } }));
 vi.mock('@/app/services/movieService', () => ({ MovieService: { getFeaturedMovies: source.local } }));
 vi.mock('next-auth', () => ({ getServerSession: source.session }));
 vi.mock('@/app/auth/authOptions', () => ({ default: {} }));

@@ -5,7 +5,8 @@ import { movieHref } from "@/app/lib/movies/links";
 import Image from "next/image";
 import Link from "next/link";
 import { Movie, MovieCategorizesAs, Genre } from "@prisma/client";
-import type { CatalogMovie } from "@/app/lib/tmdb/types";
+import type { DiscoveredMovie } from "@/app/lib/tmdb/types";
+import { scoreLabel } from '@/app/lib/movies/score-label';
 
 type MovieWithGenres = Movie & {
   genres: (MovieCategorizesAs & {
@@ -17,7 +18,7 @@ type MovieWithGenres = Movie & {
 };
 
 interface MovieCarouselProps {
-  movies: (MovieWithGenres | CatalogMovie)[];
+  movies: (MovieWithGenres | DiscoveredMovie)[];
 }
 
 interface CardStyle {
@@ -130,7 +131,7 @@ const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
           return (
             <Link
               href={movieHref(movie)}
-              key={`${movie.tmdbId ?? ('id' in movie ? movie.id : movie.localId)}-${offset}`}
+              key={`${movieHref(movie)}-${offset}`}
               className="flex-none w-56 h-80"
               role="listitem"
               aria-label={`${movie.title} (${movie.releasedYear ?? 'Release year unknown'})`}
@@ -174,7 +175,7 @@ const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
                     <p className="text-xs text-white/80 font-medium">
                       {movie.releasedYear}
                     </p>
-                    <p className="text-xs text-white/90">{movie.tmdbScore === null ? 'TMDB: not rated' : `TMDB ${movie.tmdbScore.toFixed(1)}/10`}</p>
+                    <p className="text-xs text-white/90">{scoreLabel(movie)}</p>
                     {genreNames.length > 0 && (
                       <div
                         className="flex flex-wrap gap-1 justify-center mt-2"
@@ -210,7 +211,7 @@ const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
                       {movie.title}
                     </h3>
                     <p className="text-xs text-white/90 mt-1">{movie.releasedYear ?? 'Release year unknown'}</p>
-                    {'tmdbScore' in movie && <p className="text-xs text-white/90 mt-1">{movie.tmdbScore === null ? 'TMDB: not rated' : `TMDB ${movie.tmdbScore.toFixed(1)}/10`}</p>}
+                    <p className="text-xs text-white/90 mt-1">{scoreLabel(movie)}</p>
                   </div>
                 </div>
               </div>

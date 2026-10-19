@@ -1,0 +1,29 @@
+# Local Wikidata catalog trial
+
+The default catalog is now Wikidata. `CATALOG_PROVIDER=wikidata` needs no API key; `tmdb` retains the earlier catalog integration and requires its server-only token. Existing local and explicit TMDB URLs, imports and retention tools remain available. Source licensing is still pending; the intended initial release remains noncommercial. Nothing has been pushed or deployed.
+
+After a production build, `npm run preview:wikidata` starts `http://127.0.0.1:3000` with a fresh generated schema in the guarded loopback `_test` database. It creates one invented member and **no movie or review fixtures**. Google credentials are blank, no authentication bypass is installed, and no provider/image fixture preload is loaded. The ordinary `preview:local` command still offers the separate synthetic TMDB demonstration. Stop the owned preview before rebuilding on Windows.
+
+The restored welcome/carousel, discovery grid, detail layout, themes and responsive behavior remain. Wikidata supplies real titles, original release years, runtime, genres and credits where available. Its short descriptions are not full synopses. Cards use the existing local artwork fallback and identify Wikidata without inventing popularity or ratings. [Wikidata structured data is CC0](https://www.wikidata.org/wiki/Wikidata:Licensing); linked images have separate rights and are not imported in this trial.
+
+## Identity and preservation
+
+The additive `20261019190000_wikidata_identity` migration creates `ExternalMovieIdentity` only. It never changes existing Movie IDs, metadata, account links, reviews, library records or dates. A validated Q ID maps to one local movie per provider. Authenticated save/log intent imports metadata atomically; concurrent or repeated saves reuse that movie. Read-only browsing never imports it. An identically titled legacy/TMDB movie remains separate until an independently reviewed mapping is authorized. Existing local IDs continue to resolve.
+
+Migration and logical backup/restore tests use seeded disposable schemas. They compare legacy IDs, account tokens, relationships, review text and exact `2020-02-29T23:30:00.000Z` timestamps. No populated development database was migrated and no real member record was changed. Existing privacy, moderation, diary retries, watchlist removal on logging and mutation quotas continue to use their original services.
+
+## Query boundaries
+
+- Ordinary discovery/title search uses the official Action API, ordered by incoming links, with 12 results per page and a 500-page application limit. Incoming links are coverage, not popularity.
+- Release-year queries use bounded SPARQL. Year browsing uses explicit film statements (`Q11424`) or the selected genre statement; it is not an exhaustive subclass traversal. Title-plus-year searches consider the first 100 matching titles. These limits are disclosed beside the filters.
+- The earliest nondeprecated precise publication year is used. Regional re-releases do not change the displayed original year; excluding these or blocked entries can make pages shorter than 12. Next follows the upstream candidate page rather than claiming exhaustive totals.
+- Public requests have a descriptive User-Agent, fixed HTTPS endpoints, redirect refusal, a 20-second request/body timeout, an 8MiB body limit, bounded coalescing caches and 429 cooldown. Provider cache keys separate sources and preview/test schemas. Interactive Action API reads omit `maxlag`, as permitted by [MediaWiki guidance](https://www.mediawiki.org/wiki/Manual:Maxlag_parameter), so query-service replication lag does not unnecessarily block entity reads. No member state enters shared metadata caches.
+- Saved detail snapshots and per-member library state remain available during provider outages. Unconfigured real Google OAuth is still an acceptance gate.
+
+## Measured evidence
+
+On 2026-10-19, public reads without fixture transport returned Women Make Film, Iron Man 2 and Harry Potter and the Philosopher's Stone in discovery; title search and title/year search returned Inception (Q25188, 2010). Its detail returned Christopher Nolan. Year/Science Fiction and year-only queries returned real 2010 films. Discovery/search/detail took about 2–4seconds; an uncached year-only read took about20seconds. Public endpoint availability and latency can vary; failures expose retry and saved snapshots.
+
+One independent read-only review found an invented preview movie leak, year pagination beyond the allowed page500, and missing Wikidata provenance in the homepage outage fallback. All were addressed with regressions observed failing then passing. The latter two were regraded as important because they broke the promised filter/navigation boundary and source attribution respectively.
+
+Final local test counts and localhost evidence are recorded in the implementation plan. Historical portfolio screenshots still show synthetic fixtures and retain their original labels.

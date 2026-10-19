@@ -1,13 +1,13 @@
 import Link from 'next/link';
 import { MovieService } from './services/movieService';
 import MovieCarousel from './components/MovieCarousel';
-import { tmdb } from './lib/tmdb/server';
+import { catalog } from './lib/movies/provider';
 import { getServerSession } from 'next-auth';
 import authOptions from './auth/authOptions';
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
-  const popular = await tmdb.discover().catch(() => null);
+  const popular = await catalog.discover().catch(() => null);
   const movies = popular ? popular.results : await MovieService.getFeaturedMovies();
   return (
     <div className="flex flex-col items-center justify-start bg-base-100 pb-12">

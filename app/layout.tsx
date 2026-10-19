@@ -47,6 +47,7 @@ export default async function RootLayout({
           <AuthProvider>
             <NavBar />
             {process.env.TALARAMA_LOCAL_PREVIEW === '1' && <p role="status" className="text-center text-sm bg-base-200 text-base-content py-2 px-4">Local preview · 24 invented sample films · live TMDB and Google sign-in are not connected.</p>}
+            {process.env.TALARAMA_LOCAL_PREVIEW === 'wikidata' && <p role="status" className="text-center text-sm bg-base-200 text-base-content py-2 px-4">Local preview · live Wikidata movie data · member records are disposable fixtures · Google sign-in is not connected.</p>}
             <main id="main-content" tabIndex={-1} className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 flex-grow">
               <div className="max-w-[var(--container-max-width)] mx-auto">
                 {children}

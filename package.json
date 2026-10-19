@@ -14,6 +14,7 @@
     "test:migrations": "node --env-file-if-exists=.env scripts/verify-migrations.mjs",
     "check:env": "node scripts/check-env.mjs",
     "preview:local": "node --env-file-if-exists=.env --import tsx scripts/local-preview.mjs",
+    "preview:wikidata": "node --env-file-if-exists=.env --import tsx scripts/local-preview.mjs --wikidata",
     "retention:rehearse": "node --env-file-if-exists=.env --conditions=react-server --import tsx scripts/tmdb-retention-rehearsal.ts",
     "diary:dates": "node --env-file-if-exists=.env --conditions=react-server --import tsx scripts/diary-dates.ts",
     "catalog:match": "node --env-file-if-exists=.env --conditions=react-server --import tsx scripts/catalog-match.ts",

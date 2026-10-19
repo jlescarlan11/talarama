@@ -24,17 +24,17 @@ export class TmdbClient {
     this.token = options.token ?? process.env.TMDB_READ_TOKEN ?? '';
     this.fetcher = options.fetcher ?? fetch;
   }
-  async search(params: { query: string; year?: number; page?: number }): Promise<CatalogPage> {
+  async search(params: { query: string; year?: number; page?: number }): Promise<CatalogPage<CatalogMovie>> {
     const query = input(z.string().trim().min(1).max(200), params.query);
     const year = input(yearInput, params.year);
     return this.list('search/movie', { query, ...(year ? { year: String(year) } : {}), page: String(input(pageInput, params.page)), include_adult: 'false' }, 300);
   }
-  async discover(params: { genre?: number; year?: number; page?: number } = {}): Promise<CatalogPage> {
+  async discover(params: { genre?: number; year?: number; page?: number } = {}): Promise<CatalogPage<CatalogMovie>> {
     const year = input(yearInput, params.year);
     const genre = input(tmdbIdSchema.optional(), params.genre);
     return this.list('discover/movie', { page: String(input(pageInput, params.page)), include_adult: 'false', sort_by: 'popularity.desc', ...(year ? { primary_release_year: String(year) } : {}), ...(genre ? { with_genres: String(genre) } : {}) }, 3600);
   }
-  private list(endpoint: 'search/movie' | 'discover/movie', params: Record<string, string>, ttl: number): Promise<CatalogPage> {
+  private list(endpoint: 'search/movie' | 'discover/movie', params: Record<string, string>, ttl: number): Promise<CatalogPage<CatalogMovie>> {
     return this.request(endpoint, params, ttl, value => {
       const result = pageSchema.parse(value);
       if (result.page !== Number(params.page)) throw new TmdbError('INVALID_RESPONSE');

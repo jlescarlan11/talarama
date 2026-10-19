@@ -7,7 +7,7 @@ import MovieDetail from './MovieDetail';
 import RetryDetails from './RetryDetails';
 import PublicView from '@/app/community/PublicView';
 
-export default async function DetailPage({ identity }: { identity: { localId: string } | { tmdbId: number } }) {
+export default async function DetailPage({ identity }: { identity: { localId: string } | { tmdbId: number } | {wikidataId:string} }) {
   const session = await getServerSession(authOptions);
   let detail;
   try { detail = await getMovieDetail(identity, session?.user?.id); }

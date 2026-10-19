@@ -1,4 +1,4 @@
-import { tmdb } from '@/app/lib/tmdb/server';
+import { catalog } from '@/app/lib/movies/provider';
 import { parseCatalogQuery } from '@/app/lib/movies/catalog-query';
 import { json, movieError } from '@/app/lib/movies/http';
 
@@ -9,6 +9,6 @@ export async function GET(request: Request) {
   try {
     const { mode, query: title, page, year, genre } = query;
     if (mode === 'search' && !title) return json({ page, totalPages: 0, totalResults: 0, results: [] });
-    return json(mode === 'search' ? await tmdb.search({ query: title, page, year }) : await tmdb.discover({ page, year, genre }));
+    return json(mode === 'search' ? await catalog.search({ query: title, page, year }) : await catalog.discover({ page, year, genre }));
   } catch (error) { return movieError(error); }
 }

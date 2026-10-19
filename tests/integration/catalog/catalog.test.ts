@@ -7,6 +7,7 @@ import { PrismaClient } from '@prisma/client';
 import { beforeAll, afterAll, expect, it, vi } from 'vitest';
 vi.mock('server-only', () => ({}));
 import { importMovie, refreshMovie } from '@/app/services/movieImportService';
+import { importWikidataMovie } from '@/app/services/wikidataImportService';
 import type { CatalogMovie } from '@/app/lib/tmdb/types';
 import { applyMappings } from '@/app/services/catalogMappingService';
 import { setLibraryEntry } from '@/app/services/movieLibraryService';
@@ -172,3 +173,14 @@ it('runs actual dry-run/apply CLIs with fixture transport and refuses overwritin
     expect(await db.movie.findUnique({ where: { id: 'cli-local' } })).toMatchObject({ tmdbId: 701, title: 'CLI legacy', duration: 99 });
   } finally { rmSync(directory, { recursive: true, force: true }); }
 }, 30000);
+it('restores Wikidata identities and imported movies alongside unchanged member records', async () => {
+  const movie = await importWikidataMovie('Q25188', {db,provider:{details:async()=>({localId:null,wikidataId:'Q25188',tmdbId:null,title:'Wikidata restore fixture',description:null,releasedYear:2010,duration:148,posterUrl:null,backdropUrl:null,tmdbScore:null,tmdbVoteCount:null,genres:[],cast:[],directors:[]})}});
+  const before=await snapshot(db);
+  const identities=await db.externalMovieIdentity.findMany();
+  const dump=execFileSync(pgBinary('pg_dump'),['--schema',schema,'--no-owner','--no-acl'],{env:pgEnvironment(url),encoding:'utf8',stdio:'pipe'});
+  await admin.$executeRawUnsafe(`DROP SCHEMA "${restoredSchema}" CASCADE`);
+  await runSql(dump.replaceAll(schema,restoredSchema),restoreUrl);
+  expect(await restored.externalMovieIdentity.findMany()).toEqual(identities);
+  expect(await restored.movie.findUnique({where:{id:movie.id}})).toEqual(movie);
+  expect(await snapshot(restored)).toEqual(before);
+});

@@ -2,6 +2,7 @@ import { act, fireEvent, render, renderHook, screen, waitFor } from '@testing-li
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import Discovery from '@/app/movies/Discovery';
 import { useCatalogSearch } from '@/app/hooks/useCatalogSearch';
+import { catalogQueryString,parseCatalogQuery } from '@/app/lib/movies/catalog-query';
 const route = vi.hoisted(() => ({ params: new URLSearchParams('mode=search&query=Alien'), push: vi.fn() }));
 vi.mock('next/navigation', () => ({ useSearchParams: () => route.params }));
 const empty = { page: 1, totalPages: 0, totalResults: 0, results: [] };
@@ -51,4 +52,10 @@ it('exposes retry after failure and clears obsolete results while loading', asyn
   act(() => view.result.current.retry());
   await waitFor(() => expect(view.result.current.data).toEqual(empty));
   expect(view.result.current.error).toBeNull();
+});
+it('keeps the final allowed Wikidata year page from linking to invalid page501',()=>{
+ route.params=new URLSearchParams('mode=discover&year=2010&page=500');
+ const key=catalogQueryString(parseCatalogQuery(route.params));
+ render(<Discovery source="wikidata" initial={{key,error:null,data:{...empty,page:500,totalPages:500,hasMore:true}}} />);
+ expect(screen.getByRole('button',{name:/^Next$/})).toBeDisabled();
 });

@@ -2,9 +2,11 @@
 import prisma from "@/prisma/client";
 import { Movie, MovieCategorizesAs, Genre, Prisma } from "@prisma/client";
 import { tmdb } from '@/app/lib/tmdb/server';
+import { catalog } from '@/app/lib/movies/provider';
 import { normalizeLocalMovie } from '@/app/lib/tmdb/normalize';
 
 type MovieWithGenres = Movie & {
+  wikidataId?: string;
   genres: (MovieCategorizesAs & {
     genre: Genre;
   })[];
@@ -34,8 +36,8 @@ type SortOption =
 
 export class MovieService {
   // Provider reads are independent of local persistence and member state.
-  static searchCatalog(input: { query: string; year?: number; page?: number }) { return tmdb.search(input); }
-  static discoverCatalog(input: { year?: number; genre?: number; page?: number } = {}) { return tmdb.discover(input); }
+  static searchCatalog(input: { query: string; year?: number; page?: number }) { return catalog.search(input); }
+  static discoverCatalog(input: { year?: number; genre?: number; page?: number } = {}) { return catalog.discover(input); }
   static getCatalogDetail(tmdbId: number) { return tmdb.details(tmdbId); }
   static async getLocalSnapshot(id: string) {
     const movie = await prisma.movie.findUnique({ where: { id } });
@@ -171,6 +173,7 @@ export class MovieService {
         take: 10,
         orderBy: [{ createdAt: "desc" }, { releasedYear: "desc" }],
         include: {
+          externalIdentities: true,
           genres: {
             include: {
               genre: true,
@@ -181,6 +184,7 @@ export class MovieService {
 
       return movies.map((movie) => ({
         ...movie,
+        wikidataId: movie.externalIdentities?.find(identity=>identity.provider==='WIKIDATA')?.externalId,
         genres: movie.genres.map(({ movieId, genreId, genre }) => ({
           movieId,
           genreId,

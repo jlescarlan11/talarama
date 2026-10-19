@@ -68,7 +68,18 @@ model Movie {
   diaryEntries DiaryEntry[]
   watchedBy    WatchlistEntry[]
   likedBy      LikedBy[]
+  externalIdentities ExternalMovieIdentity[]
 
+}
+
+// Provider identifiers never replace stable Movie IDs or legacy TMDB links.
+model ExternalMovieIdentity {
+  provider String
+  externalId String
+  movieId String
+  movie Movie @relation(fields:[movieId], references:[id], onDelete:Restrict)
+  @@id([provider, externalId])
+  @@unique([provider, movieId])
 }
 
 // Durable transactional mapping audit. Deliberately no cascading foreign key:
