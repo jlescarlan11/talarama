@@ -19,7 +19,9 @@ For Google OAuth, create a development web client with origin `http://localhost:
 - `npm run typecheck` — TypeScript without emitting application code.
 - `npm test` — focused logic, component, hook and route regression tests.
 - `npm run test:integration` — real database route journeys on a separate disposable database (see docs/migrations.md).
-- `npm run test:e2e` — anonymous browser journeys against a local test server.
+- `npm run test:migrations` — replay all historical migrations in an isolated test schema and assert no schema drift.
+- `npm run test:e2e` — anonymous/responsive journeys and a synthetic-session save/log/edit/delete flow. Run `npx playwright install chromium` once first. Requires `TEST_DATABASE_URL`; each run creates and removes its own schema.
+- `npm run check:env` — report missing configuration names without displaying values.
 - `npm run build` — production compilation. Requires development database configuration for database-backed page rendering.
 
 Read [phase-0 verification](docs/phase-0-verification.md) for the actual checks run and remaining limitations. The [approved roadmap](docs/superpowers/plans/2026-10-19-talarama-upgrade-roadmap.md) describes later phases; they are not implemented here.

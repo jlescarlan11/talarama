@@ -26,7 +26,9 @@ const StarRating: React.FC<StarRatingProps> = ({
           <button
             key={star}
             type="button"
-            className={`transition-colors hover:scale-110 transform ${
+            aria-label={`Rate ${star} out of 5`}
+            aria-pressed={star === rating}
+            className={`min-h-11 min-w-11 inline-flex items-center justify-center transition-colors hover:scale-110 transform ${
               star <= (hoverRating || rating)
                 ? "text-yellow-400"
                 : "text-gray-300"

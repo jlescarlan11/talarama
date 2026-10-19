@@ -1,7 +1,9 @@
 import React from "react";
 import DiaryForm from "../../_components/DiaryForm";
 import prisma from "@/prisma/client";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { getServerSession } from "next-auth";
+import authOptions from "@/app/auth/authOptions";
 import Link from "next/link";
 
 type Props = {
@@ -10,16 +12,18 @@ type Props = {
 
 const EditDiaryPage = async ({ params }: Props) => {
   const { id } = await params;
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) redirect(`/api/auth/signin?callbackUrl=${encodeURIComponent(`/diaries/edit/${id}`)}`);
 
-  const movies = await prisma.movie.findMany();
-  const diaryEntry = await prisma.diaryEntry.findUnique({
-    where: { id },
+  const diaryEntry = await prisma.diaryEntry.findFirst({
+    where: { id, userId: session.user.id },
     include: {
       movie: true,
     },
   });
 
   if (!diaryEntry) notFound();
+  const movies = await prisma.movie.findMany();
   
   return (
     <>

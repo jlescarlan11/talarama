@@ -6,12 +6,12 @@ const Footer = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="text-center sm:text-left">
-            <p className="text-sm sm:text-base text-neutral-content">
+            <p className="text-sm sm:text-base text-base-content/75">
               &copy; 2025 Talarama. A CMSC 127 Project.
             </p>
           </div>
           <div className="text-center sm:text-right">
-            <p className="text-sm sm:text-base text-secondary-content">
+            <p className="text-sm sm:text-base text-base-content/75">
               Built by Bisuela, Caringal, Dela Cruz, and Escarlan
             </p>
           </div>

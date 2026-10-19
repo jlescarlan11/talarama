@@ -2,9 +2,9 @@
 
 ## Historical baseline
 
-The checked-in migrations predate the current schema and contain destructive table/column replacements and a final `DELETE FROM "Movie"` deduplication. Never replay these on a populated database that has not applied them. Never run `prisma migrate reset` against member data.
+The checked-in historical chain produces the current schema on an empty database. It contains destructive table/column replacements and a final `DELETE FROM "Movie"` deduplication. Never replay these on a populated database that has not applied them. Never run `prisma migrate reset` against member data.
 
-Phase 0 tests history in a newly created disposable PostgreSQL database, then compares its result to `prisma/schema.prisma`. The schema remains unchanged in phase 0; see phase-0-verification.md for the measured drift.
+Phase 0 replayed all 24 migrations in disposable PostgreSQL and compared the result to `prisma/schema.prisma`: no drift. The schema remains unchanged. `npm run test:migrations` repeats this check in a generated test schema.
 
 ## New empty development database
 
@@ -12,7 +12,9 @@ Create a dedicated empty database. Configure DATABASE_URL and DIRECT_URL to it i
 
 ## Disposable integration database
 
-Use PostgreSQL 17 and create a separate empty database whose name ends in `_test`. Set TEST_DATABASE_URL in the process environment; the test runner checks this suffix and refuses to use DATABASE_URL implicitly. Run `npm run test:integration`. Tests create/drop their own unique PostgreSQL schema inside that test database, initialize it from the checked-in Prisma schema, and remove it afterward. They do not reset the public schema. The suite exercises real Prisma and HTTP handlers with synthetic authentication, including account links, favorites, watchlist, diary create/edit/delete, and ownership. It does not contact Google.
+Use PostgreSQL 17 and create a separate empty database whose name ends in `_test`. Set TEST_DATABASE_URL in `.env` or the process environment; the test runner checks this suffix and refuses to use DATABASE_URL implicitly. Run `npm run test:integration`. Tests create/drop their own unique PostgreSQL schema inside that test database, initialize it from the checked-in Prisma schema, and remove it afterward. They do not reset the public schema. The suite exercises real Prisma and HTTP handlers with synthetic authentication, including account links, favorites, watchlist, diary create/edit/delete, and ownership. It does not contact Google.
+
+Browser tests also create an isolated schema and run a local server on port 3100 with test-only authentication settings. The signed browser journey creates its JWT locally from a fixed test secret; that secret is never used by the development or production app. The fixture user has a synthetic Google provider association, not real OAuth tokens. Do not expose the browser-test server publicly.
 
 ## Before any populated-database migration
 

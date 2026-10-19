@@ -90,3 +90,14 @@ it('does not log session details or diary content on writes', async () => {
     expect(log).not.toHaveBeenCalled();
   } finally { log.mockRestore(); }
 });
+it('protects the diary edit page from anonymous visitors and other members', async () => {
+  const { default: EditPage } = await import('@/app/diaries/edit/[id]/page');
+  const entry = await db.diaryEntry.create({ data: { userId: 'phase0-owner', movieId: 'legacy-movie', rating: 4, review: 'Owner only', watchedDate: new Date('2020-01-01') } });
+  auth.userId = null;
+  await expect(EditPage({ params: Promise.resolve({ id: entry.id }) })).rejects.toThrow('NEXT_REDIRECT');
+  auth.userId = 'phase0-other';
+  await expect(EditPage({ params: Promise.resolve({ id: entry.id }) })).rejects.toThrow('NEXT_HTTP_ERROR_FALLBACK;404');
+  auth.userId = 'phase0-owner';
+  expect(await EditPage({ params: Promise.resolve({ id: entry.id }) })).toBeTruthy();
+  await db.diaryEntry.delete({ where: { id: entry.id } });
+});

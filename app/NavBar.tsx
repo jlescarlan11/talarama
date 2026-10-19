@@ -10,7 +10,7 @@ import {
   PiPlus,
 } from "react-icons/pi";
 import Logo from "./Logo";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 
@@ -24,21 +24,29 @@ const NavBar: React.FC = () => {
   const currentPath = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  const menuRef = useRef<HTMLDialogElement>(null);
+
   // Close mobile menu on route change
   useEffect(() => {
     setIsMenuOpen(false);
   }, [currentPath]);
 
-  // Prevent body scroll when mobile menu is open
   useEffect(() => {
-    if (isMenuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.body.style.overflow = "unset";
+    const desktop = window.matchMedia("(min-width: 640px)");
+    const closeOnDesktop = () => {
+      if (desktop.matches) setIsMenuOpen(false);
     };
+    desktop.addEventListener("change", closeOnDesktop);
+    return () => desktop.removeEventListener("change", closeOnDesktop);
+  }, []);
+
+  useEffect(() => {
+    const dialog = menuRef.current;
+    if (isMenuOpen) dialog?.showModal();
+    else dialog?.close();
+    const previous = document.body.style.overflow;
+    if (isMenuOpen) document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previous; };
   }, [isMenuOpen]);
 
   return (
@@ -82,13 +90,23 @@ const NavBar: React.FC = () => {
       </nav>
 
       {/* Mobile Navigation */}
-      <div
+      <dialog
+        ref={menuRef}
+        onCancel={() => setIsMenuOpen(false)}
+        onClose={() => setIsMenuOpen(false)}
+        onKeyDown={(event) => {
+          if (event.key !== "Tab") return;
+          const controls = event.currentTarget.querySelectorAll<HTMLElement>('a[href], button:not([disabled])');
+          const first = controls[0];
+          const last = controls[controls.length - 1];
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault(); last?.focus();
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault(); first?.focus();
+          }
+        }}
         id="mobile-menu"
-        className={`fixed inset-0 bg-base-100 z-50 transform transition-transform duration-[var(--transition-duration)] ease-[var(--transition-timing)] sm:hidden ${
-          isMenuOpen ? "translate-x-0" : "translate-x-full"
-        }`}
-        role="dialog"
-        aria-modal="true"
+        className="fixed inset-0 m-0 h-dvh max-h-none w-screen max-w-none bg-base-100 text-base-content p-0 border-0 backdrop:bg-black/40 sm:hidden"
         aria-label="Mobile menu"
       >
         <div className="flex flex-col h-full">
@@ -116,7 +134,7 @@ const NavBar: React.FC = () => {
             />
           </div>
         </div>
-      </div>
+      </dialog>
     </header>
   );
 };
@@ -133,7 +151,8 @@ const AuthStatus: React.FC<AuthStatusProps> = ({ currentPath, onNavigate }) => {
 
   if (status === "unauthenticated")
     return (
-      <div className="nav-links">
+      <div className="nav-links flex items-center gap-2">
+        <Link href="/movies" className="btn btn-ghost">Discover</Link>
         <button
           onClick={() => signIn("google")}
           className="btn btn-primary h-11 px-6 text-base font-medium"
@@ -191,6 +210,7 @@ const MobileAuthStatus: React.FC<AuthStatusProps> = ({
   if (status === "unauthenticated")
     return (
       <div className="flex flex-col gap-4">
+        <Link href="/movies" onClick={onNavigate} className="btn btn-ghost justify-start">Discover</Link>
         <button
           onClick={() => signIn("google")}
           className="btn btn-primary h-11 w-full text-base font-medium"
@@ -228,12 +248,12 @@ const NavLinks: React.FC<NavLinksProps> = ({ currentPath, onNavigate }) => {
     },
     {
       icon: <PiNotebook aria-hidden="true" />,
-      label: "Diary",
+      label: "My Diary",
       href: "/diaries",
     },
     {
       icon: <PiFilmSlate aria-hidden="true" />,
-      label: "Movie",
+      label: "Discover",
       href: "/movies",
     },
   ];
@@ -265,12 +285,12 @@ const MobileNavLinks: React.FC<NavLinksProps> = ({
   const links: NavLink[] = [
     {
       icon: <PiNotebook aria-hidden="true" />,
-      label: "Diary",
+      label: "My Diary",
       href: "/diaries",
     },
     {
       icon: <PiFilmSlate aria-hidden="true" />,
-      label: "Movie",
+      label: "Discover",
       href: "/movies",
     },
   ];

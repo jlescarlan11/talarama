@@ -1,11 +1,11 @@
 import "./globals.css";
-import { Inter } from "next/font/google";
+
 import NavBar from "./NavBar";
 import AuthProvider from "./auth/Provider";
 import { ThemeProvider } from "./providers/ThemeProvider";
 import Footer from "./components/Footer";
 
-const inter = Inter({ subsets: ["latin"] });
+
 
 export const viewport = {
   width: "device-width",
@@ -22,7 +22,7 @@ export const metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://talarama.com",
+
     title: "Talarama - Your Personal Movie Diary",
     description: "Track, review, and discover movies with your personal movie diary",
     siteName: "Talarama",
@@ -41,11 +41,12 @@ export default async function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} min-h-screen flex flex-col antialiased`}>
+      <body className="min-h-screen flex flex-col antialiased font-sans">
+        <a href="#main-content" className="skip-link">Skip to content</a>
         <ThemeProvider>
           <AuthProvider>
             <NavBar />
-            <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 flex-grow">
+            <main id="main-content" tabIndex={-1} className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 flex-grow">
               <div className="max-w-[var(--container-max-width)] mx-auto">
                 {children}
               </div>

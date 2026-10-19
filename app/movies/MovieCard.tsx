@@ -41,14 +41,16 @@ const MovieCard = ({ movie }: MovieCardProps) => {
       <div className="group aspect-[2/3] rounded-lg overflow-hidden relative cursor-pointer shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]">
         {/* Movie Poster */}
         <Image
-          src={movie.posterUrl || "/placeholder-movie.jpg"}
+          src={movie.posterUrl || "/placeholder-movie.svg"}
           alt={movie.title}
           fill
           className="object-cover transition-transform duration-700 group-hover:scale-110"
           sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
           onError={(e) => {
             const target = e.target as HTMLImageElement;
-            target.src = "https://placehold.co/800x1200?text=No+Poster";
+            target.onerror = null;
+            target.srcset = "";
+            target.src = "/placeholder-movie.svg";
           }}
         />
 

@@ -41,28 +41,35 @@ const DiaryFormFields: React.FC<DiaryFormFieldsProps> = ({
 
         {/* Date picker */}
         <div className="form-control">
-          <label className="label">
+          <label htmlFor="watched-date" className="label">
             <span className="label-text font-semibold">Watched Date</span>
           </label>
           <input
+            id="watched-date"
             type="date"
+            aria-invalid={!!errors.watchedDate}
+            aria-describedby={errors.watchedDate ? "watched-date-error" : undefined}
             {...register("watchedDate")}
             className={`input input-bordered w-full ${
               errors.watchedDate ? "input-error" : ""
             }`}
           />
+          {errors.watchedDate && <p id="watched-date-error" className="text-error text-sm" role="alert">{errors.watchedDate.message}</p>}
         </div>
       </div>
 
       {/* Review textarea */}
       <div className="form-control">
-        <label className="label">
-          <span className="label-text font-semibold">Review</span>
+        <label htmlFor="diary-review" className="label">
+          <span className="label-text font-semibold">Review (optional)</span>
           <span className="label-text-alt">
             {watchedFields.review?.length || 0}/2000
           </span>
         </label>
         <textarea
+          id="diary-review"
+          aria-invalid={!!errors.review}
+          aria-describedby={errors.review ? "diary-review-error" : undefined}
           placeholder="Add a review..."
           {...register("review")}
           className={`textarea textarea-bordered h-64 resize-none w-full ${
@@ -70,6 +77,7 @@ const DiaryFormFields: React.FC<DiaryFormFieldsProps> = ({
           }`}
           maxLength={2000}
         />
+        {errors.review && <p id="diary-review-error" className="text-error text-sm" role="alert">{errors.review.message}</p>}
       </div>
 
       {/* Star rating */}

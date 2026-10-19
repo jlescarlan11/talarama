@@ -8,5 +8,6 @@ for (const width of [360, 768, 1440]) {
     await page.keyboard.press('Tab');
     await expect(page.getByRole('link', { name: 'Skip to content' })).toBeFocused();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({ path: `.superpowers/anonymous-${width}.png`, fullPage: true });
   });
 }
