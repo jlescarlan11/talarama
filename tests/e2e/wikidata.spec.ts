@@ -8,7 +8,7 @@ test('Wikidata browse/detail preserve reads, identities, save/log actions and or
   await page.route('https://upload.wikimedia.org/wikipedia/commons/a/ab/Wikidata_fixture_poster.png',route=>route.fulfill({contentType:'image/png',body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aHxkAAAAASUVORK5CYII=','base64')}));
   const before=await db.movie.count();
   const defaults=await (await page.request.get('/api/catalog')).json();
-  expect(defaults.order).toBe('recent');expect(defaults.totalResults).toBe(13);
+  expect(defaults.order).toBe('recent');expect(defaults.totalResults).toBe(13);expect(defaults.hasMore).toBe(true);
   expect(defaults.results.every((movie:{posterUrl:string;releasedYear:number})=>movie.posterUrl&&movie.releasedYear===new Date().getUTCFullYear()-1)).toBe(true);
   for(const width of [360,768,1440]){
    await page.setViewportSize({width,height:1000});await page.goto('/');await expect(page.getByRole('heading',{name:'Welcome to Movie Diary'})).toBeVisible();
@@ -20,7 +20,8 @@ test('Wikidata browse/detail preserve reads, identities, save/log actions and or
    const image=page.getByRole('img',{name:'Poster for Wikidata Fixture Film'});await expect(image).toHaveAttribute('src','https://upload.wikimedia.org/wikipedia/commons/a/ab/Wikidata_fixture_poster.png');expect(await image.evaluate((element:HTMLImageElement)=>element.complete && element.naturalWidth>0)).toBe(true);
    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   }
-  await page.getByRole('button',{name:'Next',exact:true}).click();await expect(page.getByRole('link',{name:/Wikidata Second Film/})).toHaveCount(1);
+  for(let next=2;next<=6;next++){await page.getByRole('button',{name:'Next',exact:true}).click();await expect(page.getByRole('link',{name:new RegExp(`Wikidata Film Q${25188+(next-1)*12} `)})).toBeVisible();}
+  await expect(page.getByRole('button',{name:'Next',exact:true})).toBeDisabled();expect(await db.movie.count()).toBe(before);
   await page.goto(`/movies?mode=discover&year=${new Date().getUTCFullYear()-1}&genre=878&page=1`);await expect(page.getByRole('link',{name:/Wikidata Fixture Film/})).toBeVisible();
   await page.getByRole('link',{name:/Wikidata Fixture Film/}).click();await expect(page).toHaveURL(/\/movies\/(wikidata\/Q25188|[a-z0-9-]+)$/,{timeout:20000});await expect(page.getByRole('heading',{name:'Wikidata Fixture Film',level:1})).toBeVisible();
   await expect(page.getByRole('link',{name:'View source on Wikidata'})).toBeVisible();expect(await db.movie.count()).toBe(before);

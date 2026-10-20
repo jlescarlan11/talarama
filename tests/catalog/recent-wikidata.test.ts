@@ -5,8 +5,7 @@ import {WikidataClient} from '@/app/lib/wikidata/client';
 
 const year=new Date().getUTCFullYear();
 const entity=(id:string,released:number,poster=true)=>({id,labels:{en:{value:id}},claims:{P31:[{mainsnak:{datavalue:{value:{id:'Q11424'}}}}],P577:[{mainsnak:{datavalue:{value:{time:`+${released}-01-01T00:00:00Z`,precision:11}}}}],...(poster?{P3383:[{mainsnak:{datavalue:{value:`${id} poster.jpg`}}}]}:{})}});
-function transport(){
- const rows=[...Array.from({length:25},(_,i)=>entity(`Q${100+i}`,year-i%3)),entity('Q200',2000),entity('Q201',year,false),entity('Q202',year+1)];
+function transport(rows=[...Array.from({length:25},(_,i)=>entity(`Q${100+i}`,year-i%3)),entity('Q200',2000),entity('Q201',year,false),entity('Q202',year+1)]){
  return vi.fn<typeof fetch>(async input=>{
   const url=new URL(String(input));
   if(url.hostname==='query.wikidata.org')return Response.json({results:{bindings:rows.map(row=>({film:{value:`http://www.wikidata.org/entity/${row.id}`}}))}});
@@ -18,15 +17,40 @@ function transport(){
 it('defaults to a bounded live recent selection with posters, sorted by release year and paged after artwork filtering',async()=>{
  const fetcher=transport();const client=new WikidataClient({fetcher,wikipediaPreview:false});
  const first=await client.discover();const second=await client.discover({page:2});const third=await client.discover({page:3});
- expect(first).toMatchObject({order:'recent',totalResults:25,totalPages:3});
+ expect(first).toMatchObject({order:'recent',hasMore:true});expect(third).toMatchObject({totalResults:25,totalPages:3,hasMore:false});
  expect(first.results).toHaveLength(12);expect(second.results).toHaveLength(12);expect(third.results).toHaveLength(1);
  const all=[...first.results,...second.results,...third.results];
  expect(new Set(all.map(movie=>'wikidataId'in movie?movie.wikidataId:'')).size).toBe(25);
  expect(all.every(movie=>movie.posterUrl&&movie.releasedYear!>=year-2&&movie.releasedYear!<=year)).toBe(true);
  expect(all.map(movie=>movie.releasedYear)).toEqual(all.map(movie=>movie.releasedYear).sort((a,b)=>b!-a!));
  expect(fetcher.mock.calls.filter(call=>new URL(String(call[0])).hostname==='query.wikidata.org')).toHaveLength(1);
- const query=new URL(String(fetcher.mock.calls[0][0])).searchParams.get('query');expect(query).toContain(`${year-2}-01-01`);expect(query).toContain('LIMIT 60');
+ const query=new URL(String(fetcher.mock.calls[0][0])).searchParams.get('query');expect(query).toContain(`${year-2}-01-01`);expect(query).toContain('LIMIT 240');
  expect((await client.discover({page:4})).results).toEqual([]);
+});
+it('expands beyond 42 results, checks posters lazily, and keeps each upstream entity batch within 50 IDs',async()=>{
+ const rows=Array.from({length:100},(_,i)=>entity(`Q${1000+i}`,year-i%3,i%5!==0));
+ const fetcher=transport(rows);const client=new WikidataClient({fetcher,wikipediaPreview:false});
+ const first=await client.discover();expect(first.results).toHaveLength(12);expect(first.hasMore).toBe(true);
+ const posterCalls=()=>fetcher.mock.calls.map(call=>new URL(String(call[0]))).filter(url=>url.hostname==='commons.wikimedia.org');
+ expect(posterCalls().length).toBeLessThan(4);
+ const checked=posterCalls().length;await client.discover();expect(posterCalls()).toHaveLength(checked);
+ const results=[...first.results];let last=first;
+ for(let page=2;last.hasMore;page++){last=await client.discover({page});results.push(...last.results);}
+ expect(results).toHaveLength(80);expect(last).toMatchObject({totalResults:80,totalPages:7,hasMore:false});
+ expect(new Set(results.map(movie=>'wikidataId'in movie?movie.wikidataId:'')).size).toBe(80);
+ expect(results.every(movie=>movie.posterUrl)).toBe(true);
+ expect(results.map(movie=>movie.releasedYear)).toEqual(results.map(movie=>movie.releasedYear).sort((a,b)=>b!-a!));
+ const reads=fetcher.mock.calls.map(call=>new URL(String(call[0]))).filter(url=>url.searchParams.get('action')==='wbgetentities');
+ expect(reads).toHaveLength(2);expect(reads.every(url=>url.searchParams.get('ids')!.split('|').length<=50)).toBe(true);
+});
+it('coalesces overlapping pages without racing a shared discovery cursor',async()=>{
+ const fetcher=transport(Array.from({length:60},(_,i)=>entity(`Q${1000+i}`,year-i%3)));
+ const client=new WikidataClient({fetcher,wikipediaPreview:false});
+ const [third,first,second]=await Promise.all([client.discover({page:3}),client.discover(),client.discover({page:2})]);
+ const results=[...first.results,...second.results,...third.results];
+ expect(results).toHaveLength(36);expect(new Set(results.map(movie=>'wikidataId'in movie?movie.wikidataId:'')).size).toBe(36);
+ expect(results.map(movie=>movie.releasedYear)).toEqual(results.map(movie=>movie.releasedYear).sort((a,b)=>b!-a!));
+ expect(fetcher.mock.calls.filter(call=>new URL(String(call[0])).hostname==='commons.wikimedia.org')).toHaveLength(4);
 });
 it('keeps explicit genre and title browsing available across all release years',async()=>{
  const fetcher=transport();const client=new WikidataClient({fetcher});
