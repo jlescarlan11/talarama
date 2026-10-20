@@ -29,6 +29,7 @@ const env = {
   NEXTAUTH_URL: 'http://127.0.0.1:3000', NEXTAUTH_SECRET: randomUUID() + randomUUID(),
   GOOGLE_CLIENT_ID: '', GOOGLE_CLIENT_SECRET: '', TMDB_READ_TOKEN: 'synthetic-transport-fixture',
   CATALOG_PROVIDER:liveWikidata?'wikidata':'tmdb',
+  TALARAMA_WIKIPEDIA_POSTERS:liveWikidata?'1':'',
   TALARAMA_PREVIEW_CATALOG: liveWikidata?'':'1', TALARAMA_LOCAL_PREVIEW: liveWikidata?'wikidata':'1',
   TALARAMA_CACHE_SCOPE: schema,
   TALARAMA_DISABLE_COMPILER_CACHE: '1', NEXT_TELEMETRY_DISABLED: '1',

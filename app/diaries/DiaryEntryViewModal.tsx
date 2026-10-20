@@ -3,7 +3,7 @@
 import React from "react";
 import DiaryDialog from "./DiaryDialog";
 import Image from "next/image";
-import {isCommonsPosterUrl} from '@/app/lib/movies/poster-credit';
+import {isWikimediaPosterUrl} from '@/app/lib/movies/poster-credit';
 import StarRating from "./StarRating";
 import { DiaryEntryWithMovie } from "./types/diary";
 
@@ -43,7 +43,7 @@ const DiaryEntryViewModal: React.FC<DiaryEntryViewModalProps> = ({
                 height={240}
                 width={160}
                 src={entry.movie.posterUrl}
-                unoptimized={isCommonsPosterUrl(entry.movie.posterUrl)}
+                unoptimized={isWikimediaPosterUrl(entry.movie.posterUrl)}
                 referrerPolicy="no-referrer"
                 alt={`${entry.movie.title} poster`}
                 className="rounded-lg object-cover shadow-lg"

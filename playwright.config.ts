@@ -13,7 +13,7 @@ process.env.TALARAMA_E2E_DATABASE_URL = database.toString();
 process.env.TALARAMA_E2E_SECRET = 'phase0-synthetic-browser-session-only';
 export default defineConfig({
   testDir: './tests/e2e',
-  testIgnore:'**/wikidata.spec.ts',
+  testIgnore:['**/wikidata.spec.ts','**/wikipedia-posters.spec.ts'],
   globalSetup: './tests/e2e/setup.ts',
   globalTeardown: './tests/e2e/teardown.ts',
   workers: 1,

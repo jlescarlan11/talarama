@@ -14,7 +14,7 @@ export default function MovieDetail({ movie, localId, signedIn, favorite, watchl
       <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 px-0 sm:px-4 py-8">
         <div className="w-full max-w-80 lg:w-80 flex-shrink-0 space-y-2">
           <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg shadow-2xl bg-base-300"><MovieArtwork src={movie.posterUrl} title={movie.title} /></div>
-          {movie.posterCredit && <p className="text-xs text-base-content/70 break-words"><a className="link" href={movie.posterCredit.sourceUrl}>Poster source: Wikimedia Commons</a><br />{movie.posterCredit.artist} | <a className="link" href={movie.posterCredit.licenseUrl}>{movie.posterCredit.license}</a>{movie.posterCredit.credit && <> | {movie.posterCredit.credit}</>}</p>}
+          {movie.posterCredit && <p className="text-xs text-base-content/70 break-words"><a className="link" href={movie.posterCredit.sourceUrl}>Poster source: {movie.posterCredit.previewOnly?'Wikipedia':'Wikimedia Commons'}</a><br />{movie.posterCredit.artist} | <a className="link" href={movie.posterCredit.licenseUrl}>{movie.posterCredit.license}</a>{movie.posterCredit.credit && <> | {movie.posterCredit.credit}</>}</p>}
         </div>
         <div className="space-y-6 min-w-0 flex-1"><div className="space-y-3"><h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold break-words leading-tight">{movie.title}</h1><div className="flex flex-wrap gap-x-4 gap-y-1 text-base-content/70"><span>{movie.releasedYear ?? 'Release year unknown'}</span><span>{movie.duration ? `${movie.duration} min` : 'Runtime unknown'}</span></div></div>
           <p className="max-w-2xl leading-relaxed whitespace-pre-line break-words">{movie.description || 'No synopsis available.'}</p>

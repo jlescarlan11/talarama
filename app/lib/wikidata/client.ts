@@ -5,13 +5,15 @@ import { TmdbError } from '@/app/lib/tmdb/client';
 import type { CatalogPage, WikidataMovie } from '@/app/lib/tmdb/types';
 import { genres } from '@/app/lib/movies/catalog-query';
 import {CommonsPosters,type PosterCandidate} from './commons-posters';
+import {WikipediaPosters,localWikipediaPostersEnabled} from './wikipedia-posters';
 
 export const wikidataIdSchema = z.string().regex(/^Q[1-9]\d{0,11}$/);
 export const wikiGenres: Record<number, string> = { 28:'Q188473',12:'Q319221',16:'Q202866',35:'Q157443',80:'Q959790',99:'Q93204',18:'Q130232',10751:'Q1361932',14:'Q157394',36:'Q17013749',27:'Q200092',10402:'Q842256',9648:'Q1200678',10749:'Q1054574',878:'Q471839',10770:'Q506240',53:'Q2484376',10752:'Q369747',37:'Q172980' };
 const filmTypes = new Set(['Q11424','Q24869','Q24862',...Object.values(wikiGenres)]);
 const statement = z.object({ rank: z.string().optional(), mainsnak: z.object({ datavalue: z.object({ value: z.unknown() }).optional() }) });
-const entitySchema = z.object({ id: wikidataIdSchema, labels: z.record(z.object({ value: z.string().max(500) })).default({}), descriptions: z.record(z.object({ value: z.string().max(3000) })).default({}), claims: z.record(z.array(statement).max(2000)).default({}) });
+const entitySchema = z.object({ id: wikidataIdSchema, labels: z.record(z.object({ value: z.string().max(500) })).default({}), descriptions: z.record(z.object({ value: z.string().max(3000) })).default({}), claims: z.record(z.array(statement).max(2000)).default({}),sitelinks:z.object({enwiki:z.object({title:z.string().max(240)}).optional()}).optional().catch(undefined) });
 type Entity = z.infer<typeof entitySchema>;
+type ArtworkSources={files:PosterCandidate[];article?:string};
 function values(entity: Entity, property: string) { return (entity.claims[property] || []).filter(s => s.rank !== 'deprecated').map(s => s.mainsnak.datavalue?.value); }
 function ids(entity: Entity, property: string): string[] { return values(entity,property).map(value => z.object({ id: wikidataIdSchema }).safeParse(value)).filter(value => value.success).map(value => value.data!.id); }
 function years(entity: Entity) { return values(entity,'P577').map(value => z.object({ time:z.string(), precision:z.number().min(9) }).safeParse(value)).filter(value => value.success).map(value => /^\+(\d{4})-/.exec(value.data!.time)?.[1]).filter((year): year is string => !!year).map(Number).filter(year => year >= 1800 && year <= 9999).sort((a,b)=>a-b); }
@@ -33,14 +35,20 @@ export class WikidataClient {
   private blockedUntil = 0;
   private fetcher: typeof fetch;
   private posters:CommonsPosters;
-  constructor({ fetcher = fetch }: { fetcher?: typeof fetch } = {}) { this.fetcher=fetcher;this.posters=new CommonsPosters({fetcher}); }
-  private posterCandidates(entity:Entity):PosterCandidate[] {
+  private wikipedia:WikipediaPosters;
+  private wikipediaPreview:boolean;
+  constructor({ fetcher = fetch,wikipediaPreview=localWikipediaPostersEnabled() }: { fetcher?: typeof fetch;wikipediaPreview?:boolean } = {}) { this.fetcher=fetcher;this.posters=new CommonsPosters({fetcher});this.wikipedia=new WikipediaPosters({fetcher});this.wikipediaPreview=wikipediaPreview; }
+  private posterCandidates(entity:Entity):ArtworkSources {
     const files=(property:string,explicitPoster:boolean)=>values(entity,property).filter((file):file is string=>typeof file==='string').slice(0,2).map(file=>({file,explicitPoster}));
-    return [...files('P3383',true),...files('P18',false)];
+    return {files:[...files('P3383',true),...files('P18',false)],article:this.wikipediaPreview?entity.sitelinks?.enwiki?.title:undefined};
   }
-  private async attachPosters(candidates:Map<string,PosterCandidate[]>,movies:WikidataMovie[]):Promise<WikidataMovie[]> {
-    const posters=await this.posters.resolve([...candidates.values()].flat());
-    return movies.map(movie=>{const poster=candidates.get(movie.wikidataId)?.map(candidate=>posters.get(candidate.file)).find(Boolean);return poster?{...movie,posterUrl:poster.url,posterCredit:poster}:movie;});
+  private async attachPosters(candidates:Map<string,ArtworkSources>,movies:WikidataMovie[]):Promise<WikidataMovie[]> {
+    const posters=await this.posters.resolve([...candidates.values()].flatMap(value=>value.files));
+    const decorated=movies.map(movie=>{const poster=candidates.get(movie.wikidataId)?.files.map(candidate=>posters.get(candidate.file)).find(Boolean);return poster?{...movie,posterUrl:poster.url,posterCredit:poster}:movie;});
+    if(!this.wikipediaPreview)return decorated;
+    const missing=decorated.flatMap(movie=>{const title=candidates.get(movie.wikidataId)?.article;return !movie.posterUrl&&title?[{wikidataId:movie.wikidataId,title}]:[];});
+    const thumbnails=await this.wikipedia.resolve(missing);
+    return decorated.map(movie=>{const poster=thumbnails.get(movie.wikidataId);return poster?{...movie,posterUrl:poster.url,posterCredit:poster}:movie;});
   }
   private async request(url: URL): Promise<unknown> {
     if (Date.now() < this.blockedUntil) throw new TmdbError('RATE_LIMITED');
@@ -65,7 +73,7 @@ export class WikidataClient {
   private api(params: Record<string,string>) { const url=new URL('https://www.wikidata.org/w/api.php');url.search=new URLSearchParams({format:'json',...params}).toString();return this.request(url); }
   private async entities(requested: string[], claims = true): Promise<Entity[]> {
     if(!requested.length)return [];
-    const data=z.object({entities:z.record(z.unknown())}).safeParse(await this.api({action:'wbgetentities',ids:requested.join('|'),languages:'en',props:claims?'labels|descriptions|claims':'labels'}));
+    const data=z.object({entities:z.record(z.unknown())}).safeParse(await this.api({action:'wbgetentities',ids:requested.join('|'),languages:'en',props:claims?'labels|descriptions|claims'+(this.wikipediaPreview?'|sitelinks':''):'labels',sitefilter:'enwiki'}));
     if(!data.success)throw new TmdbError('INVALID_RESPONSE');
     return requested.map(id=>{ const raw=data.data.entities[id];if(raw && typeof raw==='object' && 'missing' in raw)throw new TmdbError('NOT_FOUND');const parsed=entitySchema.safeParse(raw);if(!parsed.success || parsed.data.id!==id)throw new TmdbError('INVALID_RESPONSE');return parsed.data; });
   }
@@ -84,7 +92,7 @@ export class WikidataClient {
   private async list(input: { query?:string;genre?:number;year?:number;page?:number }): Promise<CatalogPage> {
     const parsed=z.object({query:z.string().trim().min(1).max(200).optional(),genre:z.number().int().refine(id=>!!wikiGenres[id]).optional(),year:z.number().int().min(1800).max(9999).optional(),page:z.number().int().min(1).max(500).default(1)}).safeParse(input);
     if(!parsed.success)throw new TmdbError('INVALID_INPUT');const {query,genre,year,page}=parsed.data;
-    const metadata=await this.cache.get<{data:CatalogPage<WikidataMovie>;candidates:Map<string,PosterCandidate[]>}>(`list:${JSON.stringify(parsed.data)}`,query?300000:3600000,async()=>{
+    const metadata=await this.cache.get<{data:CatalogPage<WikidataMovie>;candidates:Map<string,ArtworkSources>}>(`list:${JSON.stringify(parsed.data)}`,query?300000:3600000,async()=>{
       let selected:string[];let total=0;let hasMore:boolean|undefined;
       if(year){
         // Candidate restriction keeps title/year queries away from a global label scan.

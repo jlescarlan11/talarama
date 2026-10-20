@@ -1,0 +1,27 @@
+# Newer posters in the local preview
+
+The owner requested newer movie posters without a TMDB token, retaining the original UI, existing IDs/member data and local-only work. The existing artwork flow now has an optional English Wikipedia thumbnail fallback after Commons. No source-code license changes, database migration, backfill, push or deployment are involved.
+
+`npm run preview:wikidata` enables this fallback in its own disposable, loopback-only preview. The runtime guard requires `TALARAMA_WIKIPEDIA_POSTERS=1`, `TALARAMA_LOCAL_PREVIEW=wikidata` and an HTTP loopback `NEXTAUTH_URL`. The ordinary catalog outside that preview setting keeps its existing Commons behavior. No provider token or account is needed. This flag is for the local trial, not a production-ready hosting control.
+
+Wikidata's English Wikipedia sitelink provides the exact article identity. The [public PageImages API](https://www.mediawiki.org/wiki/API:Pageimages) returns its image, and `pageprops.wikibase_item` must match the original Q ID. There is no movie-title guessing or ID reassignment. Accept only portrait raster thumbnails with poster filenames, maximum480px width/1000px height, from approved `/wikipedia/en/` media paths. The request asks for320px thumbnails; nonfree originals are often already smaller. Crosscheck the image filename, source file metadata and local repository. Reject cast photographs, mismatched film IDs, missing rights metadata, deletion/restriction flags, redirects and foreign media hosts.
+
+The English Wikipedia file must explicitly report `NonFree=true` and a Fair use label before this preview fallback is used. The application labels it **Copyrighted (Wikipedia)**, never public domain or CC0, and links the source file and its licensing section. [Wikipedia's non-free-content policy](https://en.wikipedia.org/wiki/Wikipedia:Non-free_content) describes its own use; it is not a license grant to this app. Source licensing and any public-release image-rights decision remain pending. Commons public-domain/CC0 posters remain preferred.
+
+The original carousel, catalog cards, detail layout and themes remain. The existing detail credit line changes its source label for Wikipedia images. Direct pre-sized image requests use no referrer. There is no new generic server image proxy or broad English-Wikipedia optimizer allowlist.
+
+Wikipedia metadata uses its own bounded/coalescing process cache. Requests use fixed official API URLs,8-second body/request timeouts,2MiB limits, at most12 film identities, redirect refusal and separate429 cooldown. Failures retain the film and existing actions, then can recover independently of cached Wikidata metadata. No member state is sent to either provider.
+
+These thumbnails are **transient display data**. Import snapshots omit both the English Wikipedia URL and its preview credit, including when the marker is missing but the URL is recognizable. Existing movies and member rows are never updated. Save/log still uses the same stable local movie identity and diary/library services. Diary snapshots may therefore retain the ordinary fallback for a film that has only a transient Wikipedia poster; they do not acquire a copyrighted artwork URL from this trial.
+
+Direct public provider reads returned real posters for **Dune: Part Two (2024), Q109228991**, and **Inside Out 2 (2024), Q113877606**, with the correct preview-only copyright classification. Those live reads are separate from synthetic automated tests. Final local verification and screenshots are recorded below after completion.
+
+
+Verification in this change:132 unit tests and54 disposable PostgreSQL tests passed. The new Wikipedia poster/browse/save/log/transient-snapshot browser journey passed at360/1440px; the existing Commons poster/full-library journey passed at360/768/1440px. Lint and type checks passed. Initial5-second test limits were too short during parallel cold compilation/pg_dump load; the restore fixture and watchlist assertion now use bounded30-second restore/20-second watchlist-assertion allowances for CLI startup and cold route compilation, and the checks passed when run separately. No application request/transaction timeout was relaxed.
+
+One independent read-only review found no actionable code issues. The coordinator owns runtime/browser/database evidence; it does not infer legal clearance from the review. No deferred code finding remains. Live image rights and public release remain outside this local trial. Final build and localhost evidence are recorded below when complete.
+
+
+Final handoff (2026-10-20): the production build/type validation and isolated loopback3101 smoke passed. Rebuilt `preview:wikidata` is running on127.0.0.1:3000 with real providers and no fixture preload. Live catalog searches and details returned200 forQ109228991(Dune: Part Two,2024) andQ113877606(Inside Out2,2024), each with an English Wikipedia poster and `Copyrighted (Wikipedia)`/previewOnly provenance. The owned preview's movie/entry/identity counts stayed0/0/0 after browsing.
+
+The browser visibly loaded Dune's real poster with its copyright/source caption in the restored detail layout. A fresh HTTP tab4 was opened and left as a deliverable because the old tab was on a browser-internal error page and could not be inspected; that blocked page was not accessed or bypassed. Screenshot: `.superpowers/newer-movie-poster-localhost.png`. No existing member data, schema or migration was changed. Local branch/worktree retained; no push, deployment or public image-rights clearance.

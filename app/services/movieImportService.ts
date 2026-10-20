@@ -4,12 +4,14 @@ import prisma from '@/prisma/client';
 import { tmdb } from '@/app/lib/tmdb/server';
 import { tmdbIdSchema } from '@/app/lib/tmdb/normalize';
 import type { CatalogMovie, WikidataMovie } from '@/app/lib/tmdb/types';
+import {isWikipediaPreviewPosterUrl} from '@/app/lib/movies/poster-credit';
 
 type Dependencies = { db?: PrismaClient; provider?: { details(id: number): Promise<CatalogMovie> } };
 export function movieMetadata(detail: CatalogMovie | WikidataMovie) {
+  const transient=detail.posterCredit?.previewOnly || isWikipediaPreviewPosterUrl(detail.posterUrl);
   return { title: detail.title, description: detail.description, releasedYear: detail.releasedYear, duration: detail.duration,
-    posterUrl: detail.posterUrl, backdropUrl: detail.backdropUrl, tmdbScore: detail.tmdbScore,
-    credits: { cast: detail.cast, directors: detail.directors, ...(detail.posterCredit?{posterCredit:{...detail.posterCredit}}:{}) } as Prisma.InputJsonValue,
+    posterUrl: transient?null:detail.posterUrl, backdropUrl: detail.backdropUrl, tmdbScore: detail.tmdbScore,
+    credits: { cast: detail.cast, directors: detail.directors, ...(!transient && detail.posterCredit?{posterCredit:{...detail.posterCredit}}:{}) } as Prisma.InputJsonValue,
     metadataRefreshedAt: new Date(),
   };
 }

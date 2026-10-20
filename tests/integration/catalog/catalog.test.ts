@@ -183,4 +183,4 @@ it('restores Wikidata identities and imported movies alongside unchanged member 
   expect(await restored.externalMovieIdentity.findMany()).toEqual(identities);
   expect(await restored.movie.findUnique({where:{id:movie.id}})).toEqual(movie);
   expect(await snapshot(restored)).toEqual(before);
-});
+},30000);

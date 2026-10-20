@@ -96,3 +96,13 @@ it('recovers artwork after a transient failure without refetching cached Wikidat
  failed=false;
  expect((await provider.details('Q25188')).posterUrl).toContain('wikimedia.org');expect((await provider.discover()).results[0].posterUrl).toContain('wikimedia.org');expect(original.mock.calls.length).toBe(reads);
 });
+it('uses article-identity verified Wikipedia thumbnails only in the enabled local preview',async()=>{
+ const main={...entity(),sitelinks:{enwiki:{title:'Inception'}}};const original=transport(main);
+ const fetcher=vi.fn<typeof fetch>(async(input,options)=>{
+  const url=new URL(String(input));if(url.hostname!=='en.wikipedia.org')return original(input,options);
+  return Response.json({query:{pages:url.searchParams.get('prop')==='imageinfo'?[{title:'File:Inception poster.jpg',imagerepository:'local',imageinfo:[{mime:'image/jpeg',extmetadata:{NonFree:{value:'true'},LicenseShortName:{value:'Fair use'}}}]}]:[{title:'Inception',pageprops:{wikibase_item:'Q25188'},pageimage:'Inception poster.jpg',thumbnail:{source:'https://upload.wikimedia.org/wikipedia/en/a/ab/Inception_poster.jpg',width:220,height:330}}]}});
+ });
+ const enabled=new WikidataClient({fetcher,wikipediaPreview:true});expect((await enabled.details('Q25188')).posterCredit).toMatchObject({previewOnly:true,license:'Copyrighted (Wikipedia)'});
+ expect((await enabled.discover()).results[0].posterUrl).toContain('/wikipedia/en/');
+ const disabled=new WikidataClient({fetcher,wikipediaPreview:false});expect((await disabled.details('Q25188')).posterUrl).toBeNull();
+});

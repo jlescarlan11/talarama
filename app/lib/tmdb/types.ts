@@ -1,4 +1,4 @@
-export interface PosterCredit {url:string;sourceUrl:string;license:'Public domain'|'CC0';licenseUrl:string;artist:string;credit:string}
+export interface PosterCredit {url:string;sourceUrl:string;license:'Public domain'|'CC0'|'Copyrighted (Wikipedia)';licenseUrl:string;artist:string;credit:string;previewOnly?:true}
 export interface CatalogMovie {
   localId: string | null;
   tmdbId: number;
