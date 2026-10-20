@@ -1,0 +1,80 @@
+import {act,render,renderHook} from '@testing-library/react';
+import {afterEach,beforeEach,expect,it,vi} from 'vitest';
+import LocalMovieAutoRefresh from '@/app/components/LocalMovieAutoRefresh';
+import {movieMetadataRefreshEvent} from '@/app/lib/movies/refresh';
+import {useCatalogSearch} from '@/app/hooks/useCatalogSearch';
+import {usePublicResource} from '@/app/community/usePublicResource';
+const route=vi.hoisted(()=>({pathname:'/',refresh:vi.fn()}));
+vi.mock('next/navigation',()=>({usePathname:()=>route.pathname,useRouter:()=>router}));
+const router={refresh:route.refresh};
+let visible=true,online=true;
+beforeEach(()=>{
+ vi.useFakeTimers();route.pathname='/';route.refresh.mockReset();visible=true;online=true;
+ vi.spyOn(document,'visibilityState','get').mockImplementation(()=>visible?'visible':'hidden');
+ vi.spyOn(navigator,'onLine','get').mockImplementation(()=>online);
+});
+afterEach(()=>{vi.useRealTimers();vi.restoreAllMocks();vi.unstubAllGlobals();});
+it('soft-refreshes server pages once a minute without adding UI, then stops on unmount',()=>{
+ const view=render(<LocalMovieAutoRefresh enabled/>);
+ expect(view.container).toBeEmptyDOMElement();
+ act(()=>vi.advanceTimersByTime(59999));expect(route.refresh).not.toHaveBeenCalled();
+ act(()=>vi.advanceTimersByTime(1));expect(route.refresh).toHaveBeenCalledOnce();
+ view.unmount();act(()=>vi.advanceTimersByTime(120000));expect(route.refresh).toHaveBeenCalledOnce();
+});
+it('pauses hidden/offline tabs and active saves, catches up on resume, and stays off outside local mode',()=>{
+ const view=render(<LocalMovieAutoRefresh enabled/>);
+ visible=false;act(()=>vi.advanceTimersByTime(60000));expect(route.refresh).not.toHaveBeenCalled();
+ visible=true;online=false;act(()=>document.dispatchEvent(new Event('visibilitychange')));expect(route.refresh).not.toHaveBeenCalled();
+ online=true;act(()=>window.dispatchEvent(new Event('online')));expect(route.refresh).toHaveBeenCalledOnce();
+ const busy=document.createElement('form');busy.setAttribute('aria-busy','true');document.body.append(busy);
+ act(()=>vi.advanceTimersByTime(60000));expect(route.refresh).toHaveBeenCalledOnce();busy.remove();
+ act(()=>vi.advanceTimersByTime(60000));expect(route.refresh).toHaveBeenCalledTimes(2);
+ view.rerender(<LocalMovieAutoRefresh enabled={false}/>);act(()=>vi.advanceTimersByTime(60000));expect(route.refresh).toHaveBeenCalledTimes(2);
+});
+it('updates discovery in place, retains good results on outages, and coalesces slow refreshes',async()=>{
+ route.pathname='/movies';const key='mode=discover&page=2&genre=878';
+ const initial={key,data:{page:2,totalPages:3,totalResults:30,results:[]},error:null};
+ let finish!:(response:Response)=>void;
+ const fetcher=vi.fn(()=>new Promise<Response>(resolve=>{finish=resolve;}));vi.stubGlobal('fetch',fetcher);
+ const hook=renderHook(()=>useCatalogSearch(key,initial));const view=render(<LocalMovieAutoRefresh enabled/>);
+ expect(fetcher).not.toHaveBeenCalled();
+ await act(async()=>{vi.advanceTimersByTime(60000);});expect(fetcher).toHaveBeenCalledOnce();expect(route.refresh).not.toHaveBeenCalled();
+ await act(async()=>{window.dispatchEvent(new Event(movieMetadataRefreshEvent));});expect(fetcher).toHaveBeenCalledOnce();
+ const updated={...initial.data,totalResults:40};await act(async()=>{finish(Response.json(updated));});
+ expect(hook.result.current.data).toEqual(updated);
+ await act(async()=>{window.dispatchEvent(new Event(movieMetadataRefreshEvent));finish(new Response('',{status:503}));});
+ expect(hook.result.current.data).toEqual(updated);expect(hook.result.current.error).toBeNull();expect(hook.result.current.loading).toBe(false);
+ view.unmount();hook.unmount();
+});
+it('ignores a refresh response for an obsolete discovery URL',async()=>{
+ const pending:{resolve:(response:Response)=>void;signal?:AbortSignal}[]=[];
+ vi.stubGlobal('fetch',vi.fn((_url,options)=>new Promise<Response>(resolve=>pending.push({resolve,signal:options.signal}))));
+ const first='mode=search&query=First';
+ const initial={key:first,data:{page:1,totalPages:1,totalResults:0,results:[]},error:null};
+ const hook=renderHook(({key})=>useCatalogSearch(key,initial),{initialProps:{key:first}});
+ await act(async()=>window.dispatchEvent(new Event(movieMetadataRefreshEvent)));
+ hook.rerender({key:'mode=search&query=Second'});expect(pending[0].signal?.aborted).toBe(true);
+ await act(async()=>pending[1].resolve(Response.json({page:1,totalPages:1,totalResults:2,results:[]})));
+ await act(async()=>pending[0].resolve(Response.json({page:1,totalPages:1,totalResults:99,results:[]})));
+ expect(hook.result.current.data?.totalResults).toBe(2);
+});
+it('rechecks public eligibility on page updates and clears a withdrawn review',async()=>{
+ let finish!:(response:Response)=>void;
+ const fetcher=vi.fn().mockResolvedValueOnce(Response.json({review:'Synthetic public review'})).mockImplementationOnce(()=>new Promise<Response>(resolve=>{finish=resolve;}));vi.stubGlobal('fetch',fetcher);
+ const hook=renderHook(()=>usePublicResource<{review:string}>('/api/reviews/synthetic'));
+ await act(async()=>{});expect(hook.result.current.data?.review).toBe('Synthetic public review');
+ await act(async()=>window.dispatchEvent(new Event(movieMetadataRefreshEvent)));
+ expect(hook.result.current.data?.review).toBe('Synthetic public review');
+ await act(async()=>finish(new Response('',{status:404})));
+ expect(hook.result.current.data).toBeNull();expect(hook.result.current.missing).toBe(true);
+});
+it('lets a privacy/focus recheck preempt a pending silent update and ignores its obsolete response',async()=>{
+ let finish!:(response:Response)=>void;
+ const fetcher=vi.fn().mockResolvedValueOnce(Response.json({review:'Synthetic public review'})).mockImplementationOnce(()=>new Promise<Response>(resolve=>{finish=resolve;})).mockResolvedValueOnce(new Response('',{status:404}));vi.stubGlobal('fetch',fetcher);
+ const hook=renderHook(()=>usePublicResource<{review:string}>('/api/reviews/synthetic'));
+ await act(async()=>{});await act(async()=>window.dispatchEvent(new Event(movieMetadataRefreshEvent)));
+ await act(async()=>window.dispatchEvent(new Event('focus')));
+ expect(hook.result.current.data).toBeNull();expect(hook.result.current.missing).toBe(true);
+ await act(async()=>finish(Response.json({review:'Obsolete response'})));
+ expect(hook.result.current.data).toBeNull();expect(hook.result.current.missing).toBe(true);
+});

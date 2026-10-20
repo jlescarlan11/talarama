@@ -4,6 +4,8 @@ import NavBar from "./NavBar";
 import AuthProvider from "./auth/Provider";
 import { ThemeProvider } from "./providers/ThemeProvider";
 import Footer from "./components/Footer";
+import LocalMovieAutoRefresh from './components/LocalMovieAutoRefresh';
+import {localMovieSyncEnabled} from './lib/wikidata/sync';
 
 
 
@@ -45,6 +47,7 @@ export default async function RootLayout({
         <a href="#main-content" className="skip-link">Skip to content</a>
         <ThemeProvider>
           <AuthProvider>
+            <LocalMovieAutoRefresh enabled={localMovieSyncEnabled()}/>
             <NavBar />
             {process.env.TALARAMA_LOCAL_PREVIEW === '1' && <p role="status" className="text-center text-sm bg-base-200 text-base-content py-2 px-4">Local preview · 24 invented sample films · live TMDB and Google sign-in are not connected.</p>}
             {process.env.TALARAMA_LOCAL_PREVIEW === 'wikidata' && <p role="status" className="text-center text-sm bg-base-200 text-base-content py-2 px-4">Local preview · live Wikidata movie data · member records are disposable fixtures · Google sign-in is not connected.</p>}

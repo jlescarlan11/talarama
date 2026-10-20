@@ -16,7 +16,7 @@ export default async function Home() {
       </h1>
       <p className="text-2xl text-center text-base-content/80 mb-8">Here&apos;s where you left off your movie roll....</p>
       {!popular && <p role="status" className="text-center text-base-content/70 mb-4">Live discovery is temporarily unavailable. Your saved local movies remain accessible.</p>}
-      <div className="w-full flex justify-center"><MovieCarousel movies={movies} /></div>
+      <div className="w-full flex justify-center"><MovieCarousel movies={movies} providerUnavailable={!popular}/></div>
       <div className="flex flex-wrap justify-center gap-3 mt-8"><Link href="/movies" className="btn btn-primary">Discover movies</Link><Link href="/diaries" className="btn btn-outline">My diary</Link></div>
     </div>
   );

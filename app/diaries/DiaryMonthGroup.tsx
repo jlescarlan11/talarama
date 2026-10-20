@@ -73,7 +73,7 @@ const DiaryMonthGroup: React.FC<DiaryMonthGroupProps> = ({ entries }) => {
       {/* View Modal */}
       {viewModalEntry && (
         <DiaryEntryViewModal
-          entry={viewModalEntry}
+          entry={entries.find(entry=>entry.id===viewModalEntry.id)??viewModalEntry}
           onClose={handleCloseViewModal}
         />
       )}

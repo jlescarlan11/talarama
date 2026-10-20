@@ -20,6 +20,7 @@ type MovieWithGenres = Movie & {
 
 interface MovieCarouselProps {
   movies: (MovieWithGenres | DiscoveredMovie)[];
+  providerUnavailable?:boolean;
 }
 
 interface CardStyle {
@@ -37,8 +38,10 @@ const subscribeToMotion = (notify: () => void) => {
 const getMotionPreference = () => window.matchMedia?.(motionQuery).matches ?? true;
 const getServerMotionPreference = () => true;
 
-const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies }) => {
-  const displayMovies = movies.slice(0, 14);
+const MovieCarousel: React.FC<MovieCarouselProps> = ({ movies,providerUnavailable=false }) => {
+  const [lastGoodMovies,setLastGoodMovies]=useState(providerUnavailable?[]:movies);
+  if(!providerUnavailable&&lastGoodMovies!==movies)setLastGoodMovies(movies);
+  const displayMovies = (providerUnavailable&&lastGoodMovies.length?lastGoodMovies:movies).slice(0, 14);
   const [activeIdx, setActiveIdx] = useState(
     Math.floor(displayMovies.length / 2)
   );

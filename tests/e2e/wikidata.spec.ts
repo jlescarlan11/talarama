@@ -52,3 +52,57 @@ test('Wikidata browse/detail preserve reads, identities, save/log actions and or
   await page.goto(`/movies/${mapping.movieId}`);await expect(page).toHaveURL(/\/movies\/(wikidata\/Q25188|[a-z0-9-]+)$/,{timeout:20000});await expect(page.getByRole('heading',{name:'Wikidata Fixture Film',level:1})).toBeVisible();
  }finally{await db.$disconnect();}
 });
+
+const tinyImage=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aHxkAAAAASUVORK5CYII=','base64');
+test('discovery automatically updates its visible posters without changing page, draft filters or scroll',async({page})=>{
+ const db=new PrismaClient({datasourceUrl:process.env.TALARAMA_E2E_DATABASE_URL});
+ try{
+  await page.clock.install();
+  await page.route('https://upload.wikimedia.org/**',route=>route.fulfill({contentType:'image/png',body:tinyImage}));
+  await page.goto('/movies');await page.getByRole('button',{name:'Next',exact:true}).click();
+  await expect(page).toHaveURL(/page=2/);await expect(page.getByRole('link',{name:/Wikidata Film Q25200 /})).toBeVisible();
+  const url=page.url();const query=new URL(url).search;
+  const data=await(await page.request.get('/api/catalog'+query)).json();
+  const poster='https://upload.wikimedia.org/wikipedia/commons/a/ab/Updated_fixture_poster.png';
+  const updated={...data,results:data.results.map((movie:Record<string,unknown>,index:number)=>index===0?{...movie,title:'Automatically updated fixture',posterUrl:poster}:movie)};
+  let requests=0;await page.route('**/api/catalog?**',route=>{requests++;return route.fulfill({json:updated});});
+  await page.getByLabel('Release year').fill('1999');
+  await page.evaluate(()=>window.scrollTo(0,250));const scroll=await page.evaluate(()=>scrollY);
+  const before={movies:await db.movie.findMany(),entries:await db.diaryEntry.findMany(),users:await db.user.findMany()};
+  await page.clock.fastForward(60001);
+  await expect(page.getByRole('img',{name:'Poster for Automatically updated fixture'})).toHaveAttribute('src',poster,{timeout:20000});
+  expect(requests).toBe(1);expect(page.url()).toBe(url);await expect(page.getByLabel('Release year')).toHaveValue('1999');await expect(page.getByLabel('Release year')).toBeFocused();
+  expect(await page.evaluate(()=>scrollY)).toBe(scroll);
+  expect({movies:await db.movie.findMany(),entries:await db.diaryEntry.findMany(),users:await db.user.findMany()}).toEqual(before);
+ }finally{await db.$disconnect();}
+});
+
+test('visible page details update automatically and preserve an unsaved diary draft',async({page,context})=>{
+ test.setTimeout(120000);const db=new PrismaClient({datasourceUrl:process.env.TALARAMA_E2E_DATABASE_URL});
+ const beforePoster='https://upload.wikimedia.org/wikipedia/commons/a/ab/Before_fixture_poster.png';
+ const afterPoster='https://upload.wikimedia.org/wikipedia/commons/a/ab/After_fixture_poster.png';
+ try{
+  await page.clock.install();await page.route('https://upload.wikimedia.org/**',route=>route.fulfill({contentType:'image/png',body:tinyImage}));
+  await db.movie.update({where:{id:'browser-movie'},data:{title:'Before automatic refresh',description:'Before details',posterUrl:beforePoster,duration:90}});
+  await page.goto('/movies/browser-movie');await expect(page.getByRole('heading',{name:'Before automatic refresh',level:1})).toBeVisible();
+  await expect(page.getByText('No written reviews yet')).toBeVisible();
+  await db.movie.update({where:{id:'browser-movie'},data:{title:'After automatic refresh',description:'After details',posterUrl:afterPoster,duration:120}});
+  await page.clock.fastForward(60001);
+  await expect(page.getByRole('heading',{name:'After automatic refresh',level:1})).toBeVisible({timeout:20000});
+  await expect(page.getByText('After details',{exact:true})).toBeVisible();await expect(page.getByRole('img',{name:'Poster for After automatic refresh'})).toHaveAttribute('src',afterPoster);
+  await expect(page).toHaveURL(/\/movies\/browser-movie$/);
+  const token=await encode({secret:process.env.TALARAMA_E2E_SECRET!,token:{sub:'browser-owner',id:'browser-owner',username:'browser_member'}});
+  await context.addCookies([{name:'next-auth.session-token',value:token,url:'http://127.0.0.1:3100',httpOnly:true,sameSite:'Lax'}]);
+  await page.goto('/diaries/new?movieId=browser-movie');await expect(page.getByText('Logging: After automatic refresh')).toBeVisible();
+  await expect(page.getByText(/Calendar date in .*\(loading/)).toHaveCount(0);
+  await page.getByLabel('Watched Date').fill('2020-02-29');await page.getByLabel('Rewatch',{exact:true}).check();await page.getByLabel('Visibility',{exact:true}).selectOption('PUBLIC');
+  await page.getByLabel('Find a saved movie').fill('Keep this filter');await page.getByLabel('Review (optional)').fill('Keep my unsaved review');
+  const scroll=await page.evaluate(()=>scrollY);const entries=await db.diaryEntry.findMany();const users=await db.user.findMany();
+  await db.movie.update({where:{id:'browser-movie'},data:{title:'Newest automatic title'}});
+  await page.clock.fastForward(60001);
+  await expect(page.getByText('Logging: Newest automatic title')).toBeVisible({timeout:20000});
+  await expect(page.getByLabel('Movie',{exact:true})).toHaveValue('browser-movie');await expect(page.getByLabel('Review (optional)')).toHaveValue('Keep my unsaved review');await expect(page.getByLabel('Review (optional)')).toBeFocused();
+  await expect(page.getByLabel('Watched Date')).toHaveValue('2020-02-29');await expect(page.getByLabel('Rewatch',{exact:true})).toBeChecked();await expect(page.getByLabel('Visibility',{exact:true})).toHaveValue('PUBLIC');await expect(page.getByLabel('Find a saved movie')).toHaveValue('Keep this filter');
+  expect(await page.evaluate(()=>scrollY)).toBe(scroll);expect(await db.diaryEntry.findMany()).toEqual(entries);expect(await db.user.findMany()).toEqual(users);
+ }finally{await db.$disconnect();}
+});

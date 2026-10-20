@@ -17,3 +17,15 @@ it('replaces broken provider artwork with the safe local fallback', () => {
   fireEvent.error(poster);
   expect(poster).toHaveAttribute('src', '/placeholder-movie.svg');
 });
+it('retains the visible carousel during an automatic refresh outage and accepts a successful empty result',()=>{
+ const view=render(<MovieCarousel movies={[movie]}/>);
+ view.rerender(<MovieCarousel movies={[]} providerUnavailable/>);
+ expect(screen.getAllByRole('img',{name:'Poster for Provider film'})).toHaveLength(5);
+ view.rerender(<MovieCarousel movies={[]} providerUnavailable={false}/>);
+ expect(screen.getByText('No movies yet')).toBeVisible();
+});
+it('continues updating saved fallback metadata if the homepage first opened during an outage',()=>{
+ const view=render(<MovieCarousel movies={[movie]} providerUnavailable/>);
+ view.rerender(<MovieCarousel movies={[{...movie,title:'Refreshed saved fallback'}]} providerUnavailable/>);
+ expect(screen.getAllByRole('img',{name:'Poster for Refreshed saved fallback'})).toHaveLength(5);
+});
