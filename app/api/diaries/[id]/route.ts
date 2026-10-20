@@ -4,6 +4,7 @@ import prisma from '@/prisma/client';
 import { diaryEntrySchema } from '@/app/lib/diary/contracts';
 import { json, diaryError, readDiaryBody } from '@/app/lib/diary/http';
 import { updateDiaryEntry, deleteDiaryEntry, serializeEntry } from '@/app/services/diaryEntryService';
+import {syncEntryMovies} from '@/app/services/movieSyncService';
 type Context = {
     params: Promise<{
         id: string;
@@ -16,7 +17,7 @@ export async function GET(_request: Request, { params }: Context) {
     try {
         const { id } = await params;
         const entry = await prisma.diaryEntry.findFirst({ where: { id, userId: session.user.id }, include: { movie: true } });
-        return entry ? json(serializeEntry(entry)) : json({ error: 'Diary entry not found' }, 404);
+        return entry ? json(serializeEntry((await syncEntryMovies([entry]))[0])) : json({ error: 'Diary entry not found' }, 404);
     }
     catch (error) {
         return diaryError(error);

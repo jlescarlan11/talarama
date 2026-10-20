@@ -1,6 +1,7 @@
 import prisma from '@/prisma/client';
 import { NextResponse } from 'next/server';
 import { retiredCatalogWrite } from '@/app/lib/movies/library-handler';
+import {syncMovieDisplays} from '@/app/services/movieSyncService';
 const CACHE_CONTROL = { GET: 'public, s-maxage=60, stale-while-revalidate=300' };
 export async function GET() {
   try {
@@ -15,7 +16,7 @@ export async function GET() {
       take: 20, // Limit to 20 movies per request
     });
 
-    return NextResponse.json(movies, {
+    return NextResponse.json(await syncMovieDisplays(movies), {
       status: 200,
       headers: {
         "Cache-Control": CACHE_CONTROL.GET,

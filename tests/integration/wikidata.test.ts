@@ -5,6 +5,8 @@ import { createRetentionFixture } from '@/scripts/lib/tmdb-retention-fixtures';
 import { importWikidataMovie } from '@/app/services/wikidataImportService';
 import { seedLocalPreview } from '@/scripts/lib/local-preview-seed';
 import type { WikidataMovie } from '@/app/lib/tmdb/types';
+import {WikidataSync} from '@/app/lib/wikidata/sync';
+import {syncMovieDisplays} from '@/app/services/movieSyncService';
 let scope: Awaited<ReturnType<typeof createRetentionFixture>>;
 const detail: WikidataMovie = { localId:null,wikidataId:'Q25188',tmdbId:null,title:'Same title',description:'CC0 description',releasedYear:2010,duration:148,posterUrl:'https://upload.wikimedia.org/wikipedia/commons/a/ab/Fixture_poster.jpg',posterCredit:{url:'https://upload.wikimedia.org/wikipedia/commons/a/ab/Fixture_poster.jpg',sourceUrl:'https://commons.wikimedia.org/wiki/File:Fixture_poster.jpg',license:'Public domain',licenseUrl:'https://commons.wikimedia.org/wiki/Help:Public_domain',artist:'Synthetic artist',credit:'Synthetic scan'},backdropUrl:null,tmdbScore:null,tmdbVoteCount:null,genres:[{wikidataId:'Q471839',name:'Science Fiction'}],cast:[],directors:[] };
 const provider={details:async()=>detail};
@@ -36,6 +38,26 @@ it('rejects provider identity mismatch without creating movies or identity links
  const before=await scope.db.movie.count();
  await expect(importWikidataMovie('Q42',{db:scope.db,provider})).rejects.toThrow('identity');
  expect(await scope.db.movie.count()).toBe(before);expect(await scope.db.externalMovieIdentity.findUnique({where:{provider_externalId:{provider:'WIKIDATA',externalId:'Q42'}}})).toBeNull();
+});
+it('refreshes linked displays and transient posters without changing snapshots, IDs or any member data',async()=>{
+ const capture=async()=>({member:await snapshot(),movies:await scope.db.movie.findMany({orderBy:{id:'asc'}}),identities:await scope.db.externalMovieIdentity.findMany(),genres:await scope.db.movieCategorizesAs.findMany()});
+ const before=await capture();let now=0;
+ let latest={...detail,title:'Updated title',duration:150,description:'Updated details',posterUrl:'https://upload.wikimedia.org/wikipedia/en/a/ab/Updated_poster.jpg',posterCredit:undefined};
+ const sync=new WikidataSync(async()=>latest,{ttlMs:100,now:()=>now});
+ const rows=await scope.db.movie.findMany({orderBy:{id:'asc'}});
+ await sync.refresh(['Q25188']);
+ const first=await syncMovieDisplays(rows,{db:scope.db,sync,enabled:true});
+ const linked=before.identities[0].movieId;
+ expect(first.find(row=>row.id===linked)).toMatchObject({id:linked,title:'Updated title',duration:150,posterUrl:latest.posterUrl});
+ expect(first.find(row=>row.id==='wiki-legacy')).toEqual(rows.find(row=>row.id==='wiki-legacy'));
+ now=101;latest={...latest,title:'Automatically refreshed',duration:155};
+ await sync.refresh();
+ const second=await syncMovieDisplays(rows,{db:scope.db,sync,enabled:true});
+ expect(second.find(row=>row.id===linked)).toMatchObject({title:'Automatically refreshed',duration:155});
+ expect(await capture()).toEqual(before);
+ const publicCard={id:linked,title:'Snapshot',posterUrl:null,releasedYear:2010};
+ const [card]=await syncMovieDisplays([publicCard],{db:scope.db,sync,enabled:true});
+ expect(Object.keys(card).sort()).toEqual(Object.keys(publicCard).sort());
 });
 it('seeds no invented movies or reviews in the live Wikidata preview',async()=>{
  const fixture=await createRetentionFixture(process.env.TEST_DATABASE_URL!);

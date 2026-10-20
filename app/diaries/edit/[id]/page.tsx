@@ -5,6 +5,7 @@ import { notFound, redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import authOptions from "@/app/auth/authOptions";
 import Link from "next/link";
+import {syncMovieDisplays} from '@/app/services/movieSyncService';
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -23,7 +24,7 @@ const EditDiaryPage = async ({ params }: Props) => {
   });
 
   if (!diaryEntry) notFound();
-  const movies = await prisma.movie.findMany();
+  const movies = await syncMovieDisplays(await prisma.movie.findMany());
   
   return (
     <>

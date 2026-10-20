@@ -4,6 +4,7 @@ import authOptions from "../auth/authOptions";
 import prisma from "@/prisma/client";
 import MovieGrid from "../movies/MovieGrid";
 import { Movie, MovieCategorizesAs, Genre } from "@prisma/client";
+import {syncMovieDisplays} from '@/app/services/movieSyncService';
 
 type MovieWithGenres = Movie & {
   genres: (MovieCategorizesAs & {
@@ -49,7 +50,7 @@ const Favorites = async () => {
     },
   });
 
-  const moviesWithGenres: MovieWithGenres[] = likedMovies.map((movie) => ({
+  const moviesWithGenres: MovieWithGenres[] = (await syncMovieDisplays(likedMovies)).map((movie) => ({
     ...movie,
     genres: movie.genres.map(({ movieId, genreId, genre }) => ({
       movieId,

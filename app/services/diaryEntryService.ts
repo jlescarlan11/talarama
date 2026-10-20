@@ -5,6 +5,7 @@ import { diaryEntrySchema, type DiaryInput } from '@/app/lib/diary/contracts';
 import { calendarDate, parseCalendarDate, validateWatchedDate } from '@/app/lib/diary/dates';
 import { removeLoggedMovie } from './watchlistService';
 import {consumeMutation} from '@/app/lib/rateLimit';
+import {syncMovieDisplays} from './movieSyncService';
 export class DiaryError extends Error {
     constructor(message: string, public status: number) { super(message); }
 }
@@ -122,7 +123,8 @@ export async function listDiaryEntries(userId: string, filters: DiaryFilters = {
         db.diaryEntry.findMany({ where: { AND: [where, boundary] }, include: { movie: true }, orderBy: [{ watchedDate: 'desc' }, { id: 'desc' }], take: 21 }),
         db.diaryEntry.count({ where }), db.diaryEntry.groupBy({ by: ['movieId'], where, orderBy: { movieId: 'asc' } }),
     ]);
-    const entries = rows.slice(0, 20);
+    const displayed=await syncMovieDisplays(rows.slice(0,20).map(row=>row.movie),{db});
+    const entries = rows.slice(0, 20).map((row,index)=>({...row,movie:displayed[index]}));
     const last = entries.at(-1);
     return { entries, nextCursor: rows.length > 20 && last ? Buffer.from(JSON.stringify({ id: last.id, date: last.watchedDate.toISOString() })).toString('base64url') : null, statistics: { logs, movies: movies.length } };
 }

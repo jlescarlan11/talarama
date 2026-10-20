@@ -19,7 +19,7 @@ export class WikipediaPosters {
   private cache=new MetadataCache();
   private blockedUntil=0;
   constructor(private readonly options:{fetcher?:typeof fetch}={}){}
-  async resolve(input:Film[]):Promise<Map<string,PosterCredit>> {
+  async resolve(input:Film[],{throwOnError=false}:{throwOnError?:boolean}={}):Promise<Map<string,PosterCredit>> {
     const films=input.filter(film=>/^Q[1-9]\d{0,11}$/.test(film.wikidataId)&&title.safeParse(film.title).success).slice(0,12);
     if(!films.length)return new Map();
     try{return await this.cache.get(JSON.stringify(films),3600000,async()=>{
@@ -45,7 +45,7 @@ export class WikipediaPosters {
         result.set(row.film.wikidataId,{url:row.url,sourceUrl,license:'Copyrighted (Wikipedia)',licenseUrl:sourceUrl+'#Licensing',artist:plain(value('Artist'))||'See source for copyright holder',credit:plain(value('Credit')),previewOnly:true});
       }
       return result;
-    });}catch{return new Map();}
+    });}catch(error){if(throwOnError)throw error;return new Map();}
   }
   private async api(params:Record<string,string>):Promise<unknown[]> {
     if(Date.now()<this.blockedUntil)throw Error('Wikipedia cooldown');

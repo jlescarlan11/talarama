@@ -2,7 +2,8 @@ import 'server-only';
 import { z } from 'zod';
 import { MetadataCache } from '@/app/lib/tmdb/cache';
 import { TmdbError } from '@/app/lib/tmdb/client';
-import type { CatalogPage, WikidataMovie } from '@/app/lib/tmdb/types';
+import type { CatalogPage, WikidataMovie,PosterCredit } from '@/app/lib/tmdb/types';
+import type {ArtworkFailures} from './sync';
 import { genres } from '@/app/lib/movies/catalog-query';
 import {CommonsPosters,type PosterCandidate} from './commons-posters';
 import {WikipediaPosters,localWikipediaPostersEnabled} from './wikipedia-posters';
@@ -47,12 +48,16 @@ export class WikidataClient {
     const files=(property:string,explicitPoster:boolean)=>values(entity,property).filter((file):file is string=>typeof file==='string').slice(0,2).map(file=>({file,explicitPoster}));
     return {files:[...files('P3383',true),...files('P18',false)],article:this.wikipediaPreview?entity.sitelinks?.enwiki?.title:undefined};
   }
-  private async attachPosters(candidates:Map<string,ArtworkSources>,movies:WikidataMovie[]):Promise<WikidataMovie[]> {
-    const posters=await this.posters.resolve([...candidates.values()].flatMap(value=>value.files));
+  private async attachPosters(candidates:Map<string,ArtworkSources>,movies:WikidataMovie[],unavailable?:ArtworkFailures):Promise<WikidataMovie[]> {
+    let posters=new Map<string,PosterCredit>();
+    try{posters=await this.posters.resolve([...candidates.values()].flatMap(value=>value.files),{throwOnError:true});}
+    catch{if(unavailable)unavailable.commons=true;}
     const decorated=movies.map(movie=>{const poster=candidates.get(movie.wikidataId)?.files.map(candidate=>posters.get(candidate.file)).find(Boolean);return poster?{...movie,posterUrl:poster.url,posterCredit:poster}:movie;});
     if(!this.wikipediaPreview)return decorated;
     const missing=decorated.flatMap(movie=>{const title=candidates.get(movie.wikidataId)?.article;return !movie.posterUrl&&title?[{wikidataId:movie.wikidataId,title}]:[];});
-    const thumbnails=await this.wikipedia.resolve(missing);
+    let thumbnails=new Map<string,PosterCredit>();
+    try{thumbnails=await this.wikipedia.resolve(missing,{throwOnError:true});}
+    catch{if(unavailable)unavailable.wikipedia=true;}
     return decorated.map(movie=>{const poster=thumbnails.get(movie.wikidataId);return poster?{...movie,posterUrl:poster.url,posterCredit:poster}:movie;});
   }
   private async request(url: URL): Promise<unknown> {
@@ -90,15 +95,17 @@ export class WikidataClient {
     if(!data.success)throw new TmdbError('INVALID_RESPONSE');
     return requested.map(id=>{ const raw=data.data.entities[id];if(raw && typeof raw==='object' && 'missing' in raw)throw new TmdbError('NOT_FOUND');const parsed=entitySchema.safeParse(raw);if(!parsed.success || parsed.data.id!==id)throw new TmdbError('INVALID_RESPONSE');return parsed.data; });
   }
-  async details(id: string): Promise<WikidataMovie> {
+  async details(id: string): Promise<WikidataMovie & {artworkUnavailable?:ArtworkFailures}> {
     if(!wikidataIdSchema.safeParse(id).success)throw new TmdbError('INVALID_INPUT');
-    const metadata=await this.cache.get(`details:${id}`,86400000,async()=>{
+    const metadata=await this.cache.get(`details:${id}`,3600000,async()=>{
       const [entity]=await this.entities([id]); validFilm(entity);
       const related=[...new Set([...ids(entity,'P136').slice(0,10),...ids(entity,'P57').slice(0,10),...ids(entity,'P161').slice(0,20)])];
       const labels=new Map((await this.entities(related,false)).map(row=>[row.id,row.labels.en?.value || row.id]));
       return {movie:normalize(entity,labels),candidates:this.posterCandidates(entity)};
     });
-    return (await this.attachPosters(new Map([[id,metadata.candidates]]),[metadata.movie]))[0];
+    const unavailable:ArtworkFailures={};
+    const movie=(await this.attachPosters(new Map([[id,metadata.candidates]]),[metadata.movie],unavailable))[0];
+    return Object.keys(unavailable).length?{...movie,artworkUnavailable:unavailable}:movie;
   }
   search(input: { query:string;year?:number;page?:number }) { return this.list(input); }
   discover(input: { genre?:number;year?:number;page?:number } = {}) {
@@ -187,7 +194,7 @@ export class WikidataClient {
     }
   }
 
-  private async list(input: { query?:string;genre?:number;year?:number;page?:number }): Promise<CatalogPage> {
+  private async list(input: { query?:string;genre?:number;year?:number;page?:number }): Promise<CatalogPage<WikidataMovie>> {
     const parsed=z.object({query:z.string().trim().min(1).max(200).optional(),genre:z.number().int().refine(id=>!!wikiGenres[id]).optional(),year:z.number().int().min(1800).max(9999).optional(),page:z.number().int().min(1).max(500).default(1)}).safeParse(input);
     if(!parsed.success)throw new TmdbError('INVALID_INPUT');const {query,genre,year,page}=parsed.data;
     const metadata=await this.cache.get<{data:CatalogPage<WikidataMovie>;candidates:Map<string,ArtworkSources>}>(`list:${JSON.stringify(parsed.data)}`,query?300000:3600000,async()=>{

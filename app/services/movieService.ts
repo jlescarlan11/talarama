@@ -4,6 +4,7 @@ import { Movie, MovieCategorizesAs, Genre, Prisma } from "@prisma/client";
 import { tmdb } from '@/app/lib/tmdb/server';
 import { catalog } from '@/app/lib/movies/provider';
 import { normalizeLocalMovie } from '@/app/lib/tmdb/normalize';
+import {syncMovieDisplays} from './movieSyncService';
 
 type MovieWithGenres = Movie & {
   wikidataId?: string;
@@ -41,7 +42,7 @@ export class MovieService {
   static getCatalogDetail(tmdbId: number) { return tmdb.details(tmdbId); }
   static async getLocalSnapshot(id: string) {
     const movie = await prisma.movie.findUnique({ where: { id } });
-    return movie ? normalizeLocalMovie(movie) : null;
+    return movie ? normalizeLocalMovie((await syncMovieDisplays([movie]))[0]) : null;
   }
   static async getGenres(): Promise<Genre[]> {
     return await prisma.genre.findMany({
@@ -145,7 +146,7 @@ export class MovieService {
         },
       });
 
-      return movies.map((movie) => ({
+      return (await syncMovieDisplays(movies)).map((movie) => ({
         ...movie,
         genres: movie.genres.map(({ movieId, genreId, genre }) => ({
           movieId,
@@ -182,7 +183,7 @@ export class MovieService {
         },
       });
 
-      return movies.map((movie) => ({
+      return (await syncMovieDisplays(movies)).map((movie) => ({
         ...movie,
         wikidataId: movie.externalIdentities?.find(identity=>identity.provider==='WIKIDATA')?.externalId,
         genres: movie.genres.map(({ movieId, genreId, genre }) => ({

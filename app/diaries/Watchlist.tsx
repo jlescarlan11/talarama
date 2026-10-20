@@ -2,6 +2,7 @@ import prisma from "@/prisma/client";
 import { getServerSession } from "next-auth";
 import authOptions from "../auth/authOptions";
 import MovieGrid from "../movies/MovieGrid";
+import {syncMovieDisplays} from '@/app/services/movieSyncService';
 
 const Watchlist = async () => {
   const session = await getServerSession(authOptions);
@@ -38,7 +39,7 @@ const Watchlist = async () => {
     },
   });
 
-  const moviesWithGenres = watchlistMovies.map((movie) => ({
+  const moviesWithGenres = (await syncMovieDisplays(watchlistMovies)).map((movie) => ({
     ...movie,
     genres: movie.genres.map(({ movieId, genreId, genre }) => ({
       movieId,

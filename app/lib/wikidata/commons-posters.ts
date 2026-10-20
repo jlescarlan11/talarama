@@ -30,12 +30,12 @@ export class CommonsPosters {
   private fetcher:typeof fetch;
   constructor({fetcher=fetch}:{fetcher?:typeof fetch}={}){this.fetcher=fetcher;}
 
-  async resolve(candidates:PosterCandidate[]):Promise<Map<string,PosterCredit>> {
+  async resolve(candidates:PosterCandidate[],{throwOnError=false}:{throwOnError?:boolean}={}):Promise<Map<string,PosterCredit>> {
     const valid=candidates.filter(item=>filename.safeParse(item.file).success).slice(0,48);
     if(!valid.length)return new Map();
     const files=[...new Set(valid.map(item=>item.file))].sort();
     try{
-      const pages=await this.cache.get(JSON.stringify(files),86400000,()=>this.load(files));
+      const pages=await this.cache.get(JSON.stringify(files),3600000,()=>this.load(files));
       const result=new Map<string,PosterCredit>();
       for(const candidate of valid){
         const raw=pages.find(page=>page && typeof page==='object' && 'title' in page && normalizedFile(String(page.title))===normalizedFile(candidate.file));
@@ -53,7 +53,7 @@ export class CommonsPosters {
         result.set(candidate.file,{url,sourceUrl,license:cc0?'CC0':'Public domain',licenseUrl:cc0?'https://creativecommons.org/publicdomain/zero/1.0/':'https://commons.wikimedia.org/wiki/Help:Public_domain',artist:plainText(value('Artist'))||'Artist not identified',credit:plainText(value('Credit'))});
       }
       return result;
-    }catch{return new Map();} // An artwork outage must not hide the film or its member actions.
+    }catch(error){if(throwOnError)throw error;return new Map();} // Discovery still tolerates artwork outages.
   }
 
   private async load(files:string[]):Promise<unknown[]> {
