@@ -112,6 +112,28 @@ it('splits oversized historical metadata batches while retaining the response bo
  const single=new WikidataClient({fetcher:async()=>new Response('{}',{headers:{'content-length':String(8*1024*1024+1)}})});
  await expect(single.details('Q301')).rejects.toMatchObject({code:'INVALID_RESPONSE'});
 });
+it('splits oversized cloned responses without waiting for an unread sibling stream to cancel',async()=>{
+ vi.useFakeTimers();
+ try{
+  for(const declaredLength of [true,false]){
+   const upstream=transport([],Array.from({length:5},(_,i)=>entity(`Q${301+i}`,1957-i)));
+   const siblings:ReadableStream[]=[];const signals:AbortSignal[]=[];
+   try{
+    const fetcher:typeof fetch=async(input,options)=>{
+     const count=new URL(String(input)).searchParams.get('ids')?.split('|').length??0;
+     if(count<=2)return upstream(input,options);
+     const original=new Response(new ReadableStream({start(controller){if(!declaredLength)controller.enqueue(new Uint8Array(8*1024*1024+1));}}),declaredLength?{headers:{'content-length':String(8*1024*1024+1)}}:undefined);
+     const cloned=original.clone();siblings.push(original.body!);signals.push(options!.signal!);
+     return cloned;
+    };
+    const result=new WikidataClient({fetcher,wikipediaPreview:false}).discover().then(data=>({data}),error=>({error}));
+    await vi.advanceTimersByTimeAsync(21000);
+    expect(await result).toMatchObject({data:{totalResults:5,hasMore:false}});
+    expect(signals).toHaveLength(2);expect(signals.every(signal=>signal.aborted)).toBe(true);
+   }finally{await Promise.allSettled(siblings.map(stream=>stream.cancel()));}
+  }
+ }finally{vi.useRealTimers();}
+});
 it('expands beyond 42 results, checks posters lazily, and keeps each upstream entity batch within 50 IDs',async()=>{
  const rows=Array.from({length:100},(_,i)=>entity(`Q${1000+i}`,year-i%3,i%5!==0));
  const fetcher=transport(rows);const client=new WikidataClient({fetcher,wikipediaPreview:false});

@@ -70,10 +70,15 @@ export class WikidataClient {
         const response=await this.fetcher(url,{headers:{'User-Agent':'TalaramaLocal/0.1 (https://github.com/jlescarlan11/talarama)','Accept':'application/json'},redirect:'error',cache:'no-store',signal:abort.signal});
         if(response.status===429){ const seconds=Number(response.headers.get('retry-after'));this.blockedUntil=Date.now()+Math.max(60,Math.min(3600,Number.isFinite(seconds)?seconds:60))*1000;throw new TmdbError('RATE_LIMITED'); }
         if(!response.ok || response.redirected) throw new TmdbError('UNAVAILABLE');
-        if(Number(response.headers.get('content-length'))>8*1024*1024){await response.body?.cancel().catch(()=>{});throw new OversizedWikidataResponse();}
+        if(Number(response.headers.get('content-length'))>8*1024*1024){abort.abort();void response.body?.cancel().catch(()=>{});throw new OversizedWikidataResponse();}
         const reader=response.body?.getReader(); if(!reader) throw new TmdbError('INVALID_RESPONSE');
-        const chunks:Uint8Array[]=[];let size=0;
-        try{for(;;){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>8*1024*1024)throw new OversizedWikidataResponse();chunks.push(value);}}finally{await reader.cancel().catch(()=>{});}
+        const chunks:Uint8Array[]=[];let size=0;let complete=false;
+        try{for(;;){const {done,value}=await reader.read();if(done){complete=true;break;}size+=value.byteLength;if(size>8*1024*1024)throw new OversizedWikidataResponse();chunks.push(value);}}
+        finally{
+          // Next may tee the response. Cancelling one branch can wait forever
+          // for an unread sibling: abort the transport and split without waiting.
+          if(!complete)abort.abort();void reader.cancel().catch(()=>{});
+        }
         const body=new Uint8Array(size);let offset=0;for(const chunk of chunks){body.set(chunk,offset);offset+=chunk.length;}
         try { const result=JSON.parse(new TextDecoder().decode(body));if(result.error)throw new Error();return result; } catch {throw new TmdbError('INVALID_RESPONSE');}
       })()]);
