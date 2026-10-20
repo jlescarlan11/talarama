@@ -14,6 +14,9 @@ const statement = z.object({ rank: z.string().optional(), mainsnak: z.object({ d
 const entitySchema = z.object({ id: wikidataIdSchema, labels: z.record(z.object({ value: z.string().max(500) })).default({}), descriptions: z.record(z.object({ value: z.string().max(3000) })).default({}), claims: z.record(z.array(statement).max(2000)).default({}),sitelinks:z.object({enwiki:z.object({title:z.string().max(240)}).optional()}).optional().catch(undefined) });
 type Entity = z.infer<typeof entitySchema>;
 type ArtworkSources={files:PosterCandidate[];article?:string};
+type DiscoveryMetadata={movies:WikidataMovie[];candidates:Map<string,ArtworkSources>};
+type PosterSelection={metadata:DiscoveryMetadata;batches:Map<number,Promise<WikidataMovie[]>>};
+class OversizedWikidataResponse extends TmdbError { constructor(){super('INVALID_RESPONSE');} }
 function values(entity: Entity, property: string) { return (entity.claims[property] || []).filter(s => s.rank !== 'deprecated').map(s => s.mainsnak.datavalue?.value); }
 function ids(entity: Entity, property: string): string[] { return values(entity,property).map(value => z.object({ id: wikidataIdSchema }).safeParse(value)).filter(value => value.success).map(value => value.data!.id); }
 function years(entity: Entity) { return values(entity,'P577').map(value => z.object({ time:z.string(), precision:z.number().min(9) }).safeParse(value)).filter(value => value.success).map(value => /^\+(\d{4})-/.exec(value.data!.time)?.[1]).filter((year): year is string => !!year).map(Number).filter(year => year >= 1800 && year <= 9999).sort((a,b)=>a-b); }
@@ -60,10 +63,10 @@ export class WikidataClient {
         const response=await this.fetcher(url,{headers:{'User-Agent':'TalaramaLocal/0.1 (https://github.com/jlescarlan11/talarama)','Accept':'application/json'},redirect:'error',cache:'no-store',signal:abort.signal});
         if(response.status===429){ const seconds=Number(response.headers.get('retry-after'));this.blockedUntil=Date.now()+Math.max(60,Math.min(3600,Number.isFinite(seconds)?seconds:60))*1000;throw new TmdbError('RATE_LIMITED'); }
         if(!response.ok || response.redirected) throw new TmdbError('UNAVAILABLE');
-        if(Number(response.headers.get('content-length'))>8*1024*1024) throw new TmdbError('INVALID_RESPONSE');
+        if(Number(response.headers.get('content-length'))>8*1024*1024){await response.body?.cancel().catch(()=>{});throw new OversizedWikidataResponse();}
         const reader=response.body?.getReader(); if(!reader) throw new TmdbError('INVALID_RESPONSE');
         const chunks:Uint8Array[]=[];let size=0;
-        try{for(;;){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>8*1024*1024)throw new TmdbError('INVALID_RESPONSE');chunks.push(value);}}finally{await reader.cancel().catch(()=>{});}
+        try{for(;;){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>8*1024*1024)throw new OversizedWikidataResponse();chunks.push(value);}}finally{await reader.cancel().catch(()=>{});}
         const body=new Uint8Array(size);let offset=0;for(const chunk of chunks){body.set(chunk,offset);offset+=chunk.length;}
         try { const result=JSON.parse(new TextDecoder().decode(body));if(result.error)throw new Error();return result; } catch {throw new TmdbError('INVALID_RESPONSE');}
       })()]);
@@ -73,7 +76,15 @@ export class WikidataClient {
   private api(params: Record<string,string>) { const url=new URL('https://www.wikidata.org/w/api.php');url.search=new URLSearchParams({format:'json',...params}).toString();return this.request(url); }
   private async entities(requested: string[], claims = true): Promise<Entity[]> {
     if(!requested.length)return [];
-    const data=z.object({entities:z.record(z.unknown())}).safeParse(await this.api({action:'wbgetentities',ids:requested.join('|'),languages:'en',props:claims?'labels|descriptions|claims'+(this.wikipediaPreview?'|sitelinks':''):'labels',sitefilter:'enwiki'}));
+    let raw:unknown;
+    try{raw=await this.api({action:'wbgetentities',ids:requested.join('|'),languages:'en',props:claims?'labels|descriptions|claims'+(this.wikipediaPreview?'|sitelinks':''):'labels',sitefilter:'enwiki'});}
+    catch(error){
+      if(!(error instanceof OversizedWikidataResponse)||requested.length<2)throw error;
+      const middle=Math.ceil(requested.length/2);
+      // Split sequentially so the caller's two-request concurrency ceiling still holds.
+      return [...await this.entities(requested.slice(0,middle),claims),...await this.entities(requested.slice(middle),claims)];
+    }
+    const data=z.object({entities:z.record(z.unknown())}).safeParse(raw);
     if(!data.success)throw new TmdbError('INVALID_RESPONSE');
     return requested.map(id=>{ const raw=data.data.entities[id];if(raw && typeof raw==='object' && 'missing' in raw)throw new TmdbError('NOT_FOUND');const parsed=entitySchema.safeParse(raw);if(!parsed.success || parsed.data.id!==id)throw new TmdbError('INVALID_RESPONSE');return parsed.data; });
   }
@@ -108,19 +119,49 @@ export class WikidataClient {
         const data=z.object({results:z.object({bindings:z.array(z.object({film:z.object({value:z.string().regex(/^http:\/\/www\.wikidata\.org\/entity\/Q[1-9]\d{0,11}$/)})})).max(240)})}).safeParse(await this.request(url));
         if(!data.success)throw new TmdbError('INVALID_RESPONSE');
         const selected=[...new Set(data.data.results.bindings.map(row=>row.film.value.split('/').at(-1)!))];
-        const rows:Entity[]=[];
-        for(let offset=0;offset<selected.length;offset+=100)rows.push(...(await Promise.all([this.entities(selected.slice(offset,offset+50)),this.entities(selected.slice(offset+50,offset+100))])).flat());
-        const movies=rows.flatMap(row=>{try{const movie=normalize(row);return row.labels.en?.value&&movie.releasedYear!==null&&movie.releasedYear>=year-2&&movie.releasedYear<=year?[movie]:[];}catch(error){if(error instanceof TmdbError&&error.code==='CONTENT_BLOCKED')return [];throw error;}});
-        movies.sort((a,b)=>b.releasedYear!-a.releasedYear!||a.wikidataId.localeCompare(b.wikidataId,'en',{numeric:true}));
-        return {movies,candidates:new Map(rows.map(row=>[row.id,this.posterCandidates(row)]))};
+        return this.discoveryMetadata(selected,movie=>movie.releasedYear!==null&&movie.releasedYear>=year-2&&movie.releasedYear<=year);
       });
       return {metadata,batches:new Map<number,Promise<WikidataMovie[]>>()};
     });
     const {metadata,batches}=selection;
     const available:WikidataMovie[]=[];
+    await this.appendPosters(selection,available,page*12);
+    let older:PosterSelection|undefined;
+    if(available.length<=page*12){
+      older=await this.olderSelection(day,year);
+      await this.appendPosters(older,available,page*12,new Set(metadata.movies.map(movie=>movie.wikidataId)));
+    }
+    // An artwork outage must be retryable, not cached as a successful empty catalog.
+    if((metadata.movies.length||older?.metadata.movies.length)&&!available.length){batches.clear();older?.batches.clear();throw new TmdbError('UNAVAILABLE');}
+    const hasMore=available.length>page*12;
+    const total=hasMore?page*12+1:available.length;
+    return {source:'wikidata',order:'recent',page,hasMore,totalResults:total,totalPages:Math.ceil(total/12),results:available.slice((page-1)*12,page*12)};
+  }
+
+  private async discoveryMetadata(selected:string[],eligible:(movie:WikidataMovie)=>boolean):Promise<DiscoveryMetadata> {
+    const unique=[...new Set(selected)];const rows:Entity[]=[];
+    for(let offset=0;offset<unique.length;offset+=100)rows.push(...(await Promise.all([this.entities(unique.slice(offset,offset+50)),this.entities(unique.slice(offset+50,offset+100))])).flat());
+    const movies=rows.flatMap(row=>{try{const movie=normalize(row);return row.labels.en?.value&&eligible(movie)?[movie]:[];}catch(error){if(error instanceof TmdbError&&error.code==='CONTENT_BLOCKED')return [];throw error;}});
+    movies.sort((a,b)=>b.releasedYear!-a.releasedYear!||a.wikidataId.localeCompare(b.wikidataId,'en',{numeric:true}));
+    return {movies,candidates:new Map(rows.map(row=>[row.id,this.posterCandidates(row)]))};
+  }
+  private olderSelection(day:string,year:number):Promise<PosterSelection> {
+    return this.cache.get(`older-posters:${day}`,300000,async()=>{
+      const metadata=await this.cache.get(`older-metadata:${day}`,3600000,async()=>{
+        // Fetch broadly documented films without a global historical date-range scan.
+        // Normalize first release years locally to exclude recent films and re-releases.
+        const data=z.object({query:z.object({search:z.array(z.object({title:wikidataIdSchema})).max(240)})}).safeParse(await this.api({action:'query',list:'search',srsearch:'haswbstatement:P31=Q11424 haslabel:en',srsort:'incoming_links_desc',srlimit:'240',srinfo:'',srprop:''}));
+        if(!data.success)throw new TmdbError('INVALID_RESPONSE');
+        return this.discoveryMetadata(data.data.query.search.map(row=>row.title),movie=>movie.releasedYear!==null&&movie.releasedYear<year-2);
+      });
+      return {metadata,batches:new Map<number,Promise<WikidataMovie[]>>()};
+    });
+  }
+  private async appendPosters(selection:PosterSelection,available:WikidataMovie[],target:number,exclude?:Set<string>) {
+    const {metadata,batches}=selection;
     // Resolve only enough ordered candidates for this page and one verified lookahead.
     // Cached batch promises coalesce concurrent pages without mutating a shared cursor.
-    for(let offset=0;offset<metadata.movies.length&&available.length<=page*12;offset+=12){
+    for(let offset=0;offset<metadata.movies.length&&available.length<=target;offset+=12){
       let pending=batches.get(offset);
       if(!pending){
         const batch=metadata.movies.slice(offset,offset+12);
@@ -129,13 +170,8 @@ export class WikidataClient {
           .catch(error=>{batches.delete(offset);throw error;});
         batches.set(offset,pending);
       }
-      available.push(...await pending);
+      available.push(...(await pending).filter(movie=>!exclude?.has(movie.wikidataId)));
     }
-    // An artwork outage must be retryable, not cached as a successful empty catalog.
-    if(metadata.movies.length&&!available.length){batches.clear();throw new TmdbError('UNAVAILABLE');}
-    const hasMore=available.length>page*12;
-    const total=hasMore?page*12+1:available.length;
-    return {source:'wikidata',order:'recent',page,hasMore,totalResults:total,totalPages:Math.ceil(total/12),results:available.slice((page-1)*12,page*12)};
   }
 
   private async list(input: { query?:string;genre?:number;year?:number;page?:number }): Promise<CatalogPage> {
