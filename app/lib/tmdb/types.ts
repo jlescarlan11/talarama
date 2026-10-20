@@ -22,7 +22,7 @@ export type WikidataMovie = Omit<CatalogMovie, 'tmdbId' | 'tmdbVoteCount' | 'gen
   directors: { wikidataId: string; name: string }[];
 };
 export type DiscoveredMovie = CatalogMovie | WikidataMovie;
-export interface CatalogPage<TMovie=DiscoveredMovie> { page: number; totalPages: number; totalResults: number; results: TMovie[]; source?: 'tmdb' | 'wikidata'; hasMore?: boolean; order?: 'coverage' | 'identifier' }
+export interface CatalogPage<TMovie=DiscoveredMovie> { page: number; totalPages: number; totalResults: number; results: TMovie[]; source?: 'tmdb' | 'wikidata'; hasMore?: boolean; order?: 'coverage' | 'identifier' | 'recent' }
 export type LocalCatalogMovie = Omit<CatalogMovie, 'localId' | 'tmdbId' | 'tmdbVoteCount'> & { localId: string; tmdbId: number | null; tmdbVoteCount: null };
 export interface CatalogProvider {
   details(tmdbId: number): Promise<CatalogMovie>;

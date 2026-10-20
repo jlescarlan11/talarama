@@ -88,7 +88,43 @@ export class WikidataClient {
     return (await this.attachPosters(new Map([[id,metadata.candidates]]),[metadata.movie]))[0];
   }
   search(input: { query:string;year?:number;page?:number }) { return this.list(input); }
-  discover(input: { genre?:number;year?:number;page?:number } = {}) { return this.list(input); }
+  discover(input: { genre?:number;year?:number;page?:number } = {}) {
+    return input.genre===undefined && input.year===undefined ? this.recent(input.page??1) : this.list(input);
+  }
+  /** A bounded live selection, not an exhaustive release calendar or popularity chart.
+   * Filter artwork before pagination so every default card has a verified poster.
+   * No imports or member reads occur here. Explicit filters retain the full catalog.
+   */
+  private async recent(page:number):Promise<CatalogPage<WikidataMovie>> {
+    if(!Number.isInteger(page)||page<1||page>500)throw new TmdbError('INVALID_INPUT');
+    const now=new Date(),year=now.getUTCFullYear(),day=now.toISOString().slice(0,10);
+    const tomorrow=new Date(Date.UTC(year,now.getUTCMonth(),now.getUTCDate()+1)).toISOString();
+    const results=await this.cache.get(`recent-posters:${day}`,300000,async()=>{
+      const metadata=await this.cache.get(`recent-metadata:${day}`,3600000,async()=>{
+        // Rank a small candidate pool by language coverage, then order eligible films
+        // by first release year locally. Normalize excludes older regional re-releases.
+        const q=`PREFIX wdt:<http://www.wikidata.org/prop/direct/> PREFIX wd:<http://www.wikidata.org/entity/> PREFIX hint:<http://www.bigdata.com/queryHints#> PREFIX wikibase:<http://wikiba.se/ontology#> SELECT DISTINCT ?film ?links WHERE { ?film wdt:P31 wd:Q11424; wdt:P577 ?date. FILTER(?date >= "${year-2}-01-01T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> && ?date < "${tomorrow}"^^<http://www.w3.org/2001/XMLSchema#dateTime>) hint:Prior hint:rangeSafe true. ?film wikibase:sitelinks ?links. FILTER(?links >= 30) } ORDER BY DESC(?links) ?film LIMIT 60`;
+        const url=new URL('https://query.wikidata.org/sparql');url.search=new URLSearchParams({query:q,format:'json'}).toString();
+        const data=z.object({results:z.object({bindings:z.array(z.object({film:z.object({value:z.string().regex(/^http:\/\/www\.wikidata\.org\/entity\/Q[1-9]\d{0,11}$/)})})).max(60)})}).safeParse(await this.request(url));
+        if(!data.success)throw new TmdbError('INVALID_RESPONSE');
+        const selected=[...new Set(data.data.results.bindings.map(row=>row.film.value.split('/').at(-1)!))];
+        const rows=(await Promise.all([this.entities(selected.slice(0,50)),this.entities(selected.slice(50))])).flat();
+        const movies=rows.flatMap(row=>{try{const movie=normalize(row);return movie.releasedYear!==null&&movie.releasedYear>=year-2&&movie.releasedYear<=year?[movie]:[];}catch(error){if(error instanceof TmdbError&&error.code==='CONTENT_BLOCKED')return [];throw error;}});
+        return {movies,candidates:new Map(rows.map(row=>[row.id,this.posterCandidates(row)]))};
+      });
+      const decorated:WikidataMovie[]=[];
+      // Each artwork request stays within the existing 12-film / 48-file bound.
+      for(let offset=0;offset<metadata.movies.length;offset+=12){
+        const batch=metadata.movies.slice(offset,offset+12);
+        decorated.push(...await this.attachPosters(new Map(batch.map(movie=>[movie.wikidataId,metadata.candidates.get(movie.wikidataId)!])),batch));
+      }
+      const available=decorated.filter(movie=>!!movie.posterUrl).sort((a,b)=>b.releasedYear!-a.releasedYear!||a.wikidataId.localeCompare(b.wikidataId,'en',{numeric:true}));
+      // An artwork outage must be retryable, not cached as a successful empty catalog.
+      if(metadata.movies.length&&!available.length)throw new TmdbError('UNAVAILABLE');
+      return available;
+    });
+    return {source:'wikidata',order:'recent',page,totalResults:results.length,totalPages:Math.ceil(results.length/12),results:results.slice((page-1)*12,page*12)};
+  }
   private async list(input: { query?:string;genre?:number;year?:number;page?:number }): Promise<CatalogPage> {
     const parsed=z.object({query:z.string().trim().min(1).max(200).optional(),genre:z.number().int().refine(id=>!!wikiGenres[id]).optional(),year:z.number().int().min(1800).max(9999).optional(),page:z.number().int().min(1).max(500).default(1)}).safeParse(input);
     if(!parsed.success)throw new TmdbError('INVALID_INPUT');const {query,genre,year,page}=parsed.data;

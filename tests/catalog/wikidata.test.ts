@@ -85,16 +85,16 @@ it('uses a verified identity-linked Commons poster in both discovery and detail 
  const original=transport(main);
  const fetcher=vi.fn<typeof fetch>(async(input,options)=>new URL(String(input)).hostname==='commons.wikimedia.org'?Response.json({query:{pages:[{title:'File:Inception fixture poster.jpg',imagerepository:'local',imageinfo:[{width:1000,height:1500,mime:'image/jpeg',thumburl:'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ab/Inception_fixture_poster.jpg/500px-Inception_fixture_poster.jpg',descriptionurl:'https://commons.wikimedia.org/wiki/File:Inception_fixture_poster.jpg',extmetadata:{License:{value:'pd'},LicenseShortName:{value:'Public domain'},AttributionRequired:{value:'false'}}}]}]}}):original(input,options));
  const provider=new WikidataClient({fetcher});
- for(const movie of [(await provider.discover()).results[0],await provider.details('Q25188')])expect(movie).toMatchObject({wikidataId:'Q25188',tmdbId:null,posterUrl:'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ab/Inception_fixture_poster.jpg/500px-Inception_fixture_poster.jpg',posterCredit:{license:'Public domain'}});
+ for(const movie of [(await provider.discover({genre:878})).results[0],await provider.details('Q25188')])expect(movie).toMatchObject({wikidataId:'Q25188',tmdbId:null,posterUrl:'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ab/Inception_fixture_poster.jpg/500px-Inception_fixture_poster.jpg',posterCredit:{license:'Public domain'}});
 });
 it('recovers artwork after a transient failure without refetching cached Wikidata metadata',async()=>{
  const main={...entity(),claims:{...entity().claims,P3383:[{mainsnak:{datavalue:{value:'Fixture poster.jpg'}}}]}};
  const original=transport(main);let failed=true;
  const fetcher=vi.fn<typeof fetch>(async(input,options)=>new URL(String(input)).hostname==='commons.wikimedia.org'?(failed?new Response('',{status:503}):Response.json({query:{pages:[{title:'File:Fixture poster.jpg',imagerepository:'local',imageinfo:[{width:1000,height:1500,mime:'image/jpeg',thumburl:'https://upload.wikimedia.org/wikipedia/commons/a/ab/Fixture_poster.jpg',descriptionurl:'https://commons.wikimedia.org/wiki/File:Fixture_poster.jpg',extmetadata:{License:{value:'pd'},LicenseShortName:{value:'Public domain'},AttributionRequired:{value:'false'}}}]}]}})):original(input,options));
  const provider=new WikidataClient({fetcher});
- expect((await provider.details('Q25188')).posterUrl).toBeNull();expect((await provider.discover()).results[0].posterUrl).toBeNull();const reads=original.mock.calls.length;
+ expect((await provider.details('Q25188')).posterUrl).toBeNull();expect((await provider.discover({genre:878})).results[0].posterUrl).toBeNull();const reads=original.mock.calls.length;
  failed=false;
- expect((await provider.details('Q25188')).posterUrl).toContain('wikimedia.org');expect((await provider.discover()).results[0].posterUrl).toContain('wikimedia.org');expect(original.mock.calls.length).toBe(reads);
+ expect((await provider.details('Q25188')).posterUrl).toContain('wikimedia.org');expect((await provider.discover({genre:878})).results[0].posterUrl).toContain('wikimedia.org');expect(original.mock.calls.length).toBe(reads);
 });
 it('uses article-identity verified Wikipedia thumbnails only in the enabled local preview',async()=>{
  const main={...entity(),sitelinks:{enwiki:{title:'Inception'}}};const original=transport(main);
@@ -103,6 +103,6 @@ it('uses article-identity verified Wikipedia thumbnails only in the enabled loca
   return Response.json({query:{pages:url.searchParams.get('prop')==='imageinfo'?[{title:'File:Inception poster.jpg',imagerepository:'local',imageinfo:[{mime:'image/jpeg',extmetadata:{NonFree:{value:'true'},LicenseShortName:{value:'Fair use'}}}]}]:[{title:'Inception',pageprops:{wikibase_item:'Q25188'},pageimage:'Inception poster.jpg',thumbnail:{source:'https://upload.wikimedia.org/wikipedia/en/a/ab/Inception_poster.jpg',width:220,height:330}}]}});
  });
  const enabled=new WikidataClient({fetcher,wikipediaPreview:true});expect((await enabled.details('Q25188')).posterCredit).toMatchObject({previewOnly:true,license:'Copyrighted (Wikipedia)'});
- expect((await enabled.discover()).results[0].posterUrl).toContain('/wikipedia/en/');
+ expect((await enabled.discover({genre:878})).results[0].posterUrl).toContain('/wikipedia/en/');
  const disabled=new WikidataClient({fetcher,wikipediaPreview:false});expect((await disabled.details('Q25188')).posterUrl).toBeNull();
 });
