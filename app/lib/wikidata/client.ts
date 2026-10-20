@@ -16,6 +16,7 @@ type Entity = z.infer<typeof entitySchema>;
 type ArtworkSources={files:PosterCandidate[];article?:string};
 type DiscoveryMetadata={movies:WikidataMovie[];candidates:Map<string,ArtworkSources>};
 type PosterSelection={metadata:DiscoveryMetadata;batches:Map<number,Promise<WikidataMovie[]>>};
+type OlderSelection=PosterSelection&{nextOffset:number|null};
 class OversizedWikidataResponse extends TmdbError { constructor(){super('INVALID_RESPONSE');} }
 function values(entity: Entity, property: string) { return (entity.claims[property] || []).filter(s => s.rank !== 'deprecated').map(s => s.mainsnak.datavalue?.value); }
 function ids(entity: Entity, property: string): string[] { return values(entity,property).map(value => z.object({ id: wikidataIdSchema }).safeParse(value)).filter(value => value.success).map(value => value.data!.id); }
@@ -35,6 +36,7 @@ function normalize(entity: Entity, labels = new Map<string,string>()): WikidataM
 /** Public read-only official endpoints. Never sends member state or accepts an upstream URL. */
 export class WikidataClient {
   private cache = new MetadataCache();
+  private discoveryCache = new MetadataCache(512);
   private blockedUntil = 0;
   private fetcher: typeof fetch;
   private posters:CommonsPosters;
@@ -110,8 +112,8 @@ export class WikidataClient {
     if(!Number.isInteger(page)||page<1||page>500)throw new TmdbError('INVALID_INPUT');
     const now=new Date(),year=now.getUTCFullYear(),day=now.toISOString().slice(0,10);
     const tomorrow=new Date(Date.UTC(year,now.getUTCMonth(),now.getUTCDate()+1)).toISOString();
-    const selection=await this.cache.get(`recent-posters:${day}`,300000,async()=>{
-      const metadata=await this.cache.get(`recent-metadata:${day}`,3600000,async()=>{
+    const selection=await this.discoveryCache.get(`recent-posters:${day}`,300000,async()=>{
+      const metadata=await this.discoveryCache.get(`recent-metadata:${day}`,3600000,async()=>{
         // Rank a small candidate pool by language coverage, then order eligible films
         // by first release year locally. Normalize excludes older regional re-releases.
         const q=`PREFIX wdt:<http://www.wikidata.org/prop/direct/> PREFIX wd:<http://www.wikidata.org/entity/> PREFIX hint:<http://www.bigdata.com/queryHints#> PREFIX wikibase:<http://wikiba.se/ontology#> SELECT DISTINCT ?film ?links WHERE { ?film wdt:P31 wd:Q11424; wdt:P577 ?date. FILTER(?date >= "${year-2}-01-01T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> && ?date < "${tomorrow}"^^<http://www.w3.org/2001/XMLSchema#dateTime>) hint:Prior hint:rangeSafe true. ?film wikibase:sitelinks ?links. FILTER(?links >= 10) } ORDER BY DESC(?links) ?film LIMIT 240`;
@@ -123,18 +125,23 @@ export class WikidataClient {
       });
       return {metadata,batches:new Map<number,Promise<WikidataMovie[]>>()};
     });
-    const {metadata,batches}=selection;
+    const {metadata}=selection;
     const available:WikidataMovie[]=[];
     await this.appendPosters(selection,available,page*12);
-    let older:PosterSelection|undefined;
-    if(available.length<=page*12){
-      older=await this.olderSelection(day,year);
-      await this.appendPosters(older,available,page*12,new Set(metadata.movies.map(movie=>movie.wikidataId)));
+    const selections:PosterSelection[]=[selection];
+    const seen=new Set(metadata.movies.map(movie=>movie.wikidataId));
+    const budget={remaining:4};let offset:number|null=0;
+    while(available.length<=page*12&&offset!==null){
+      const older=await this.olderSelection(day,year,offset,budget);
+      selections.push(older);
+      await this.appendPosters(older,available,page*12,seen);
+      for(const movie of older.metadata.movies)seen.add(movie.wikidataId);
+      offset=older.nextOffset;
     }
     // An artwork outage must be retryable, not cached as a successful empty catalog.
-    if((metadata.movies.length||older?.metadata.movies.length)&&!available.length){batches.clear();older?.batches.clear();throw new TmdbError('UNAVAILABLE');}
-    const hasMore=available.length>page*12;
-    const total=hasMore?page*12+1:available.length;
+    if(selections.some(value=>value.metadata.movies.length)&&!available.length){for(const value of selections)value.batches.clear();throw new TmdbError('UNAVAILABLE');}
+    const hasMore=page<500&&available.length>page*12;
+    const total=hasMore?page*12+1:Math.min(available.length,page*12);
     return {source:'wikidata',order:'recent',page,hasMore,totalResults:total,totalPages:Math.ceil(total/12),results:available.slice((page-1)*12,page*12)};
   }
 
@@ -145,18 +152,24 @@ export class WikidataClient {
     movies.sort((a,b)=>b.releasedYear!-a.releasedYear!||a.wikidataId.localeCompare(b.wikidataId,'en',{numeric:true}));
     return {movies,candidates:new Map(rows.map(row=>[row.id,this.posterCandidates(row)]))};
   }
-  private olderSelection(day:string,year:number):Promise<PosterSelection> {
-    return this.cache.get(`older-posters:${day}`,300000,async()=>{
-      const metadata=await this.cache.get(`older-metadata:${day}`,3600000,async()=>{
-        // Fetch broadly documented films without a global historical date-range scan.
-        // Normalize first release years locally to exclude recent films and re-releases.
-        const data=z.object({query:z.object({search:z.array(z.object({title:wikidataIdSchema})).max(240)})}).safeParse(await this.api({action:'query',list:'search',srsearch:'haswbstatement:P31=Q11424 haslabel:en',srsort:'incoming_links_desc',srlimit:'240',srinfo:'',srprop:''}));
+  private olderSelection(day:string,year:number,offset=0,budget={remaining:4}):Promise<OlderSelection> {
+    return this.discoveryCache.get(`older-posters:${day}:${offset}`,300000,async()=>{
+      const loaded=await this.discoveryCache.get(`older-metadata:${day}:${offset}`,3600000,async()=>{
+        // Preserve the opening classics selection, then fetch small continuation batches.
+        // A cold deep-page jump can retry; it cannot trigger unbounded upstream work.
+        if(offset>0&&budget.remaining--<=0)throw new TmdbError('TIMEOUT');
+        const limit=Math.min(offset===0?240:48,10000-offset);
+        const data=z.object({continue:z.object({sroffset:z.number().int().min(1).max(10000)}).optional(),query:z.object({search:z.array(z.object({title:wikidataIdSchema})).max(limit)})}).safeParse(await this.api({action:'query',list:'search',srsearch:'haswbstatement:P31=Q11424 haslabel:en',srsort:'incoming_links_desc',srlimit:String(limit),sroffset:String(offset),srinfo:'',srprop:''}));
         if(!data.success)throw new TmdbError('INVALID_RESPONSE');
-        return this.discoveryMetadata(data.data.query.search.map(row=>row.title),movie=>movie.releasedYear!==null&&movie.releasedYear<year-2);
+        const next=data.data.continue?.sroffset;
+        if(next!==undefined&&(next<=offset||next>offset+limit))throw new TmdbError('INVALID_RESPONSE');
+        const metadata=await this.discoveryMetadata(data.data.query.search.map(row=>row.title),movie=>movie.releasedYear!==null&&movie.releasedYear<year-2);
+        return {metadata,nextOffset:next===undefined||next===10000?null:next};
       });
-      return {metadata,batches:new Map<number,Promise<WikidataMovie[]>>()};
+      return {...loaded,batches:new Map<number,Promise<WikidataMovie[]>>()};
     });
   }
+
   private async appendPosters(selection:PosterSelection,available:WikidataMovie[],target:number,exclude?:Set<string>) {
     const {metadata,batches}=selection;
     // Resolve only enough ordered candidates for this page and one verified lookahead.

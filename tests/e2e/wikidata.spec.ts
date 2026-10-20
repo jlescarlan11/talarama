@@ -23,6 +23,9 @@ test('Wikidata browse/detail preserve reads, identities, save/log actions and or
   for(let next=2;next<=6;next++){await page.getByRole('button',{name:'Next',exact:true}).click();await expect(page.getByRole('link',{name:new RegExp(`Wikidata Film Q${25188+(next-1)*12} `)})).toBeVisible();}
   await expect(page.getByRole('link',{name:/Poster for Classic Fixture Film/})).toBeVisible();
   await expect(page.getByRole('link',{name:/Poster for Silent Classic Fixture Film/})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Next',exact:true})).toBeEnabled();
+  await page.getByRole('button',{name:'Next',exact:true}).click();await expect(page.getByRole('link',{name:/Continued Fixture Film Q91009 /})).toBeVisible();
+  await page.getByRole('button',{name:'Next',exact:true}).click();await expect(page.getByRole('link',{name:/Continued Fixture Film Q91021 /})).toBeVisible();
   await expect(page.getByRole('button',{name:'Next',exact:true})).toBeDisabled();expect(await db.movie.count()).toBe(before);
   await page.goto(`/movies?mode=discover&year=${new Date().getUTCFullYear()-1}&genre=878&page=1`);await expect(page.getByRole('link',{name:/Wikidata Fixture Film/})).toBeVisible();
   await page.getByRole('link',{name:/Wikidata Fixture Film/}).click();await expect(page).toHaveURL(/\/movies\/(wikidata\/Q25188|[a-z0-9-]+)$/,{timeout:20000});await expect(page.getByRole('heading',{name:'Wikidata Fixture Film',level:1})).toBeVisible();

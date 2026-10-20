@@ -27,6 +27,51 @@ it('defaults to a bounded live recent selection with posters, sorted by release 
  const query=new URL(String(fetcher.mock.calls[0][0])).searchParams.get('query');expect(query).toContain(`${year-2}-01-01`);expect(query).toContain('LIMIT 240');
  expect((await client.discover({page:4})).results).toEqual([]);
 });
+it('follows continuation batches beyond the featured pool, deduplicates IDs and leaves earlier pages stable',async()=>{
+ const recent=Array.from({length:25},(_,i)=>entity(`Q${100+i}`,year-i%3));
+ const older=[entity('Q300',1957),entity('Q301',1942)];
+ const additions=[entity('Q401',2011),entity('Q402',2000),entity('Q403',1999,false),entity('Q404',year)];
+ const upstream=transport(recent,[...older,...additions]);
+ const fetcher=vi.fn<typeof fetch>(async(input,options)=>{
+  const url=new URL(String(input));if(url.searchParams.get('list')==='search'){
+   const offset=Number(url.searchParams.get('sroffset')||0);
+   const selected=offset===0?older:offset===240?[older[0],additions[0],additions[2],additions[3]]:[additions[1]];
+   return Response.json({...(offset===288?{}:{continue:{sroffset:offset===0?240:288}}),query:{search:selected.map(row=>({title:row.id}))}});
+  }return upstream(input,options);
+ });
+ const client=new WikidataClient({fetcher,wikipediaPreview:false});
+ const first=await client.discover();const second=await client.discover({page:2});const third=await client.discover({page:3});
+ const all=[...first.results,...second.results,...third.results];
+ expect(all).toHaveLength(29);expect(third).toMatchObject({hasMore:false,totalResults:29});
+ expect(all.slice(25).map(movie=>movie.releasedYear)).toEqual([1957,1942,2011,2000]);
+ expect(new Set(all.map(movie=>'wikidataId'in movie?movie.wikidataId:'')).size).toBe(29);
+ expect((await client.discover()).results).toEqual(first.results);
+ expect(fetcher.mock.calls.map(call=>new URL(String(call[0]))).filter(url=>url.searchParams.get('list')==='search').map(url=>[url.searchParams.get('sroffset'),url.searchParams.get('srlimit')])).toEqual([['0','240'],['240','48'],['288','48']]);
+});
+it('bounds cold continuation scans and resumes cached progress on retry',async()=>{
+ const additions=Array.from({length:13},(_,i)=>entity(`Q${9000+i}`,2000));const upstream=transport([],additions);
+ const fetcher=vi.fn<typeof fetch>(async(input,options)=>{
+  const url=new URL(String(input));if(url.searchParams.get('list')!=='search')return upstream(input,options);
+  const offset=Number(url.searchParams.get('sroffset'));
+  return Response.json({...(offset===432?{}:{continue:{sroffset:offset===0?240:offset+48}}),query:{search:offset===432?additions.map(row=>({title:row.id})):[]}});
+ });
+ const client=new WikidataClient({fetcher,wikipediaPreview:false});
+ await expect(client.discover()).rejects.toMatchObject({code:'TIMEOUT'});
+ const calls=()=>fetcher.mock.calls.map(call=>new URL(String(call[0]))).filter(url=>url.searchParams.get('list')==='search');
+ expect(calls()).toHaveLength(5);
+ expect(await client.discover()).toMatchObject({hasMore:true,results:expect.any(Array)});
+ expect(calls()).toHaveLength(6);expect(await client.discover({page:2})).toMatchObject({hasMore:false,totalResults:13});
+});
+it('rejects nonadvancing continuation offsets and retries without reporting a final page',async()=>{
+ const upstream=transport([],[entity('Q301',1957)]);let broken=true;
+ const fetcher=vi.fn<typeof fetch>(async(input,options)=>{
+  const url=new URL(String(input));if(url.searchParams.get('list')==='search')return broken?Response.json({continue:{sroffset:240},query:{search:[]}}):Response.json({query:{search:[{title:'Q301'}]}});
+  return upstream(input,options);
+ });
+ const client=new WikidataClient({fetcher,wikipediaPreview:false});
+ await expect(client.discover()).rejects.toMatchObject({code:'INVALID_RESPONSE'});
+ broken=false;expect(await client.discover()).toMatchObject({hasMore:false,totalResults:1});
+});
 it('appends older films and classics after recent posters without loading their source on the homepage',async()=>{
  const recent=Array.from({length:25},(_,i)=>entity(`Q${100+i}`,year-i%3));
  const older=[entity('Q300',year-3),entity('Q301',1957),entity('Q302',1927),entity('Q303',1999,false),entity('Q304',year)];
