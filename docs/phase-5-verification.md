@@ -72,3 +72,11 @@ One Minor README ambiguity used “Saving” for watchlist removal. Source inspe
 The reviewer did not rerun suites, access databases, independently retrieve current provider terms/action pins, or execute hosted Linux CI. All command totals in this report are the implementing author's measured runs. Final relative-link/image checks, credential-format scan, foundation preservation and Git whitespace/status checks passed; those do not substitute for external acceptance.
 
 Execution rulings: autonomous plan execution under owner authorization (cost: reversible local edits if changed); retain scratch/worktree/backups (cost: disk use); preserve persistent snapshots while retention mechanism/terms await review (cost: public release remains blocked); correct the review's minor wording as part of the authorized documentation deliverable instead of deferring it (cost: one reversible sentence edit). No licensing or external deployment decision has been inferred. The detailed [execution ledger](superpowers/plans/2026-10-19-phase-5-execution.md) remains the task record.
+
+## Local Google sign-in follow-up — 2026-10-22
+
+The owner's existing Google OAuth web client was connected to the local app through its ignored `.env` file. The same Google Cloud project/client retains the existing localhost and hosted callback registrations. The old client secret remains enabled; an additional secret was saved locally and was not committed or deployed.
+
+The app now runs against the persistent local development database instead of the disposable preview schema. Before the remaining additive Wikidata identity migration was applied, a local database backup was saved outside tracked source. Real Google sign-in created one member and one linked Google account. Their identity fingerprint stayed unchanged across an app-process restart, and the browser still opened the authenticated diary afterward. The disposable-fixture banner is absent in this normal app mode.
+
+This closes the local Google callback and account-persistence smoke check only. Hosted authentication, production database preservation/restore, deployment, and the other external release gates above still need their own verification. The local database and session secret must be retained and backed up; accounts are persistent local records, not a cloud backup or a claim of permanent storage.

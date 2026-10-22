@@ -69,6 +69,8 @@ test('discovery automatically updates its visible posters without changing page,
   await page.getByLabel('Release year').fill('1999');
   await page.evaluate(()=>window.scrollTo(0,250));const scroll=await page.evaluate(()=>scrollY);
   const before={movies:await db.movie.findMany(),entries:await db.diaryEntry.findMany(),users:await db.user.findMany()};
+  // Refresh deliberately pauses while auth/review skeletons are busy.
+  await expect(page.locator('[aria-busy="true"]')).toHaveCount(0,{timeout:20000});
   await page.clock.fastForward(60001);
   await expect(page.getByRole('img',{name:'Poster for Automatically updated fixture'})).toHaveAttribute('src',poster,{timeout:20000});
   expect(requests).toBe(1);expect(page.url()).toBe(url);await expect(page.getByLabel('Release year')).toHaveValue('1999');await expect(page.getByLabel('Release year')).toBeFocused();
@@ -87,6 +89,8 @@ test('visible page details update automatically and preserve an unsaved diary dr
   await page.goto('/movies/browser-movie');await expect(page.getByRole('heading',{name:'Before automatic refresh',level:1})).toBeVisible();
   await expect(page.getByText('No written reviews yet')).toBeVisible();
   await db.movie.update({where:{id:'browser-movie'},data:{title:'After automatic refresh',description:'After details',posterUrl:afterPoster,duration:120}});
+  // Refresh deliberately pauses while auth/review skeletons are busy.
+  await expect(page.locator('[aria-busy="true"]')).toHaveCount(0,{timeout:20000});
   await page.clock.fastForward(60001);
   await expect(page.getByRole('heading',{name:'After automatic refresh',level:1})).toBeVisible({timeout:20000});
   await expect(page.getByText('After details',{exact:true})).toBeVisible();await expect(page.getByRole('img',{name:'Poster for After automatic refresh'})).toHaveAttribute('src',afterPoster);
@@ -99,10 +103,37 @@ test('visible page details update automatically and preserve an unsaved diary dr
   await page.getByLabel('Find a saved movie').fill('Keep this filter');await page.getByLabel('Review (optional)').fill('Keep my unsaved review');
   const scroll=await page.evaluate(()=>scrollY);const entries=await db.diaryEntry.findMany();const users=await db.user.findMany();
   await db.movie.update({where:{id:'browser-movie'},data:{title:'Newest automatic title'}});
+  // Refresh deliberately pauses while auth/review skeletons are busy.
+  await expect(page.locator('[aria-busy="true"]')).toHaveCount(0,{timeout:20000});
   await page.clock.fastForward(60001);
   await expect(page.getByText('Logging: Newest automatic title')).toBeVisible({timeout:20000});
   await expect(page.getByLabel('Movie',{exact:true})).toHaveValue('browser-movie');await expect(page.getByLabel('Review (optional)')).toHaveValue('Keep my unsaved review');await expect(page.getByLabel('Review (optional)')).toBeFocused();
   await expect(page.getByLabel('Watched Date')).toHaveValue('2020-02-29');await expect(page.getByLabel('Rewatch',{exact:true})).toBeChecked();await expect(page.getByLabel('Visibility',{exact:true})).toHaveValue('PUBLIC');await expect(page.getByLabel('Find a saved movie')).toHaveValue('Keep this filter');
   expect(await page.evaluate(()=>scrollY)).toBe(scroll);expect(await db.diaryEntry.findMany()).toEqual(entries);expect(await db.user.findMany()).toEqual(users);
+ }finally{await db.$disconnect();}
+});
+
+for(const selection of [
+ {name:'title search',query:'mode=search&query=Wikidata&page=2'},
+ {name:'filtered discovery',query:'mode=discover&genre=878&page=2'},
+])test(`${selection.name} refreshes cached results automatically without changing the URL or filter draft`,async({page})=>{
+ const db=new PrismaClient({datasourceUrl:process.env.TALARAMA_E2E_DATABASE_URL});
+ try{
+  await page.clock.install();await page.route('https://upload.wikimedia.org/**',route=>route.fulfill({contentType:'image/png',body:tinyImage}));
+  await page.goto(`/movies?${selection.query}`);
+  await expect(page.getByRole('img',{name:'Poster for Wikidata Film Q25189'})).toBeVisible();
+  const data=await(await page.request.get(`/api/catalog?${selection.query}`)).json();
+  let recovered=false,requests=0;
+  await page.route('**/api/catalog?**',route=>{
+   requests++;
+   return route.fulfill({json:{...data,...(recovered?{}:{stale:true}),results:data.results.map((movie:Record<string,unknown>)=>({...movie,title:recovered?'Recovered visible movie':'Cached visible movie'}))}});
+  });
+  await page.getByLabel('Release year').fill('1999');
+  const url=page.url(),before={movies:await db.movie.findMany(),identities:await db.externalMovieIdentity.findMany(),entries:await db.diaryEntry.findMany(),users:await db.user.findMany()};
+  await expect(page.locator('[aria-busy="true"]')).toHaveCount(0,{timeout:20000});
+  await page.clock.fastForward(60001);await expect(page.getByRole('img',{name:'Poster for Cached visible movie'})).toBeVisible({timeout:20000});
+  recovered=true;await page.clock.fastForward(60001);await expect(page.getByRole('img',{name:'Poster for Recovered visible movie'})).toBeVisible({timeout:20000});
+  expect(requests).toBe(2);expect(page.url()).toBe(url);await expect(page.getByLabel('Release year')).toHaveValue('1999');await expect(page.getByLabel('Release year')).toBeFocused();
+  expect({movies:await db.movie.findMany(),identities:await db.externalMovieIdentity.findMany(),entries:await db.diaryEntry.findMany(),users:await db.user.findMany()}).toEqual(before);
  }finally{await db.$disconnect();}
 });

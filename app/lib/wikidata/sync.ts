@@ -50,7 +50,7 @@ export class WikidataSync {
    const previous=state.movie;
    const retain=previous&&!movie.posterUrl&&((artworkUnavailable?.commons&&isCommonsPosterUrl(previous.posterUrl))||(artworkUnavailable?.wikipedia&&isWikipediaPreviewPosterUrl(previous.posterUrl)));
    state.movie=retain?{...movie,posterUrl:previous.posterUrl,posterCredit:previous.posterCredit}:movie;
-   state.error=undefined;state.nextAttempt=this.now()+(artworkUnavailable?(this.options.retryMs??60000):(this.options.ttlMs??MOVIE_SYNC_TTL_MS));
+   state.error=undefined;state.nextAttempt=this.now()+((artworkUnavailable||movie.stale)?(this.options.retryMs??60000):(this.options.ttlMs??MOVIE_SYNC_TTL_MS));
    return state.movie;
   }catch(error){
    state.error=error;state.nextAttempt=this.now()+(this.options.retryMs??60000);

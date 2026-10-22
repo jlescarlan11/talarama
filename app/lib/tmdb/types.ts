@@ -17,12 +17,13 @@ export interface CatalogMovie {
 }
 export type WikidataMovie = Omit<CatalogMovie, 'tmdbId' | 'tmdbVoteCount' | 'genres' | 'cast' | 'directors'> & {
   wikidataId: string; tmdbId: null; tmdbVoteCount: null;
+  stale?: true;
   genres: { wikidataId: string; name: string }[];
   cast: { wikidataId: string; name: string; character: string }[];
   directors: { wikidataId: string; name: string }[];
 };
 export type DiscoveredMovie = CatalogMovie | WikidataMovie;
-export interface CatalogPage<TMovie=DiscoveredMovie> { page: number; totalPages: number; totalResults: number; results: TMovie[]; source?: 'tmdb' | 'wikidata'; hasMore?: boolean; order?: 'coverage' | 'identifier' | 'recent' }
+export interface CatalogPage<TMovie=DiscoveredMovie> { page: number; totalPages: number; totalResults: number; results: TMovie[]; source?: 'tmdb' | 'wikidata'; hasMore?: boolean; order?: 'coverage' | 'identifier' | 'recent'; stale?: true }
 export type LocalCatalogMovie = Omit<CatalogMovie, 'localId' | 'tmdbId' | 'tmdbVoteCount'> & { localId: string; tmdbId: number | null; tmdbVoteCount: null };
 export interface CatalogProvider {
   details(tmdbId: number): Promise<CatalogMovie>;

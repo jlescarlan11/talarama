@@ -31,6 +31,7 @@ const env = {
   CATALOG_PROVIDER:liveWikidata?'wikidata':'tmdb',
   TALARAMA_WIKIPEDIA_POSTERS:liveWikidata?'1':'',
   TALARAMA_PREVIEW_CATALOG: liveWikidata?'':'1', TALARAMA_LOCAL_PREVIEW: liveWikidata?'wikidata':'1',
+  TALARAMA_DISCOVERY_CACHE_DIR:liveWikidata?resolve('.superpowers/wikidata-cache'):'',
   TALARAMA_CACHE_SCOPE: schema,
   TALARAMA_DISABLE_COMPILER_CACHE: '1', NEXT_TELEMETRY_DISABLED: '1',
   NODE_OPTIONS: liveWikidata?'':`--require="${resolve('tests/e2e/tmdb-fixture.cjs').replaceAll('\\', '/')}"`,

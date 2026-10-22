@@ -5,6 +5,14 @@ const mocks=vi.hoisted(()=>({identity:vi.fn(),like:vi.fn(),watch:vi.fn(),details
 vi.mock('@/prisma/client',()=>({default:{externalMovieIdentity:{findUnique:mocks.identity},likedBy:{findUnique:mocks.like},watchlistEntry:{findUnique:mocks.watch}}}));
 vi.mock('@/app/lib/wikidata/server',()=>({wikidata:{details:mocks.details}}));
 import {getWikidataMovieDetail} from '@/app/services/wikidataDetailService';
+it('marks cached public details as unavailable while preserving mapped IDs and independent member library state',async()=>{
+ const movie={wikidataId:'Q100',localId:null,title:'Cached details',stale:true};
+ mocks.details.mockResolvedValue(movie);mocks.like.mockResolvedValue({});mocks.watch.mockResolvedValue(null);
+ for(const linked of [true,false]){
+  mocks.identity.mockResolvedValue(linked?{movie:{id:'unchanged-local'}}:null);
+  expect(await getWikidataMovieDetail('Q100','member-a')).toMatchObject({localId:linked?'unchanged-local':null,providerUnavailable:true,favorite:linked,watchlist:false,movie});
+ }
+});
 it('keeps the saved local identity and per-member library state during provider failure',async()=>{
  mocks.identity.mockResolvedValue({movie:{id:'unchanged-local',title:'Saved movie',description:'Keep snapshot',releasedYear:2010,duration:148,posterUrl:null,backdropUrl:null,credits:{cast:[],directors:[]},genres:[]}});
  mocks.details.mockRejectedValue(Error('outage'));mocks.like.mockResolvedValue({});mocks.watch.mockResolvedValue(null);

@@ -2,7 +2,7 @@ import 'server-only';
 import prisma from '@/prisma/client';
 import type {PrismaClient} from '@prisma/client';
 import {movieSync,wikidata} from '@/app/lib/wikidata/server';
-import {localMovieSyncEnabled,MOVIE_SYNC_TTL_MS,type WikidataSync} from '@/app/lib/wikidata/sync';
+import {localMovieSyncEnabled,type WikidataSync} from '@/app/lib/wikidata/sync';
 
 export async function syncEntryMovies<T extends {movie:{id:string;title:string;posterUrl:string|null;releasedYear:number|null}}>(entries:T[],{db=prisma}:{db?:PrismaClient}={}){
  const movies=await syncMovieDisplays(entries.map(entry=>entry.movie),{db});
@@ -31,15 +31,17 @@ export async function syncMovieDisplays<T extends {id:string;title:string;poster
 /** Runs only in an explicitly enabled local preview; reads mappings, never member tables. */
 export function startLocalMovieSync(){
  if(!localMovieSyncEnabled())return;
- let cursor:string|undefined;let nextDiscovery=0;
+ let cursor:string|undefined;
  const stop=movieSync.start(async()=>{
+  // Discovery advances independently of member activity or saved mappings.
+  try{
+   const progress=await wikidata.prefetchDiscovery();
+   if(progress)console.info(`[movie-sync] Discovery warmed page ${progress.page} (${progress.movies} films with posters; ${progress.hasMore?'more available':'end of current selection'}).`);
+  }catch{console.info('[movie-sync] Discovery read deferred; retrying next minute.');}
   const rows=await prisma.externalMovieIdentity.findMany({where:{provider:'WIKIDATA',...(cursor?{externalId:{gt:cursor}}:{})},select:{externalId:true},orderBy:{externalId:'asc'},take:12});
   cursor=rows.length===12?rows.at(-1)!.externalId:undefined;
-  if(Date.now()>=nextDiscovery){
-   try{await wikidata.discover();nextDiscovery=Date.now()+MOVIE_SYNC_TTL_MS;}catch{ /* Retry on the next bounded sweep. */ }
-  }
   return rows.map(row=>row.externalId);
  });
- console.info('[movie-sync] Local background refresh enabled (hourly metadata, bounded minute sweeps).');
+ console.info('[movie-sync] Local background refresh enabled (one discovery page per minute, hourly head checks and metadata refresh).');
  return stop;
 }

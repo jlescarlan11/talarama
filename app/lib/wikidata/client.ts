@@ -1,4 +1,5 @@
 import 'server-only';
+import {createHash} from 'node:crypto';
 import { z } from 'zod';
 import { MetadataCache } from '@/app/lib/tmdb/cache';
 import { TmdbError } from '@/app/lib/tmdb/client';
@@ -7,6 +8,8 @@ import type {ArtworkFailures} from './sync';
 import { genres } from '@/app/lib/movies/catalog-query';
 import {CommonsPosters,type PosterCandidate} from './commons-posters';
 import {WikipediaPosters,localWikipediaPostersEnabled} from './wikipedia-posters';
+import type {LocalDiscoveryCache,DiscoverySnapshot} from './local-discovery-cache';
+import {isCommonsPosterUrl,isWikipediaPreviewPosterUrl} from '@/app/lib/movies/poster-credit';
 
 export const wikidataIdSchema = z.string().regex(/^Q[1-9]\d{0,11}$/);
 export const wikiGenres: Record<number, string> = { 28:'Q188473',12:'Q319221',16:'Q202866',35:'Q157443',80:'Q959790',99:'Q93204',18:'Q130232',10751:'Q1361932',14:'Q157394',36:'Q17013749',27:'Q200092',10402:'Q842256',9648:'Q1200678',10749:'Q1054574',878:'Q471839',10770:'Q506240',53:'Q2484376',10752:'Q369747',37:'Q172980' };
@@ -15,10 +18,13 @@ const statement = z.object({ rank: z.string().optional(), mainsnak: z.object({ d
 const entitySchema = z.object({ id: wikidataIdSchema, labels: z.record(z.object({ value: z.string().max(500) })).default({}), descriptions: z.record(z.object({ value: z.string().max(3000) })).default({}), claims: z.record(z.array(statement).max(2000)).default({}),sitelinks:z.object({enwiki:z.object({title:z.string().max(240)}).optional()}).optional().catch(undefined) });
 type Entity = z.infer<typeof entitySchema>;
 type ArtworkSources={files:PosterCandidate[];article?:string};
-type DiscoveryMetadata={movies:WikidataMovie[];candidates:Map<string,ArtworkSources>};
+export type DiscoveryMetadata={movies:WikidataMovie[];candidates:Map<string,ArtworkSources>};
 type PosterSelection={metadata:DiscoveryMetadata;batches:Map<number,Promise<WikidataMovie[]>>};
+type RecentCursor={links:number;id:string};
+type RecentSelection=PosterSelection&{nextCursor:RecentCursor|null};
 type OlderSelection=PosterSelection&{nextOffset:number|null};
 class OversizedWikidataResponse extends TmdbError { constructor(){super('INVALID_RESPONSE');} }
+class DiscoveryWorkLimit extends TmdbError { constructor(){super('TIMEOUT');} }
 function values(entity: Entity, property: string) { return (entity.claims[property] || []).filter(s => s.rank !== 'deprecated').map(s => s.mainsnak.datavalue?.value); }
 function ids(entity: Entity, property: string): string[] { return values(entity,property).map(value => z.object({ id: wikidataIdSchema }).safeParse(value)).filter(value => value.success).map(value => value.data!.id); }
 function years(entity: Entity) { return values(entity,'P577').map(value => z.object({ time:z.string(), precision:z.number().min(9) }).safeParse(value)).filter(value => value.success).map(value => /^\+(\d{4})-/.exec(value.data!.time)?.[1]).filter((year): year is string => !!year).map(Number).filter(year => year >= 1800 && year <= 9999).sort((a,b)=>a-b); }
@@ -43,7 +49,17 @@ export class WikidataClient {
   private posters:CommonsPosters;
   private wikipedia:WikipediaPosters;
   private wikipediaPreview:boolean;
-  constructor({ fetcher = fetch,wikipediaPreview=localWikipediaPostersEnabled() }: { fetcher?: typeof fetch;wikipediaPreview?:boolean } = {}) { this.fetcher=fetcher;this.posters=new CommonsPosters({fetcher});this.wikipedia=new WikipediaPosters({fetcher});this.wikipediaPreview=wikipediaPreview; }
+  private persistence?:LocalDiscoveryCache;
+  private discoveryRetryAt=0;
+  private discoveryError?:TmdbError;
+  private lastDiscoveryPages=new Map<number,CatalogPage<WikidataMovie>>();
+  private lastListPages=new Map<string,CatalogPage<WikidataMovie>>();
+  private listRetries=new Map<string,{until:number;error:TmdbError}>();
+  private detailRetries=new Map<string,{until:number;error:TmdbError}>();
+  constructor({ fetcher = fetch,wikipediaPreview=localWikipediaPostersEnabled(),persistence }: { fetcher?: typeof fetch;wikipediaPreview?:boolean;persistence?:LocalDiscoveryCache } = {}) { this.fetcher=fetcher;this.posters=new CommonsPosters({fetcher});this.wikipedia=new WikipediaPosters({fetcher});this.wikipediaPreview=wikipediaPreview;this.persistence=persistence; }
+  private cachedDiscovery<T extends DiscoverySnapshot>(key:string,load:()=>Promise<T>):Promise<T>{
+    return this.persistence?this.persistence.get(key,load):this.discoveryCache.get(key,3600000,load);
+  }
   private posterCandidates(entity:Entity):ArtworkSources {
     const files=(property:string,explicitPoster:boolean)=>values(entity,property).filter((file):file is string=>typeof file==='string').slice(0,2).map(file=>({file,explicitPoster}));
     return {files:[...files('P3383',true),...files('P18',false)],article:this.wikipediaPreview?entity.sitelinks?.enwiki?.title:undefined};
@@ -102,19 +118,60 @@ export class WikidataClient {
   }
   async details(id: string): Promise<WikidataMovie & {artworkUnavailable?:ArtworkFailures}> {
     if(!wikidataIdSchema.safeParse(id).success)throw new TmdbError('INVALID_INPUT');
-    const metadata=await this.cache.get(`details:${id}`,3600000,async()=>{
-      const [entity]=await this.entities([id]); validFilm(entity);
-      const related=[...new Set([...ids(entity,'P136').slice(0,10),...ids(entity,'P57').slice(0,10),...ids(entity,'P161').slice(0,20)])];
-      const labels=new Map((await this.entities(related,false)).map(row=>[row.id,row.labels.en?.value || row.id]));
-      return {movie:normalize(entity,labels),candidates:this.posterCandidates(entity)};
-    });
+    let metadata:DiscoveryMetadata;let stale=false;
+    try{
+      const retry=this.detailRetries.get(id);if(retry&&Date.now()<retry.until)throw retry.error;
+      metadata=await this.cache.get(`details:${id}`,3600000,async()=>{
+        let entity:Entity;
+        try{[entity]=await this.entities([id]);validFilm(entity);}catch(error){
+          if(error instanceof TmdbError&&['NOT_FOUND','CONTENT_BLOCKED'].includes(error.code))await this.persistence?.discardDetail(id);
+          throw error;
+        }
+        const related=[...new Set([...ids(entity,'P136').slice(0,10),...ids(entity,'P57').slice(0,10),...ids(entity,'P161').slice(0,20)])];
+        const labels=new Map((await this.entities(related,false)).map(row=>[row.id,row.labels.en?.value || row.id]));
+        const value={movies:[normalize(entity,labels)],candidates:new Map([[id,this.posterCandidates(entity)]])};
+        await this.persistence?.saveDetail(value);return value;
+      });
+      this.detailRetries.delete(id);
+    }catch(error){
+      if(!this.persistence||!(error instanceof TmdbError)||!['UNAVAILABLE','TIMEOUT','RATE_LIMITED'].includes(error.code))throw error;
+      const cached=await this.persistence.cachedDetail(id);if(!cached)throw error;
+      metadata=cached;stale=true;
+      if((this.detailRetries.get(id)?.until??0)<=Date.now()){
+        this.detailRetries.delete(id);while(this.detailRetries.size>=512)this.detailRetries.delete(this.detailRetries.keys().next().value!);
+        this.detailRetries.set(id,{until:Date.now()+60000,error});
+      }
+    }
     const unavailable:ArtworkFailures={};
-    const movie=(await this.attachPosters(new Map([[id,metadata.candidates]]),[metadata.movie],unavailable))[0];
-    return Object.keys(unavailable).length?{...movie,artworkUnavailable:unavailable}:movie;
+    const movie=(await this.attachPosters(metadata.candidates,metadata.movies,unavailable))[0];
+    return {...movie,...(stale?{stale:true as const}:{}),...(Object.keys(unavailable).length?{artworkUnavailable:unavailable}:{})};
   }
   search(input: { query:string;year?:number;page?:number }) { return this.list(input); }
   discover(input: { genre?:number;year?:number;page?:number } = {}) {
-    return input.genre===undefined && input.year===undefined ? this.recent(input.page??1) : this.list(input);
+    return input.genre===undefined && input.year===undefined ? this.discovery(input.page??1) : this.list(input);
+  }
+  private async discovery(page:number):Promise<CatalogPage<WikidataMovie>>{
+    if(!Number.isInteger(page)||page<1||page>500)throw new TmdbError('INVALID_INPUT');
+    if(!this.persistence)return this.recent(page);
+    try{
+      if(Date.now()<this.discoveryRetryAt&&this.discoveryError)throw this.discoveryError;
+      const data=await this.recent(page);
+      await this.persistence.savePage(data);this.lastDiscoveryPages.set(page,data);
+      this.discoveryRetryAt=0;this.discoveryError=undefined;return data;
+    }catch(error){
+      if(!(error instanceof TmdbError)||!['UNAVAILABLE','TIMEOUT','RATE_LIMITED'].includes(error.code))throw error;
+      if(!(error instanceof DiscoveryWorkLimit)&&Date.now()>=this.discoveryRetryAt){this.discoveryRetryAt=Date.now()+60000;this.discoveryError=error;}
+      const cached=await this.persistence.cachedPage(page);if(!cached)throw error;
+      const failures:ArtworkFailures={};
+      const decorated=await this.attachPosters(cached.candidates,cached.data.results,failures);
+      const previous=new Map(this.lastDiscoveryPages.get(page)?.results.map(movie=>[movie.wikidataId,movie]));
+      const results=decorated.map(movie=>{
+        const old=previous.get(movie.wikidataId);
+        const retain=old&&!movie.posterUrl&&((failures.commons&&isCommonsPosterUrl(old.posterUrl))||(failures.wikipedia&&isWikipediaPreviewPosterUrl(old.posterUrl)));
+        return retain?{...movie,posterUrl:old.posterUrl,posterCredit:old.posterCredit}:movie;
+      });
+      return {...cached.data,results};
+    }
   }
   /** A bounded live selection, not an exhaustive release calendar or popularity chart.
    * Filter artwork before pagination so every default card has a verified poster.
@@ -124,25 +181,24 @@ export class WikidataClient {
     if(!Number.isInteger(page)||page<1||page>500)throw new TmdbError('INVALID_INPUT');
     const now=new Date(),year=now.getUTCFullYear(),day=now.toISOString().slice(0,10);
     const tomorrow=new Date(Date.UTC(year,now.getUTCMonth(),now.getUTCDate()+1)).toISOString();
-    const selection=await this.discoveryCache.get(`recent-posters:${day}`,300000,async()=>{
-      const metadata=await this.discoveryCache.get(`recent-metadata:${day}`,3600000,async()=>{
-        // Rank a small candidate pool by language coverage, then order eligible films
-        // by first release year locally. Normalize excludes older regional re-releases.
-        const q=`PREFIX wdt:<http://www.wikidata.org/prop/direct/> PREFIX wd:<http://www.wikidata.org/entity/> PREFIX hint:<http://www.bigdata.com/queryHints#> PREFIX wikibase:<http://wikiba.se/ontology#> SELECT DISTINCT ?film ?links WHERE { ?film wdt:P31 wd:Q11424; wdt:P577 ?date. FILTER(?date >= "${year-2}-01-01T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> && ?date < "${tomorrow}"^^<http://www.w3.org/2001/XMLSchema#dateTime>) hint:Prior hint:rangeSafe true. ?film wikibase:sitelinks ?links. FILTER(?links >= 10) } ORDER BY DESC(?links) ?film LIMIT 240`;
-        const url=new URL('https://query.wikidata.org/sparql');url.search=new URLSearchParams({query:q,format:'json'}).toString();
-        const data=z.object({results:z.object({bindings:z.array(z.object({film:z.object({value:z.string().regex(/^http:\/\/www\.wikidata\.org\/entity\/Q[1-9]\d{0,11}$/)})})).max(240)})}).safeParse(await this.request(url));
-        if(!data.success)throw new TmdbError('INVALID_RESPONSE');
-        const selected=[...new Set(data.data.results.bindings.map(row=>row.film.value.split('/').at(-1)!))];
-        return this.discoveryMetadata(selected,movie=>movie.releasedYear!==null&&movie.releasedYear>=year-2&&movie.releasedYear<=year);
-      });
-      return {metadata,batches:new Map<number,Promise<WikidataMovie[]>>()};
-    });
-    const {metadata}=selection;
     const available:WikidataMovie[]=[];
-    await this.appendPosters(selection,available,page*12);
-    const selections:PosterSelection[]=[selection];
-    const seen=new Set(metadata.movies.map(movie=>movie.wikidataId));
-    const budget={remaining:4};let offset:number|null=0;
+    const selections:PosterSelection[]=[];
+    const seen=new Set<string>();
+    const budget={remaining:4};
+    // Give each year its own coverage-ranked pool. A previous year's hit must
+    // not crowd a newly catalogued current-year film out of the shared limit.
+    // Older years are loaded only when this page (or its lookahead) needs them.
+    for(let releaseYear=year;releaseYear>=year-2&&available.length<=page*12;releaseYear--){
+      let cursor:RecentCursor|null=null;
+      do{
+        const selection=await this.recentSelection(day,releaseYear,releaseYear===year?tomorrow:`${releaseYear+1}-01-01T00:00:00Z`,cursor,budget);
+        selections.push(selection);
+        await this.appendPosters(selection,available,page*12,seen);
+        for(const movie of selection.metadata.movies)seen.add(movie.wikidataId);
+        cursor=selection.nextCursor;
+      }while(cursor&&available.length<=page*12);
+    }
+    let offset:number|null=0;
     while(available.length<=page*12&&offset!==null){
       const older=await this.olderSelection(day,year,offset,budget);
       selections.push(older);
@@ -157,6 +213,34 @@ export class WikidataClient {
     return {source:'wikidata',order:'recent',page,hasMore,totalResults:total,totalPages:Math.ceil(total/12),results:available.slice((page-1)*12,page*12)};
   }
 
+  private recentSelection(day:string,year:number,before:string,cursor:RecentCursor|null,budget:{remaining:number}):Promise<RecentSelection> {
+    const key=`${day}:${year}:${cursor?`${cursor.links}:${cursor.id}`:'start'}`;
+    return this.discoveryCache.get(`recent-posters:${key}`,300000,async()=>{
+      const loaded=await this.cachedDiscovery(`recent-metadata:${key}`,async()=>{
+        // Only fresh continuation reads consume this request's budget. Cached
+        // progress survives a retry; a cold deep link cannot scan indefinitely.
+        if(cursor&&budget.remaining--<=0)throw new DiscoveryWorkLimit();
+        const limit=cursor?48:240;
+        const after=cursor?` FILTER(?links < ${cursor.links} || (?links = ${cursor.links} && STR(?film) > "http://www.wikidata.org/entity/${cursor.id}"))`:'';
+        const q=`PREFIX wdt:<http://www.wikidata.org/prop/direct/> PREFIX wd:<http://www.wikidata.org/entity/> PREFIX hint:<http://www.bigdata.com/queryHints#> PREFIX wikibase:<http://wikiba.se/ontology#> SELECT DISTINCT ?film ?links WHERE { ?film wdt:P31 wd:Q11424; wdt:P577 ?date. FILTER(?date >= "${year}-01-01T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> && ?date < "${before}"^^<http://www.w3.org/2001/XMLSchema#dateTime>) hint:Prior hint:rangeSafe true. ?film wikibase:sitelinks ?links. FILTER(?links >= 1)${after} } ORDER BY DESC(?links) ?film LIMIT ${limit}`;
+        const url=new URL('https://query.wikidata.org/sparql');url.search=new URLSearchParams({query:q,format:'json'}).toString();
+        const data=z.object({results:z.object({bindings:z.array(z.object({film:z.object({value:z.string().regex(/^http:\/\/www\.wikidata\.org\/entity\/Q[1-9]\d{0,11}$/)}),links:z.object({value:z.string().regex(/^[1-9]\d{0,6}$/)})})).max(limit)})}).safeParse(await this.request(url));
+        if(!data.success)throw new TmdbError('INVALID_RESPONSE');
+        let last=cursor;
+        for(const row of data.data.results.bindings){
+          const next={links:Number(row.links.value),id:row.film.value.split('/').at(-1)!};
+          if(last&&(next.links>last.links||(next.links===last.links&&next.id<=last.id)))throw new TmdbError('INVALID_RESPONSE');
+          last=next;
+        }
+        const selected=[...new Set(data.data.results.bindings.map(row=>row.film.value.split('/').at(-1)!))];
+        // First release year excludes regional re-releases and cross-year duplicates.
+        const metadata=await this.discoveryMetadata(selected,movie=>movie.releasedYear===year);
+        return {metadata,nextCursor:data.data.results.bindings.length===limit?last:null};
+      });
+      return {...loaded,batches:new Map<number,Promise<WikidataMovie[]>>()};
+    });
+  }
+
   private async discoveryMetadata(selected:string[],eligible:(movie:WikidataMovie)=>boolean):Promise<DiscoveryMetadata> {
     const unique=[...new Set(selected)];const rows:Entity[]=[];
     for(let offset=0;offset<unique.length;offset+=100)rows.push(...(await Promise.all([this.entities(unique.slice(offset,offset+50)),this.entities(unique.slice(offset+50,offset+100))])).flat());
@@ -166,10 +250,10 @@ export class WikidataClient {
   }
   private olderSelection(day:string,year:number,offset=0,budget={remaining:4}):Promise<OlderSelection> {
     return this.discoveryCache.get(`older-posters:${day}:${offset}`,300000,async()=>{
-      const loaded=await this.discoveryCache.get(`older-metadata:${day}:${offset}`,3600000,async()=>{
+      const loaded=await this.cachedDiscovery(`older-metadata:${day}:${offset}`,async()=>{
         // Preserve the opening classics selection, then fetch small continuation batches.
         // A cold deep-page jump can retry; it cannot trigger unbounded upstream work.
-        if(offset>0&&budget.remaining--<=0)throw new TmdbError('TIMEOUT');
+        if(offset>0&&budget.remaining--<=0)throw new DiscoveryWorkLimit();
         const limit=Math.min(offset===0?240:48,10000-offset);
         const data=z.object({continue:z.object({sroffset:z.number().int().min(1).max(10000)}).optional(),query:z.object({search:z.array(z.object({title:wikidataIdSchema})).max(limit)})}).safeParse(await this.api({action:'query',list:'search',srsearch:'haswbstatement:P31=Q11424 haslabel:en',srsort:'incoming_links_desc',srlimit:String(limit),sroffset:String(offset),srinfo:'',srprop:''}));
         if(!data.success)throw new TmdbError('INVALID_RESPONSE');
@@ -202,7 +286,14 @@ export class WikidataClient {
   private async list(input: { query?:string;genre?:number;year?:number;page?:number }): Promise<CatalogPage<WikidataMovie>> {
     const parsed=z.object({query:z.string().trim().min(1).max(200).optional(),genre:z.number().int().refine(id=>!!wikiGenres[id]).optional(),year:z.number().int().min(1800).max(9999).optional(),page:z.number().int().min(1).max(500).default(1)}).safeParse(input);
     if(!parsed.success)throw new TmdbError('INVALID_INPUT');const {query,genre,year,page}=parsed.data;
-    const metadata=await this.cache.get<{data:CatalogPage<WikidataMovie>;candidates:Map<string,ArtworkSources>}>(`list:${JSON.stringify(parsed.data)}`,query?300000:3600000,async()=>{
+    // Stable field order, explicit defaults, and a digest keep query text out of the disk index.
+    const key=`list:${createHash('sha256').update(JSON.stringify([query??null,genre??null,year??null,page])).digest('hex')}`;
+    type ListMetadata={data:CatalogPage<WikidataMovie>;candidates:Map<string,ArtworkSources>};
+    let metadata:ListMetadata;
+    try{
+     const retry=this.listRetries.get(key);if(retry&&Date.now()<retry.until)throw retry.error;
+     metadata=await this.cache.get<ListMetadata>(key,query?300000:3600000,async()=>{
+      const load=async():Promise<ListMetadata>=>{
       let selected:string[];let total=0;let hasMore:boolean|undefined;
       if(year){
         // Candidate restriction keeps title/year queries away from a global label scan.
@@ -227,7 +318,33 @@ export class WikidataClient {
       const rows=await this.entities([...new Set(selected)]);
       const results=rows.flatMap(row=>{try{if(year && years(row)[0]!==year)return [];return [normalize(row)];}catch(error){if(error instanceof TmdbError && error.code==='CONTENT_BLOCKED')return [];throw error;}});
       return {data:{source:'wikidata',order:year?'identifier':'coverage',page,totalPages:Math.min(500,Math.ceil(total/12)),totalResults:total,results,...(hasMore===undefined?{}:{hasMore})},candidates:new Map(rows.filter(row=>results.some(movie=>movie.wikidataId===row.id)).map(row=>[row.id,this.posterCandidates(row)]))};
+      };
+      const fresh=await load();await this.persistence?.saveList(key,fresh);return fresh;
+     });
+     this.listRetries.delete(key);
+    }catch(error){
+     if(!this.persistence||!(error instanceof TmdbError)||!['UNAVAILABLE','TIMEOUT','RATE_LIMITED'].includes(error.code))throw error;
+     if(!this.listRetries.has(key)||Date.now()>=this.listRetries.get(key)!.until){
+      this.listRetries.delete(key);
+      while(this.listRetries.size>=512)this.listRetries.delete(this.listRetries.keys().next().value!);
+      this.listRetries.set(key,{until:Date.now()+60000,error});
+     }
+     const cached=await this.persistence.cachedList(key);if(!cached)throw error;metadata=cached;
+    }
+    const failures:ArtworkFailures={};
+    const decorated=await this.attachPosters(metadata.candidates,metadata.data.results,failures);
+    const previous=new Map(this.lastListPages.get(key)?.results.map(movie=>[movie.wikidataId,movie]));
+    const results=decorated.map(movie=>{
+     const old=previous.get(movie.wikidataId);
+     const retain=old&&!movie.posterUrl&&((failures.commons&&isCommonsPosterUrl(old.posterUrl))||(failures.wikipedia&&isWikipediaPreviewPosterUrl(old.posterUrl)));
+     return retain?{...movie,posterUrl:old.posterUrl,posterCredit:old.posterCredit}:movie;
     });
-    return {...metadata.data,results:await this.attachPosters(metadata.candidates,metadata.data.results)};
+    const data={...metadata.data,results};
+    if(this.persistence){
+     this.lastListPages.delete(key);
+     while(this.lastListPages.size>=200)this.lastListPages.delete(this.lastListPages.keys().next().value!);
+     this.lastListPages.set(key,data);
+    }
+    return data;
   }
 }

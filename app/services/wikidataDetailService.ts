@@ -9,7 +9,7 @@ import {posterCreditSchema} from '@/app/lib/movies/poster-credit';
 export async function getWikidataMovieDetail(wikidataId:string,userId?:string) {
   const identity=await prisma.externalMovieIdentity.findUnique({where:{provider_externalId:{provider:'WIKIDATA',externalId:wikidataId}},include:{movie:{include:{genres:{include:{genre:true}}}}}});
   const local=identity?.movie;let movie:WikidataMovie;let providerUnavailable=false;
-  try{movie=await wikidata.details(wikidataId);}catch(error){
+  try{movie=await wikidata.details(wikidataId);providerUnavailable=!!movie.stale;}catch(error){
     if(!local){if(error instanceof TmdbError && ['NOT_FOUND','CONTENT_BLOCKED'].includes(error.code))return null;throw error;}
     providerUnavailable=true;
     const person=z.object({wikidataId:z.string(),name:z.string(),character:z.string().default('')});
