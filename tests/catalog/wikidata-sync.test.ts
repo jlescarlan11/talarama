@@ -52,10 +52,12 @@ it('bounds work, never overlaps cycles, and only sends validated public identifi
  expect(max).toBeLessThanOrEqual(2);expect(load.mock.calls.every(([id])=>/^Q\d+$/.test(id))).toBe(true);
  expect(load.mock.calls.length).toBeLessThanOrEqual(5);
 });
-it('only enables the background worker for the explicit loopback Wikidata preview',()=>{
- const env={TALARAMA_LOCAL_PREVIEW:'wikidata',NEXTAUTH_URL:'http://127.0.0.1:3000'};
+it('enables normal Wikidata refresh on local and HTTPS origins with an explicit opt-out',()=>{
+ const env={NEXTAUTH_URL:'http://127.0.0.1:3000'};
  expect(localMovieSyncEnabled(env)).toBe(true);
- expect(localMovieSyncEnabled({...env,NEXTAUTH_URL:'https://example.com'})).toBe(false);
+ expect(localMovieSyncEnabled({...env,NEXTAUTH_URL:'https://example.com'})).toBe(true);
+ expect(localMovieSyncEnabled({...env,TALARAMA_MOVIE_SYNC:'0'})).toBe(false);
+ expect(localMovieSyncEnabled({...env,NEXTAUTH_URL:'http://example.com'})).toBe(false);
  expect(localMovieSyncEnabled({...env,CATALOG_PROVIDER:'tmdb'})).toBe(false);
  expect(localMovieSyncEnabled({...env,NEXT_PHASE:'phase-production-build'})).toBe(false);
 });

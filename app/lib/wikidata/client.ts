@@ -49,6 +49,7 @@ export class WikidataClient {
   private posters:CommonsPosters;
   private wikipedia:WikipediaPosters;
   private wikipediaPreview:boolean;
+  private requirePosters:boolean;
   private persistence?:LocalDiscoveryCache;
   private discoveryRetryAt=0;
   private discoveryError?:TmdbError;
@@ -56,7 +57,7 @@ export class WikidataClient {
   private lastListPages=new Map<string,CatalogPage<WikidataMovie>>();
   private listRetries=new Map<string,{until:number;error:TmdbError}>();
   private detailRetries=new Map<string,{until:number;error:TmdbError}>();
-  constructor({ fetcher = fetch,wikipediaPreview=localWikipediaPostersEnabled(),persistence }: { fetcher?: typeof fetch;wikipediaPreview?:boolean;persistence?:LocalDiscoveryCache } = {}) { this.fetcher=fetcher;this.posters=new CommonsPosters({fetcher});this.wikipedia=new WikipediaPosters({fetcher});this.wikipediaPreview=wikipediaPreview;this.persistence=persistence; }
+  constructor({ fetcher = fetch,wikipediaPreview=localWikipediaPostersEnabled(),requirePosters=true,persistence }: { fetcher?: typeof fetch;wikipediaPreview?:boolean;requirePosters?:boolean;persistence?:LocalDiscoveryCache } = {}) { this.fetcher=fetcher;this.posters=new CommonsPosters({fetcher});this.wikipedia=new WikipediaPosters({fetcher});this.wikipediaPreview=wikipediaPreview;this.requirePosters=requirePosters;this.persistence=persistence; }
   private cachedDiscovery<T extends DiscoverySnapshot>(key:string,load:()=>Promise<T>):Promise<T>{
     return this.persistence?this.persistence.get(key,load):this.discoveryCache.get(key,3600000,load);
   }
@@ -174,7 +175,7 @@ export class WikidataClient {
     }
   }
   /** A bounded live selection, not an exhaustive release calendar or popularity chart.
-   * Filter artwork before pagination so every default card has a verified poster.
+   * Poster-focused previews filter artwork; normal browsing retains metadata when artwork is missing.
    * No imports or member reads occur here. Explicit filters retain the full catalog.
    */
   private async recent(page:number):Promise<CatalogPage<WikidataMovie>> {
@@ -207,7 +208,7 @@ export class WikidataClient {
       offset=older.nextOffset;
     }
     // An artwork outage must be retryable, not cached as a successful empty catalog.
-    if(selections.some(value=>value.metadata.movies.length)&&!available.length){for(const value of selections)value.batches.clear();throw new TmdbError('UNAVAILABLE');}
+    if(this.requirePosters&&selections.some(value=>value.metadata.movies.length)&&!available.length){for(const value of selections)value.batches.clear();throw new TmdbError('UNAVAILABLE');}
     const hasMore=page<500&&available.length>page*12;
     const total=hasMore?page*12+1:Math.min(available.length,page*12);
     return {source:'wikidata',order:'recent',page,hasMore,totalResults:total,totalPages:Math.ceil(total/12),results:available.slice((page-1)*12,page*12)};
@@ -275,7 +276,7 @@ export class WikidataClient {
       if(!pending){
         const batch=metadata.movies.slice(offset,offset+12);
         pending=this.attachPosters(new Map(batch.map(movie=>[movie.wikidataId,metadata.candidates.get(movie.wikidataId)!])),batch)
-          .then(movies=>movies.filter(movie=>!!movie.posterUrl))
+          .then(movies=>this.requirePosters?movies.filter(movie=>!!movie.posterUrl):movies)
           .catch(error=>{batches.delete(offset);throw error;});
         batches.set(offset,pending);
       }

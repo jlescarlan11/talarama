@@ -7,7 +7,7 @@ const validId=(id:string)=>/^Q[1-9]\d{0,11}$/.test(id);
 type RecordState={movie?:WikidataMovie;nextAttempt:number;pending?:Promise<WikidataMovie>;error?:unknown};
 
 export function localMovieSyncEnabled(env:Record<string,string|undefined>=process.env){
- try{const url=new URL(env.NEXTAUTH_URL||'');return env.TALARAMA_LOCAL_PREVIEW==='wikidata'&&env.CATALOG_PROVIDER!=='tmdb'&&env.NEXT_PHASE!=='phase-production-build'&&url.protocol==='http:'&&['localhost','127.0.0.1','[::1]'].includes(url.hostname);}catch{return false;}
+ try{const url=new URL(env.NEXTAUTH_URL||'');return env.TALARAMA_MOVIE_SYNC!=='0'&&env.CATALOG_PROVIDER!=='tmdb'&&env.NEXT_PHASE!=='phase-production-build'&&!url.username&&!url.password&&(url.protocol==='https:'||(url.protocol==='http:'&&['localhost','127.0.0.1','[::1]'].includes(url.hostname)));}catch{return false;}
 }
 
 /** Only public movie metadata lives here. All data is transient and bounded. */

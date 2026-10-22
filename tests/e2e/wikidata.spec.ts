@@ -15,7 +15,7 @@ test('Wikidata browse/detail preserve reads, identities, save/log actions and or
    const carousel=page.getByRole('region',{name:'Movie carousel'});await expect(carousel.getByRole('img')).toHaveCount(5);
    for(const image of await carousel.getByRole('img').all())await expect(image).toHaveAttribute('src','https://upload.wikimedia.org/wikipedia/commons/a/ab/Wikidata_fixture_poster.png');
    await page.goto('/movies');await expect(page.getByRole('button',{name:'Browse movies'})).toBeVisible();
-   await expect(page.getByText(/Recent movies with verified posters/)).toBeVisible();
+   await expect(page.getByText(/Recent movies lead/)).toBeVisible();
    await expect(page.getByRole('link',{name:/Wikidata Fixture Film/})).toHaveAttribute('href','/movies/wikidata/Q25188');
    const image=page.getByRole('img',{name:'Poster for Wikidata Fixture Film'});await expect(image).toHaveAttribute('src','https://upload.wikimedia.org/wikipedia/commons/a/ab/Wikidata_fixture_poster.png');expect(await image.evaluate((element:HTMLImageElement)=>element.complete && element.naturalWidth>0)).toBe(true);
    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);

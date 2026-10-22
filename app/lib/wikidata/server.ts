@@ -10,7 +10,7 @@ type SharedWikidata={client:WikidataClient;sync:WikidataSync;discovery?:Discover
 const shared=globalThis as typeof globalThis & {talaramaWikidata?:SharedWikidata};
 const state:SharedWikidata=shared.talaramaWikidata??(()=>{
  const directory=localDiscoveryDirectory();const persistence=directory?new LocalDiscoveryCache(directory):undefined;
- const client=new WikidataClient({persistence});return {client,sync:new WikidataSync(id=>client.details(id)),persistence};
+ const client=new WikidataClient({persistence,requirePosters:process.env.TALARAMA_LOCAL_PREVIEW==='wikidata'});return {client,sync:new WikidataSync(id=>client.details(id)),persistence};
 })();
 shared.talaramaWikidata=state;
 const discovery=state.discovery??=new DiscoveryPrefetch(page=>state.client.discover({page}),{checkpoint:state.persistence});

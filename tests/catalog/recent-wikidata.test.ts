@@ -288,3 +288,13 @@ it('recovers poster outages without repeating the recent metadata query, and val
  unavailable=false;expect((await client.discover()).results).toHaveLength(12);
  expect(upstream.mock.calls.filter(call=>new URL(String(call[0])).hostname==='query.wikidata.org')).toHaveLength(3);
 });
+
+it('serves normal discovery metadata without scanning for missing or unavailable posters',async()=>{
+ const rows=Array.from({length:445},(_,i)=>entity('Q'+(10000+i),year,false));
+ const fetcher=transport(rows);const client=new WikidataClient({fetcher,wikipediaPreview:false,requirePosters:false});
+ const first=await client.discover();
+ expect(first.results).toHaveLength(12);expect(first.hasMore).toBe(true);
+ expect(first.results.every(movie=>movie.posterUrl===null)).toBe(true);
+ expect(fetcher.mock.calls.filter(call=>new URL(String(call[0])).hostname==='query.wikidata.org')).toHaveLength(1);
+ expect((await client.discover({page:2})).results.map(movie=>movie.wikidataId)).toEqual(rows.slice(12,24).map(row=>row.id));
+});

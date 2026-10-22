@@ -13,11 +13,13 @@ const fixture=()=>({metadata:{movies:[{localId:null,wikidataId:'Q100',tmdbId:nul
 async function directory(){const path=await mkdtemp(join(tmpdir(),'talarama-discovery-'));directories.push(path);return path;}
 const key='recent-metadata:2026-10-20:2026:start';
 
-it('enables persistence only at the explicit local preview cache directory',()=>{
+it('enables normal persistence at the bounded app cache directory',()=>{
  const cwd=join(tmpdir(),'talarama-preview'),path=join(cwd,'.superpowers','wikidata-cache');
  const env={NEXTAUTH_URL:'http://127.0.0.1:3000',TALARAMA_LOCAL_PREVIEW:'wikidata',CATALOG_PROVIDER:'wikidata',TALARAMA_DISCOVERY_CACHE_DIR:path};
  expect(localDiscoveryDirectory(env,cwd)).toBe(path);
- for(const override of [{TALARAMA_DISCOVERY_CACHE_DIR:''},{TALARAMA_DISCOVERY_CACHE_DIR:join(cwd,'other')},{NEXTAUTH_URL:'https://example.com'},{TALARAMA_LOCAL_PREVIEW:''},{NEXT_PHASE:'phase-production-build'},{CATALOG_PROVIDER:'tmdb'}])expect(localDiscoveryDirectory({...env,...override},cwd)).toBeUndefined();
+ expect(localDiscoveryDirectory({NEXTAUTH_URL:'http://localhost:3000'},cwd)).toBe(path);
+ expect(localDiscoveryDirectory({...env,NEXTAUTH_URL:'https://example.com',TALARAMA_LOCAL_PREVIEW:''},cwd)).toBe(path);
+ for(const override of [{TALARAMA_DISCOVERY_CACHE_DIR:''},{TALARAMA_DISCOVERY_CACHE_DIR:join(cwd,'other')},{TALARAMA_MOVIE_SYNC:'0'},{NEXTAUTH_URL:'http://example.com'},{NEXT_PHASE:'phase-production-build'},{CATALOG_PROVIDER:'tmdb'}])expect(localDiscoveryDirectory({...env,...override},cwd)).toBeUndefined();
 });
 
 it('restores public movie metadata and continuation after a fresh instance, omitting local identities, member fields and preview artwork',async()=>{

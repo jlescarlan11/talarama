@@ -28,7 +28,7 @@ export async function syncMovieDisplays<T extends {id:string;title:string;poster
  });
 }
 
-/** Runs only in an explicitly enabled local preview; reads mappings, never member tables. */
+/** Runs for the Wikidata catalog; reads public mappings, never member tables. */
 export function startLocalMovieSync(){
  if(!localMovieSyncEnabled())return;
  let cursor:string|undefined;
@@ -36,12 +36,12 @@ export function startLocalMovieSync(){
   // Discovery advances independently of member activity or saved mappings.
   try{
    const progress=await wikidata.prefetchDiscovery();
-   if(progress)console.info(`[movie-sync] Discovery warmed page ${progress.page} (${progress.movies} films with posters; ${progress.hasMore?'more available':'end of current selection'}).`);
+   if(progress)console.info(`[movie-sync] Discovery warmed page ${progress.page} (${progress.movies} films; ${progress.hasMore?'more available':'end of current selection'}).`);
   }catch{console.info('[movie-sync] Discovery read deferred; retrying next minute.');}
   const rows=await prisma.externalMovieIdentity.findMany({where:{provider:'WIKIDATA',...(cursor?{externalId:{gt:cursor}}:{})},select:{externalId:true},orderBy:{externalId:'asc'},take:12});
   cursor=rows.length===12?rows.at(-1)!.externalId:undefined;
   return rows.map(row=>row.externalId);
  });
- console.info('[movie-sync] Local background refresh enabled (one discovery page per minute, hourly head checks and metadata refresh).');
+ console.info('[movie-sync] Background refresh enabled (one discovery page per minute, hourly head checks and metadata refresh).');
  return stop;
 }

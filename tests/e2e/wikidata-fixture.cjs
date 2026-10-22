@@ -5,6 +5,7 @@ const film=id=>({id,labels:{en:{value:id==='Q25188'?'Wikidata Fixture Film':id==
 globalThis.fetch=async(input,options)=>{
  const url=new URL(typeof input==='string'?input:input instanceof URL?input.href:input.url);
  if(url.hostname==='query.wikidata.org'){const recent=(url.searchParams.get('query')||'').includes('LIMIT 240');return Response.json({results:{bindings:(recent?Array.from({length:61},(_,i)=>`Q${25188+i}`):['Q25188']).map((id,index)=>({film:{value:`http://www.wikidata.org/entity/${id}`},links:{value:String(10000-index)}}))}});}
+ if(url.hostname==='commons.wikimedia.org'&&process.env.TALARAMA_TEST_NO_POSTERS==='1')return new Response('',{status:503});
  if(url.hostname==='commons.wikimedia.org')return Response.json({query:{pages:[{title:'File:Wikidata fixture poster.png',imagerepository:'local',imageinfo:[{width:1000,height:1500,mime:'image/png',thumburl:'https://upload.wikimedia.org/wikipedia/commons/a/ab/Wikidata_fixture_poster.png',descriptionurl:'https://commons.wikimedia.org/wiki/File:Wikidata_fixture_poster.png',extmetadata:{License:{value:'pd'},LicenseShortName:{value:'Public domain'},AttributionRequired:{value:'false'},Artist:{value:'Synthetic poster artist'}}}]}]}});
  if(url.origin!=='https://www.wikidata.org')return original(input,options);
  const query=url.searchParams.get('srsearch')||'';

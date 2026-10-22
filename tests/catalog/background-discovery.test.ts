@@ -14,13 +14,13 @@ vi.mock('@/app/lib/wikidata/server',async()=>{
 });
 import {startLocalMovieSync} from '@/app/services/movieSyncService';
 
-it('only runs idle discovery in the local preview and advances even when saved-mapping reads fail, without touching member data or refreshing unseen details',async()=>{
+it('runs idle discovery with normal accounts and advances even when saved-mapping reads fail, without touching member data or refreshing unseen details',async()=>{
  vi.useFakeTimers();vi.setSystemTime(0);vi.spyOn(console,'info').mockImplementation(()=>{});
  let stop:(()=>void)|undefined;
  try{
   vi.stubEnv('TALARAMA_LOCAL_PREVIEW','');vi.stubEnv('NEXTAUTH_URL','http://127.0.0.1:3000');vi.stubEnv('CATALOG_PROVIDER','wikidata');vi.stubEnv('NEXT_PHASE','phase-production-server');
-  expect(startLocalMovieSync()).toBeUndefined();await vi.advanceTimersByTimeAsync(60000);expect(fixture.load).not.toHaveBeenCalled();
-  vi.stubEnv('TALARAMA_LOCAL_PREVIEW','wikidata');fixture.read.mockRejectedValueOnce(Error('Temporary fixture DB outage'));
+  vi.stubEnv('TALARAMA_MOVIE_SYNC','0');expect(startLocalMovieSync()).toBeUndefined();await vi.advanceTimersByTimeAsync(60000);expect(fixture.load).not.toHaveBeenCalled();
+  vi.stubEnv('TALARAMA_MOVIE_SYNC','1');fixture.read.mockRejectedValueOnce(Error('Temporary fixture DB outage'));
   stop=startLocalMovieSync();await vi.advanceTimersByTimeAsync(180000);
   expect(fixture.load.mock.calls.map(([page])=>page)).toEqual([1,2,3]);
   expect(fixture.read).toHaveBeenCalledTimes(3);expect(fixture.read).toHaveBeenLastCalledWith({where:{provider:'WIKIDATA'},select:{externalId:true},orderBy:{externalId:'asc'},take:12});

@@ -13,11 +13,13 @@ process.env.TALARAMA_E2E_DATABASE_URL = database.toString();
 process.env.TALARAMA_E2E_SECRET = 'phase0-synthetic-browser-session-only';
 export default defineConfig({
   testDir: './tests/e2e',
-  testIgnore:['**/wikidata.spec.ts','**/wikipedia-posters.spec.ts'],
+  testIgnore:['**/wikidata.spec.ts','**/wikipedia-posters.spec.ts','**/normal-discovery.spec.ts'],
   globalSetup: './tests/e2e/setup.ts',
   globalTeardown: './tests/e2e/teardown.ts',
   workers: 1,
-  timeout: 60000,
+  // Cold Next dev compilation is part of browser setup, not a five-second UX contract.
+  timeout: 120000,
+  expect: { timeout: 20000 },
   use: { baseURL: 'http://127.0.0.1:3100', reducedMotion: 'reduce' },
   webServer: {
     command: 'npm run dev -- --hostname 127.0.0.1 --port 3100',

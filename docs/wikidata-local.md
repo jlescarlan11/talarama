@@ -1,10 +1,18 @@
 # Local Wikidata catalog trial
 
-The default catalog is now Wikidata. `CATALOG_PROVIDER=wikidata` needs no API key; `tmdb` retains the earlier catalog integration and requires its server-only token. Existing local and explicit TMDB URLs, imports and retention tools remain available. Source licensing is still pending; the intended initial release remains noncommercial. Nothing has been pushed or deployed.
+The default catalog is now Wikidata. `CATALOG_PROVIDER=wikidata` needs no API key; `tmdb` retains the earlier catalog integration and requires its server-only token. Existing local and explicit TMDB URLs, imports and retention tools remain available. Source licensing is still pending; the intended initial release remains noncommercial. Historical trial notes follow; current normal-app behavior is described below.
 
 After a production build, `npm run preview:wikidata` starts `http://127.0.0.1:3000` with a fresh generated schema in the guarded loopback `_test` database. It creates one invented member and **no movie or review fixtures**. Google credentials are blank, no authentication bypass is installed, and no provider/image fixture preload is loaded. The ordinary `preview:local` command still offers the separate synthetic TMDB demonstration. Stop the owned preview before rebuilding on Windows.
 
 The restored welcome/carousel, discovery grid, detail layout, themes and responsive behavior remain. Wikidata supplies real titles, original release years, runtime, genres and credits where available. Its short descriptions are not full synopses. Identity-linked Commons posters marked public domain or CC0 now appear where available; other cards keep the local artwork fallback. No popularity or ratings are invented. [Wikidata structured data is CC0](https://www.wikidata.org/wiki/Wikidata:Licensing); linked images have separate rights. See [poster loading and its limits](wikidata-posters-local.md).
+
+## Normal app behavior
+
+Normal Wikidata browsing now uses the same bounded background refresh, visible-page checks and public metadata outage recovery as the local trial. A valid HTTPS app origin or loopback HTTP origin in NEXTAUTH_URL enables it; TALARAMA_MOVIE_SYNC=0 disables refresh and disk backup. Builds and the TMDB provider never start the worker. Public metadata defaults to the ignored .superpowers/wikidata-cache directory; an empty TALARAMA_DISCOVERY_CACHE_DIR disables disk persistence, and arbitrary paths are rejected. Read-only or ephemeral hosts retain in-memory operation; durable recovery across host restarts requires persistent storage. No account, diary, library, image URL or artwork credit is stored in this cache.
+
+Normal discovery keeps films whose verified artwork is missing and renders the existing placeholder. This prevents sparse licensed posters from exhausting the continuation budget and surfacing a false provider outage. The explicit disposable Wikidata preview retains its poster-focused selection. Wikipedia copyrighted thumbnails remain restricted to the existing opt-in loopback preview. Real upstream outages still require a previously successful public metadata snapshot for recovery; uncached data can remain temporarily unavailable. Historical trial notes below describe their original preview scope.
+
+Type checking runs next typegen before tsc so a fresh CI checkout has Next.js image and route declarations.
 
 ## Identity and preservation
 

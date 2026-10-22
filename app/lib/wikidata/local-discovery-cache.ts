@@ -29,7 +29,7 @@ const olderKey=/^older-metadata:\d{4}-\d{2}-\d{2}:\d{1,5}$/;
 
 export function localDiscoveryDirectory(env:Record<string,string|undefined>=process.env,cwd=process.cwd()){
  const expected=resolve(cwd,'.superpowers/wikidata-cache');
- return localMovieSyncEnabled(env)&&env.TALARAMA_DISCOVERY_CACHE_DIR&&resolve(env.TALARAMA_DISCOVERY_CACHE_DIR)===expected?expected:undefined;
+ return localMovieSyncEnabled(env)&&(env.TALARAMA_DISCOVERY_CACHE_DIR===undefined||!!env.TALARAMA_DISCOVERY_CACHE_DIR&&resolve(env.TALARAMA_DISCOVERY_CACHE_DIR)===expected)?expected:undefined;
 }
 
 /** Public metadata only. Thumbnail URLs, artwork credits, local identities and
