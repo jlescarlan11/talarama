@@ -25,14 +25,14 @@ test('first member and empty community work without seeded public reviews at all
       await page.emulateMedia({ colorScheme: width === 768 ? 'dark' : 'light', reducedMotion: 'reduce' });
       await page.goto('/diaries');
       await expect(page.getByRole('main').getByText('0 viewing logs · 0 distinct movies', { exact: true })).toBeVisible();
-      await expect(page.getByText('No diary entries yet')).toBeVisible();
+      await expect(page.getByRole('main').getByRole('heading', { name: 'No diary entries yet', exact: true })).toBeVisible();
       await page.getByRole('tab', { name: 'Favorites', exact: true }).click();
       await expect(page.getByRole('tabpanel')).toContainText(/no|haven.t/i);
       await page.getByRole('tab', { name: 'Watchlist', exact: true }).click();
       await expect(page.getByRole('tabpanel')).toContainText(/no|empty/i);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       await page.goto('/community');
-      await expect(page.getByText('No public activity yet')).toBeVisible();
+      await expect(page.getByRole('main').getByText('No public activity yet', { exact: true })).toBeVisible();
       await expect(page.getByRole('article')).toHaveCount(0);
       await capture(page, `empty-community-${width}`);
       await page.goto('/movies');
