@@ -1,5 +1,11 @@
 # Newer posters in the local preview
 
+## Normal app support (2026-10-23)
+
+Set `TALARAMA_WIKIPEDIA_POSTERS=1` to use the same fallback in the normal app, with an HTTPS `NEXTAUTH_URL` or HTTP localhost. No disposable-preview flag is required. Commons remains preferred. Existing hourly provider cache refresh, minute visible-page checks, bounded background sync and transient-outage retries apply. Posters still require an exact Wikidata/article identity and validated low-resolution poster metadata; coverage is not guaranteed.
+
+Copyright/source labels remain visible on movie details. The legacy `previewOnly` artwork marker now also identifies transient normal-mode Wikipedia artwork: imports and disk backups continue omitting these URLs, and saved movie/diary reads overlay fresh artwork without rewriting member records. Wikipedia's file metadata describes its own use, not a license grant to Talarama. The historical local-trial notes below describe the original restriction.
+
 The owner requested newer movie posters without a TMDB token, retaining the original UI, existing IDs/member data and local-only work. The existing artwork flow now has an optional English Wikipedia thumbnail fallback after Commons. No source-code license changes, database migration, backfill, push or deployment are involved.
 
 `npm run preview:wikidata` enables this fallback in its own disposable, loopback-only preview. The runtime guard requires `TALARAMA_WIKIPEDIA_POSTERS=1`, `TALARAMA_LOCAL_PREVIEW=wikidata` and an HTTP loopback `NEXTAUTH_URL`. The ordinary catalog outside that preview setting keeps its existing Commons behavior. No provider token or account is needed. This flag is for the local trial, not a production-ready hosting control.

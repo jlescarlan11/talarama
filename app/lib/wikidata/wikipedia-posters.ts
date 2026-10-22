@@ -5,7 +5,7 @@ import type {PosterCredit} from '@/app/lib/tmdb/types';
 
 type Film={wikidataId:string;title:string};
 export function localWikipediaPostersEnabled(env:Record<string,string|undefined>=process.env){
-  try{const url=new URL(env.NEXTAUTH_URL||'');return env.TALARAMA_WIKIPEDIA_POSTERS==='1' && env.TALARAMA_LOCAL_PREVIEW==='wikidata' && url.protocol==='http:' && ['localhost','127.0.0.1','[::1]'].includes(url.hostname);}catch{return false;}
+  try{const url=new URL(env.NEXTAUTH_URL||'');return env.TALARAMA_WIKIPEDIA_POSTERS==='1' && !url.username && !url.password && (url.protocol==='https:' || (url.protocol==='http:' && ['localhost','127.0.0.1','[::1]'].includes(url.hostname)));}catch{return false;}
 }
 const title=z.string().min(1).max(240).regex(/^[^|\[\]{}<>\x00-\x1f\x7f]+$/);
 const filename=z.string().min(1).max(240).regex(/^[^|\[\]{}<>\x00-\x1f\x7f/\\]+\.(jpe?g|png|webp)$/i);
@@ -14,7 +14,7 @@ const plain=(value:string)=>value.replace(/<[^>]*>/g,' ').replace(/&amp;/g,'&').
 const pageSchema=z.object({title:z.string(),pageprops:z.object({wikibase_item:z.string().regex(/^Q[1-9]\d{0,11}$/)}),pageimage:filename,thumbnail:z.object({source:z.string().max(2048),width:z.number().positive().max(480),height:z.number().positive().max(1000)})});
 const fileSchema=z.object({title:z.string(),imagerepository:z.literal('local'),imageinfo:z.array(z.object({mime:z.enum(['image/jpeg','image/png','image/webp']),extmetadata:z.record(z.object({value:z.union([z.string().max(12000),z.number()])}).passthrough())})).length(1)});
 
-/** Read-only low-resolution English Wikipedia images, used only by the loopback preview. */
+/** Opt-in, read-only low-resolution English Wikipedia images in preview and normal mode. */
 export class WikipediaPosters {
   private cache=new MetadataCache();
   private blockedUntil=0;
@@ -42,6 +42,7 @@ export class WikipediaPosters {
         if(!parsed.success)continue;const meta=parsed.data.imageinfo[0].extmetadata;const value=(key:string)=>String(meta[key]?.value??'');
         if(value('NonFree').toLowerCase()!=='true' || !/fair use/i.test(value('LicenseShortName')) || value('DeletionReason') || value('Restrictions'))continue;
         const sourceUrl=`https://en.wikipedia.org/wiki/File:${encodeURIComponent(row.file.replaceAll(' ','_'))}`;
+        // Legacy marker means transient artwork: never persist it in movie snapshots.
         result.set(row.film.wikidataId,{url:row.url,sourceUrl,license:'Copyrighted (Wikipedia)',licenseUrl:sourceUrl+'#Licensing',artist:plain(value('Artist'))||'See source for copyright holder',credit:plain(value('Credit')),previewOnly:true});
       }
       return result;

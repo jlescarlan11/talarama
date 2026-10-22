@@ -6,10 +6,12 @@ const film={wikidataId:'Q109228991',title:'Dune: Part Two'};
 const metadata={mime:'image/jpeg',extmetadata:{NonFree:{value:'true'},LicenseShortName:{value:'Fair use'},Artist:{value:'<b>Studio</b>'}}};
 const page={title:film.title,pageprops:{wikibase_item:film.wikidataId},pageimage:'Dune Part Two poster.jpeg',thumbnail:{source:'https://upload.wikimedia.org/wikipedia/en/5/52/Dune_Part_Two_poster.jpeg?utm_source=test',width:259,height:384}};
 const transport=(override:Record<string,unknown>={})=>vi.fn<typeof fetch>(async input=>new URL(String(input)).searchParams.get('prop')==='imageinfo'?Response.json({query:{pages:[{title:'File:Dune Part Two poster.jpeg',imagerepository:'local',imageinfo:[metadata]}]}}):Response.json({query:{pages:[{...page,...override}]}}));
-it('requires an explicit loopback preview setting',()=>{
+it('supports opt-in Wikipedia artwork in normal localhost and HTTPS apps',()=>{
  const settings={TALARAMA_WIKIPEDIA_POSTERS:'1',TALARAMA_LOCAL_PREVIEW:'wikidata',NEXTAUTH_URL:'http://127.0.0.1:3000'};
  expect(localWikipediaPostersEnabled(settings)).toBe(true);
- for(const override of [{TALARAMA_WIKIPEDIA_POSTERS:''},{TALARAMA_LOCAL_PREVIEW:''},{NEXTAUTH_URL:'https://example.com'},{NEXTAUTH_URL:'http://127.0.0.1.evil.invalid'}])expect(localWikipediaPostersEnabled({...settings,...override})).toBe(false);
+ expect(localWikipediaPostersEnabled({...settings,TALARAMA_LOCAL_PREVIEW:''})).toBe(true);
+ expect(localWikipediaPostersEnabled({...settings,TALARAMA_LOCAL_PREVIEW:'',NEXTAUTH_URL:'https://example.com'})).toBe(true);
+ for(const override of [{TALARAMA_WIKIPEDIA_POSTERS:''},{TALARAMA_WIKIPEDIA_POSTERS:'0'},{NEXTAUTH_URL:'http://127.0.0.1.evil.invalid'},{NEXTAUTH_URL:'https://user:pass@example.com'},{NEXTAUTH_URL:'invalid'}])expect(localWikipediaPostersEnabled({...settings,...override})).toBe(false);
 });
 it('returns a matched newer-film thumbnail with explicit preview-only copyrighted provenance',async()=>{
  const fetcher=transport();const result=await new WikipediaPosters({fetcher}).resolve([film]);
